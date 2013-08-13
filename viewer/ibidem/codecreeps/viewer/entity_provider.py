@@ -10,9 +10,9 @@ from creep import Creep
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
 CREEP_FILENAMES = [
-    'bluecreep.png',
-    'pinkcreep.png',
-    'graycreep.png']
+    'mockup_tank1.png',
+    'mockup_tank2.png',
+    'mockup_tank3.png']
 N_CREEPS = 20
 
 creeps = []
