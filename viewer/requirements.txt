@@ -1,1 +1,1 @@
-#hg+http://bitbucket.org/pygame/pygame
+-e hg+http://bitbucket.org/pygame/pygame#egg=pygame

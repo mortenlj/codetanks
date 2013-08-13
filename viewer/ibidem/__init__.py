@@ -1,5 +1,1 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
-
-if __name__ == "__main__":
-    pass
+__import__('pkg_resources').declare_namespace(__name__)

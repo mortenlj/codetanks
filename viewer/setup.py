@@ -37,7 +37,7 @@ setup(
     author_email = "mortenjo@ifi.uio.no",
     license = "LGPL",
     keywords = "ibidem codetanks",
-    url = "TODO",
+    url = "https://bitbucket.org/mortenlj/codetanks",
 
     # Entry points
     entry_points = {
