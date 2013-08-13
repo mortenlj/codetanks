@@ -11,9 +11,9 @@ import pkg_resources
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
 CREEP_FILENAMES = [
-    pkg_resources.resource_filename("ibidem.codecreeps.viewer.resources", 'mockup_tank1.png'),
-    pkg_resources.resource_filename("ibidem.codecreeps.viewer.resources", 'mockup_tank2.png'),
-    pkg_resources.resource_filename("ibidem.codecreeps.viewer.resources", 'mockup_tank3.png')]
+    pkg_resources.resource_filename("ibidem.codetanks.viewer.resources", 'mockup_tank1.png'),
+    pkg_resources.resource_filename("ibidem.codetanks.viewer.resources", 'mockup_tank2.png'),
+    pkg_resources.resource_filename("ibidem.codetanks.viewer.resources", 'mockup_tank3.png')]
 N_CREEPS = 20
 
 creeps = []
