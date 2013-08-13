@@ -25,24 +25,24 @@ def parse_requirements(file_name):
 
 
 setup(
-    name = "Codecreeps Viewer",
+    name = "Codetanks Viewer",
     version = "0.1",
-    packages = ["ibidem", "ibidem.codecreeps", "ibidem.codecreeps.viewer"],
+    packages = ["ibidem", "ibidem.codetanks", "ibidem.codetanks.viewer"],
     install_requires=parse_requirements("requirements.txt"),
-    namespace_packages = ["ibidem", "ibidem.codecreeps"],
+    namespace_packages = ["ibidem", "ibidem.codetanks"],
     zip_safe = True,
 
     # Metadata
     author = "Morten Lied Johansen",
     author_email = "mortenjo@ifi.uio.no",
     license = "LGPL",
-    keywords = "ibidem codecreeps",
+    keywords = "ibidem codetanks",
     url = "TODO",
 
     # Entry points
     entry_points = {
         "gui_scripts": [
-            "codecreeps-viewer = ibidem.codecreeps.viewer.main:main"
+            "codetanks-viewer = ibidem.codetanks.viewer.main:main"
         ],
     }
 )
