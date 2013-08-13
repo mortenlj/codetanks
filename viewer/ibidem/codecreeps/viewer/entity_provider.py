@@ -7,12 +7,13 @@ Placeholder for actual data provider
 
 from random import choice, randint
 from creep import Creep
+import pkg_resources
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
 CREEP_FILENAMES = [
-    'mockup_tank1.png',
-    'mockup_tank2.png',
-    'mockup_tank3.png']
+    pkg_resources.resource_filename("ibidem.codecreeps.viewer.resources", 'mockup_tank1.png'),
+    pkg_resources.resource_filename("ibidem.codecreeps.viewer.resources", 'mockup_tank2.png'),
+    pkg_resources.resource_filename("ibidem.codecreeps.viewer.resources", 'mockup_tank3.png')]
 N_CREEPS = 20
 
 creeps = []
