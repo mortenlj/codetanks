@@ -3,12 +3,11 @@
 
 import pkg_resources
 import pygame
-from pygame.sprite import Sprite
 
 from ibidem.codetanks.viewer.vec2d import vec2d
 
 
-class MovingEntity(Sprite):
+class MovingEntity(pygame.sprite.Sprite):
     """A moving entity.
 
     Subclass must implement _update_visauls end provide attributes speed and image_name
