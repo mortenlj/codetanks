@@ -1,10 +1,10 @@
-Code Creeps
-===========
+Code Tanks
+==========
 
-Creeps controlled by *your* code, networked.
+Tanks controlled by *your* code, networked.
 
 Uses zeromq for comunication between modules. Pygame for game-viewer, erlang(?) for game-server and
-anything you like for controlling the creeps.
+anything you like for controlling the tanks.
 
-A creep can shoot at other creeps and move around. Last creep standing wins.
+A tank can shoot at other tanks and move around. Last tank standing wins.
 
