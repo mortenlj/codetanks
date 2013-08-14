@@ -6,30 +6,22 @@ Placeholder for actual data provider
 """
 
 from random import choice, randint
-from creep import Creep
+import pygame
+from entities import Bullet
 import pkg_resources
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
-CREEP_FILENAMES = [
-    pkg_resources.resource_filename("ibidem.codetanks.viewer.resources", 'mockup_tank1.png'),
-    pkg_resources.resource_filename("ibidem.codetanks.viewer.resources", 'mockup_tank2.png'),
-    pkg_resources.resource_filename("ibidem.codetanks.viewer.resources", 'mockup_tank3.png')]
-N_CREEPS = 20
 
-creeps = []
+bullets = pygame.sprite.RenderUpdates()
 
-def init(screen):
-    for i in range(N_CREEPS):
-        creeps.append(Creep(screen,
-                            choice(CREEP_FILENAMES),
-                            (   randint(0, SCREEN_WIDTH),
-                                randint(0, SCREEN_HEIGHT)),
-                            (   choice([-1, 1]),
-                                choice([-1, 1])),
-                            0.1))
+def init():
+    for i in range(10):
+        position = (randint(0, SCREEN_WIDTH), randint(0, SCREEN_HEIGHT))
+        direction = (choice([-1, 1]), choice([-1, 1]))
+        bullets.add(Bullet(position, direction))
 
 def get():
-    return creeps
+    return bullets
 
 if __name__ == "__main__":
     pass

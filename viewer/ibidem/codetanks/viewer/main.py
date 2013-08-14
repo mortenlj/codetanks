@@ -12,7 +12,7 @@ def main():
     screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
     clock = pygame.time.Clock()
 
-    entity_provider.init(screen)
+    entity_provider.init()
 
     while True:
         time_passed = clock.tick(50)
@@ -25,9 +25,9 @@ def main():
         screen.fill(BG_COLOR)
 
         # Update and redraw all creeps
-        for creep in entity_provider.get():
-            creep.update(time_passed)
-            creep.blitme()
+        render_updates = entity_provider.get()
+        render_updates.update(time_passed)
+        render_updates.draw(screen)
 
         pygame.display.flip()
 
