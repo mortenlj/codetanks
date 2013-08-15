@@ -26,8 +26,9 @@ def main():
 
         # Update and redraw all creeps
         render_updates = entity_provider.get()
-        render_updates.update(time_passed)
-        render_updates.draw(screen)
+        for ru in render_updates:
+            ru.update(time_passed)
+            ru.draw(screen)
 
         pygame.display.flip()
 
