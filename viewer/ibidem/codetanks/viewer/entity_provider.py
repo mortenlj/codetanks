@@ -15,15 +15,15 @@ bullets = pygame.sprite.RenderUpdates()
 tanks = pygame.sprite.RenderUpdates()
 
 
-def init():
+def init(bounds):
     for i in range(10):
         position = (randint(0, SCREEN_WIDTH), randint(0, SCREEN_HEIGHT))
         direction = (choice([-1, 1]), choice([-1, 1]))
-        bullets.add(Bullet(position, direction))
+        bullets.add(Bullet(position, direction, bounds))
     for i in range(10):
         position = (randint(0, SCREEN_WIDTH), randint(0, SCREEN_HEIGHT))
         direction = (choice([-1, 1]), choice([-1, 1]))
-        tanks.add(Tank(position, direction))
+        tanks.add(Tank(position, direction, bounds))
 
 
 def get():

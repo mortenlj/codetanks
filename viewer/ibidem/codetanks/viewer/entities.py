@@ -16,11 +16,12 @@ class MovingEntity(pygame.sprite.Sprite):
     speed = 0.1
     image_name = ""
 
-    def __init__(self, init_pos, init_dir):
+    def __init__(self, init_pos, init_dir, bounds):
         super(MovingEntity, self).__init__()
         self.position = vec2d(init_pos)
         self.direction = vec2d(init_dir).normalized()
         self.base_image = pygame.image.load(self.image_name).convert_alpha()
+        self.bounds = bounds
         self.update_visuals()
 
     def update(self, time_passed):
@@ -31,11 +32,16 @@ class MovingEntity(pygame.sprite.Sprite):
         )
         self.position += displacement
         self.update_visuals()
+        if not self.bounds.contains(self.rect):
+            self.on_wall_collision()
 
     def update_vector(self, time_passed):
         raise NotImplementedError()
 
     def update_visuals(self):
+        raise NotImplementedError()
+
+    def on_wall_collision(self):
         raise NotImplementedError()
 
 
@@ -55,13 +61,18 @@ class Bullet(MovingEntity):
             self.position.y - self.image_h / 2
         )
 
+    def on_wall_collision(self):
+        self.kill()
+
 
 class Tank(MovingEntity):
     image_name = pkg_resources.resource_filename("ibidem.codetanks.viewer.resources", "mockup_tank1.png")
     speed = 0.1
 
     def update_vector(self, time_passed):
-        self.direction.rotate(10)
+        if self.speed == 0.0:
+            self.direction.rotate(10)
+            self.speed = 0.1
 
     def update_visuals(self):
         self.image = pygame.transform.rotate(self.base_image, -self.direction.angle)
@@ -70,6 +81,9 @@ class Tank(MovingEntity):
             self.position.x - self.image_w / 2,
             self.position.y - self.image_h / 2
         )
+
+    def on_wall_collision(self):
+        self.speed = 0.0
 
 
 if __name__ == "__main__":
