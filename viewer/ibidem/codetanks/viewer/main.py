@@ -10,6 +10,10 @@ BG_COLOR = 20, 20, 20
 def main():
     pygame.init()
     screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
+    screen.fill(BG_COLOR)
+    pygame.display.flip()
+    background = screen.copy()
+
     clock = pygame.time.Clock()
 
     entity_provider.init()
@@ -22,16 +26,15 @@ def main():
                 pygame.quit()
                 return
 
-        screen.fill(BG_COLOR)
+        # Update and redraw all entities
+        entity_groups = entity_provider.get()
+        updates = []
+        for group in entity_groups:
+            group.clear(screen, background)
+            group.update(time_passed)
+            updates.extend(group.draw(screen))
 
-        # Update and redraw all creeps
-        render_updates = entity_provider.get()
-        for ru in render_updates:
-            ru.update(time_passed)
-            ru.draw(screen)
-
-        pygame.display.flip()
-
+        pygame.display.update(updates)
 
 
 if __name__ == "__main__":
