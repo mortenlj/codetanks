@@ -16,7 +16,7 @@ def main():
 
     clock = pygame.time.Clock()
 
-    entity_provider.init()
+    entity_provider.init(screen.get_rect())
 
     while True:
         time_passed = clock.tick(50)
