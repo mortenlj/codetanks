@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
+import json
 
+import uuid
 import pkg_resources
 import pygame
 
 from ibidem.codetanks.viewer.vec2d import vec2d
+
 
 
 class MovingEntity(pygame.sprite.Sprite):
@@ -16,13 +19,46 @@ class MovingEntity(pygame.sprite.Sprite):
     speed = 0.1
     image_name = ""
 
-    def __init__(self, init_pos, init_dir, bounds):
+    def __init__(self, init_pos_or_dict, init_dir=None, bounds=None):
         super(MovingEntity, self).__init__()
-        self.position = vec2d(init_pos)
-        self.direction = vec2d(init_dir).normalized()
         self.base_image = pygame.image.load(self.image_name).convert_alpha()
-        self.bounds = bounds
+        if isinstance(init_pos_or_dict, dict):
+            self.id = init_pos_or_dict["id"]
+            self.update_from_dict(init_pos_or_dict)
+        else:
+            self.id = "%r-%r" % (self.__class__.__name__, uuid.uuid4())
+            self.position = vec2d(init_pos_or_dict)
+            self.direction = vec2d(init_dir).normalized()
+            self.bounds = bounds
+            self.update_visuals()
+
+    def update_from_dict(self, data_dict):
+        self.position = vec2d(data_dict["position"]["x"], data_dict["position"]["y"])
+        self.direction = vec2d(data_dict["direction"]["x"], data_dict["direction"]["y"])
+        self.speed = data_dict["speed"]
+        bounds = data_dict["bounds"]
+        self.bounds = pygame.Rect(bounds["left"], bounds["top"], bounds["width"], bounds["height"])
         self.update_visuals()
+
+    def as_dict(self):
+        return {
+            "id": self.id,
+            "position": {
+                "x": self.position.x,
+                "y": self.position.y
+            },
+            "direction": {
+                "x": self.direction.x,
+                "y": self.direction.y
+            },
+            "speed": self.speed,
+            "bounds": {
+                "left": self.bounds.left,
+                "top": self.bounds.top,
+                "height": self.bounds.height,
+                "width": self.bounds.width
+            }
+        }
 
     def update(self, time_passed):
         self.update_vector(time_passed)
@@ -70,9 +106,7 @@ class Tank(MovingEntity):
     speed = 0.1
 
     def update_vector(self, time_passed):
-        if self.speed == 0.0:
-            self.direction.rotate(10)
-            self.speed = 0.1
+        pass
 
     def update_visuals(self):
         self.image = pygame.transform.rotate(self.base_image, -self.direction.angle)
