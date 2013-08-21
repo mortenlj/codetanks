@@ -27,11 +27,10 @@ def main():
                 return
 
         # Update and redraw all entities
-        entity_groups = entity_provider.get()
+        entity_groups = entity_provider.get(time_passed)
         updates = []
         for group in entity_groups:
             group.clear(screen, background)
-            group.update(time_passed)
             updates.extend(group.draw(screen))
 
         pygame.display.update(updates)
