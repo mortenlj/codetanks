@@ -2,7 +2,8 @@
 # -*- coding: utf-8
 
 import pygame
-import entity_provider
+import dummy_server
+from ibidem.codetanks.viewer.server_proxy import ServerProxy
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
 BG_COLOR = 20, 20, 20
@@ -16,7 +17,8 @@ def main():
 
     clock = pygame.time.Clock()
 
-    entity_provider.init(screen.get_rect())
+    server = ServerProxy("dummy")
+    server.start()
 
     while True:
         time_passed = clock.tick(50)
@@ -27,7 +29,7 @@ def main():
                 return
 
         # Update and redraw all entities
-        entity_groups = entity_provider.get(time_passed)
+        entity_groups = server.update(time_passed)
         updates = []
         for group in entity_groups:
             group.clear(screen, background)

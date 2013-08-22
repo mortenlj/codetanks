@@ -8,17 +8,8 @@ import json
 
 from random import choice, randint
 from threading import Thread
-from Queue import Queue, Empty
 import pygame
 from entities import Bullet, Tank
-
-SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
-
-bullet_group = pygame.sprite.RenderUpdates()
-bullets = {}
-tank_group = pygame.sprite.RenderUpdates()
-tanks = {}
-queue = Queue()
 
 
 class Server(Thread):
@@ -30,7 +21,7 @@ class Server(Thread):
         self.bullets = pygame.sprite.RenderUpdates()
         self.clock = pygame.time.Clock()
         for i in range(1):
-            position = (randint(0, SCREEN_WIDTH), randint(0, SCREEN_HEIGHT))
+            position = (randint(0, bounds.width), randint(0, bounds.height))
             direction = (choice([-1, 1]), choice([-1, 1]))
             self.tanks.add(Tank(position, direction, bounds))
 
@@ -48,38 +39,6 @@ class Server(Thread):
         game_data["tanks"] = [t.as_dict() for t in self.tanks]
         game_data["bullets"] = [b.as_dict() for b in self.bullets]
         return game_data
-
-
-def init(bounds):
-    server = Server(queue, bounds)
-    server.start()
-
-
-def update_entities(updates, entities, sprite_group, entity_class):
-    for update in updates:
-        entity_id = update["id"]
-        if entities.has_key(entity_id):
-            entity = entities[entity_id]
-            entity.update_from_dict(update)
-        else:
-            entity = entity_class(update)
-            sprite_group.add(entity)
-            entities[entity.id] = entity
-
-
-def update_game_data(game_data):
-    update_entities(game_data["tanks"], tanks, tank_group, Tank)
-    update_entities(game_data["bullets"], bullets, bullet_group, Bullet)
-
-
-def get(time_passed):
-    try:
-        game_data = queue.get_nowait()
-        update_game_data(json.loads(game_data))
-    except Empty:
-        bullet_group.update(time_passed)
-        tank_group.update(time_passed)
-    return bullet_group, tank_group
 
 if __name__ == "__main__":
     pass
