@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
-from Queue import Queue, Empty
-import json
+from Queue import Empty
 import pygame
-from ibidem.codetanks.viewer.dummy_server import Server
+import zmq
 from ibidem.codetanks.viewer.entities import Tank, Bullet
 
 
@@ -23,12 +22,15 @@ class ServerProxy(object):
         self.bullets = pygame.sprite.RenderUpdates()
         self._tanks = {}
         self._bullets = {}
-        self._queue = Queue()
-
-    def start(self):
-        """Start a new game"""
-        self._server = Server(self._queue, self.arena)
-        self._server.start()
+        zmq_context = zmq.Context.instance()
+        registration_socket = zmq_context.socket(zmq.REQ)
+        registration_socket.connect(server_url)
+        registration_socket.send_json({"test": True})
+        data = registration_socket.recv_json()
+        self._update_socket = zmq_context.socket(zmq.PULL)
+        update_url = data["update_url"]
+        print "Subscribing to %s" % update_url
+        self._update_socket.connect(update_url)
 
     def _update_entities(self, updates, entities, sprite_group, entity_class):
         for update in updates:
@@ -46,7 +48,7 @@ class ServerProxy(object):
         self._update_entities(game_data["bullets"], self._bullets, self.bullets, Bullet)
 
     def _get_server_update(self):
-        return json.loads(self._queue.get_nowait())
+        return self._update_socket.recv_json()
 
     def update(self, time_passed):
         try:

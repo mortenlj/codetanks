@@ -2,13 +2,14 @@
 # -*- coding: utf-8
 
 import pygame
-import dummy_server
 from ibidem.codetanks.viewer.server_proxy import ServerProxy
 
-SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
+SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
 BG_COLOR = 20, 20, 20
 
 def main():
+    import sys
+    server_url = sys.argv[1]
     pygame.init()
     screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
     screen.fill(BG_COLOR)
@@ -17,8 +18,7 @@ def main():
 
     clock = pygame.time.Clock()
 
-    server = ServerProxy("dummy")
-    server.start()
+    server = ServerProxy(server_url)
 
     while True:
         time_passed = clock.tick(50)
