@@ -27,7 +27,8 @@ class ServerProxy(object):
         registration_socket.connect(server_url)
         registration_socket.send_json({"test": True})
         data = registration_socket.recv_json()
-        self._update_socket = zmq_context.socket(zmq.PULL)
+        self._update_socket = zmq_context.socket(zmq.SUB)
+        self._update_socket.set(zmq.SUBSCRIBE, "")
         update_url = data["update_url"]
         print "Subscribing to %s" % update_url
         self._update_socket.connect(update_url)
