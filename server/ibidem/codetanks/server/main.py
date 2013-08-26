@@ -9,8 +9,9 @@ def main():
     zmq_context = zmq.Context.instance()
     registration_socket = zmq_context.socket(zmq.REP)
     port = registration_socket.bind_to_random_port("tcp://*")
-    print "Ready to accept registrations on tcp://*:%d" % port
-    update_socket = zmq_context.socket(zmq.PUSH)
+    registration_url = "tcp://localhost:%d" % port
+    print "Ready to accept registrations on %s" % registration_url
+    update_socket = zmq_context.socket(zmq.PUB)
     port = update_socket.bind_to_random_port("tcp://*")
     update_url = "tcp://localhost:%d" % port
     print "Publishing updates on %s" % update_url
