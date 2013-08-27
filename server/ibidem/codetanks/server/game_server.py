@@ -30,6 +30,14 @@ class GameServer(object):
         game_data["bullets"] = [b.as_dict() for b in self.bullets]
         return game_data
 
+    def build_game_info(self):
+        return {
+            "arena": {
+                "width": self.bounds.width,
+                "height": self.bounds.height,
+            }
+        }
+
 
 if __name__ == "__main__":
     pass

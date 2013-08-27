@@ -40,7 +40,8 @@ class App(object):
             if reg_socket in socks and socks[reg_socket] == zmq.POLLIN:
                 registration = reg_socket.recv_json()
                 print "Received registration: %r" % registration
-                reg_socket.send_json({"update_url": self._socket_urls[UPDATE]})
+                reg_socket.send_json({"update_url": self._socket_urls[UPDATE],
+                                      "game_info": self.game_server.build_game_info()})
                 self.viewers += 1
             if self.viewers:
                 self.game_server.update()
