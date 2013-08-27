@@ -4,36 +4,50 @@
 import zmq
 from ibidem.codetanks.server.game_server import GameServer
 
+# Socket names
+REGISTRATION = "registration"
+UPDATE = "update"
+
+
+class App(object):
+    def __init__(self):
+        self._sockets = {}
+        self._socket_urls = {}
+        self._init_socket(zmq.REP, REGISTRATION)
+        self._init_socket(zmq.PUB, UPDATE)
+        self.poller = zmq.Poller()
+        self.poller.register(self._sockets[REGISTRATION])
+        self.game_server = GameServer()
+        self.viewers = 0
+
+    def _init_socket(self, socket_type, name, zmq_context=None):
+        if not zmq_context:
+            zmq_context = zmq.Context.instance()
+        self._sockets[name] = zmq_context.socket(socket_type)
+        port = self._sockets[name].bind_to_random_port("tcp://*")
+        url = "tcp://localhost:%d" % port
+        self._socket_urls[name] = url
+        print "Opened %s on %s" % (name, url)
+
+    def run(self):
+        while True:
+            socks = dict(self.poller.poll(1))
+            reg_socket = self._sockets[REGISTRATION]
+            if reg_socket in socks and socks[reg_socket] == zmq.POLLIN:
+                registration = reg_socket.recv_json()
+                print "Received registration: %r" % registration
+                reg_socket.send_json({"update_url": self._socket_urls[UPDATE]})
+                self.viewers += 1
+            if self.viewers:
+                self.game_server.update()
+                game_data = self.game_server.build_game_data()
+                #print "Publishing: %r" % game_data
+                self._sockets[UPDATE].send_json(game_data)
+
 
 def main():
-    zmq_context = zmq.Context.instance()
-    registration_socket = zmq_context.socket(zmq.REP)
-    port = registration_socket.bind_to_random_port("tcp://*")
-    registration_url = "tcp://localhost:%d" % port
-    print "Ready to accept registrations on %s" % registration_url
-    update_socket = zmq_context.socket(zmq.PUB)
-    port = update_socket.bind_to_random_port("tcp://*")
-    update_url = "tcp://localhost:%d" % port
-    print "Publishing updates on %s" % update_url
-    poller = zmq.Poller()
-    poller.register(registration_socket)
-    game_server = GameServer()
-
-    viewers = 0
-
-    while True:
-        socks = dict(poller.poll(1))
-        if registration_socket in socks and socks[registration_socket] == zmq.POLLIN:
-            registration = registration_socket.recv_json()
-            print "Received registration: %r" % registration
-            registration_socket.send_json({"update_url": update_url})
-            viewers += 1
-        if viewers:
-            game_server.update()
-            game_data = game_server.build_game_data()
-            #print "Publishing: %r" % game_data
-            update_socket.send_json(game_data)
-
+    app = App()
+    app.run()
 
 if __name__ == "__main__":
     pass
