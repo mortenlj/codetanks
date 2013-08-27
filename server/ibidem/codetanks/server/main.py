@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
+import argparse
 
 import zmq
 from ibidem.codetanks.server.game_server import GameServer
@@ -10,21 +11,24 @@ UPDATE = "update"
 
 
 class App(object):
-    def __init__(self):
+    def __init__(self, registration_port):
         self._sockets = {}
         self._socket_urls = {}
-        self._init_socket(zmq.REP, REGISTRATION)
+        self._init_socket(zmq.REP, REGISTRATION, registration_port)
         self._init_socket(zmq.PUB, UPDATE)
         self.poller = zmq.Poller()
         self.poller.register(self._sockets[REGISTRATION])
         self.game_server = GameServer()
         self.viewers = 0
 
-    def _init_socket(self, socket_type, name, zmq_context=None):
+    def _init_socket(self, socket_type, name, port=None, zmq_context=None):
         if not zmq_context:
             zmq_context = zmq.Context.instance()
         self._sockets[name] = zmq_context.socket(socket_type)
-        port = self._sockets[name].bind_to_random_port("tcp://*")
+        if port:
+            self._sockets[name].bind("tcp://*:%d" % port)
+        else:
+            port = self._sockets[name].bind_to_random_port("tcp://*")
         url = "tcp://localhost:%d" % port
         self._socket_urls[name] = url
         print "Opened %s on %s" % (name, url)
@@ -41,12 +45,14 @@ class App(object):
             if self.viewers:
                 self.game_server.update()
                 game_data = self.game_server.build_game_data()
-                #print "Publishing: %r" % game_data
                 self._sockets[UPDATE].send_json(game_data)
 
 
 def main():
-    app = App()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-p", "--port", type=int)
+    args = parser.parse_args()
+    app = App(args.port)
     app.run()
 
 if __name__ == "__main__":
