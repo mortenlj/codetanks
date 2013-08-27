@@ -17,7 +17,6 @@ class ServerProxy(object):
 
         :param server_url: The URL of the actual server being proxied
         """
-        self.arena = pygame.Rect((0, 0), (500, 500))
         self.tanks = pygame.sprite.RenderUpdates()
         self.bullets = pygame.sprite.RenderUpdates()
         self._tanks = {}
@@ -25,11 +24,13 @@ class ServerProxy(object):
         zmq_context = zmq.Context.instance()
         registration_socket = zmq_context.socket(zmq.REQ)
         registration_socket.connect(server_url)
-        registration_socket.send_json({"test": True})
+        registration_socket.send_json({"type": "viewer"})
         data = registration_socket.recv_json()
         self._update_socket = zmq_context.socket(zmq.SUB)
         self._update_socket.set(zmq.SUBSCRIBE, "")
         update_url = data["update_url"]
+        arena = data["game_info"]["arena"]
+        self.arena = pygame.Rect(0, 0, arena["width"], arena["height"])
         print "Subscribing to %s" % update_url
         self._update_socket.connect(update_url)
 

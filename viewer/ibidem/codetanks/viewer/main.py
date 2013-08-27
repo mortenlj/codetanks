@@ -3,22 +3,25 @@
 
 import pygame
 from ibidem.codetanks.viewer.server_proxy import ServerProxy
+from ibidem.codetanks.viewer.widgets import Arena
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
 BG_COLOR = 20, 20, 20
 
+
 def main():
     import sys
     server_url = sys.argv[1]
+    server = ServerProxy(server_url)
     pygame.init()
-    screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
+    screen = pygame.display.set_mode([server.arena.width + 200, server.arena.height+64])
+    arena = Arena(server.arena.width, server.arena.height)
     screen.fill(BG_COLOR)
+    arena.draw(screen, (0, 0))
     pygame.display.flip()
     background = screen.copy()
 
     clock = pygame.time.Clock()
-
-    server = ServerProxy(server_url)
 
     while True:
         time_passed = clock.tick(50)
