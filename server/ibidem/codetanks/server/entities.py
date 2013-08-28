@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
+from random import randint
 
 import uuid
 import pygame
@@ -81,8 +82,20 @@ class Tank(MovingEntity):
     speed = 0.1
     size = 46
 
+    def __init__(self, init_pos, init_dir, bounds=None):
+        super(Tank, self).__init__(init_pos, init_dir, bounds)
+        self.aim = vec2d(init_dir).normalized()
+
+    def as_dict(self):
+        d = super(Tank, self).as_dict()
+        d["aim"] = {
+            "x": self.aim.x,
+            "y": self.aim.y
+        }
+        return d
+
     def update_vector(self, time_passed):
-        pass
+        self.aim.rotate(randint(0, 5))
 
     def on_wall_collision(self):
         self.speed = 0.0

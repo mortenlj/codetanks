@@ -52,13 +52,12 @@ class ServerProxy(object):
     def _get_server_update(self):
         return self._update_socket.recv_json()
 
-    def update(self, time_passed):
+    def update(self):
         try:
             game_data = self._get_server_update()
             self._update_game_data(game_data)
         except Empty:
-            self.tanks.update(time_passed)
-            self.bullets.update(time_passed)
+            pass
         return self.tanks, self.bullets
 
 
