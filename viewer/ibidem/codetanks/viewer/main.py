@@ -14,12 +14,12 @@ def main():
     server_url = sys.argv[1]
     server = ServerProxy(server_url)
     pygame.init()
+    #TODO: Show splash while setting up, then change mode after we know how large the arena is
     screen = pygame.display.set_mode([server.arena.width + 200, server.arena.height+64])
     arena = Arena(server.arena.width, server.arena.height)
     screen.fill(BG_COLOR)
     arena.draw(screen, (0, 0))
     pygame.display.flip()
-    background = screen.copy()
 
     clock = pygame.time.Clock()
 
@@ -33,12 +33,12 @@ def main():
 
         # Update and redraw all entities
         entity_groups = server.update(time_passed)
-        updates = []
         for group in entity_groups:
-            group.clear(screen, background)
-            updates.extend(group.draw(screen))
+            group.clear(arena.game_field, arena.background)
+            group.draw(arena.game_field)
 
-        pygame.display.update(updates)
+        arena.draw(screen, (0, 0))
+        pygame.display.flip()
 
 
 if __name__ == "__main__":
