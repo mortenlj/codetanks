@@ -11,12 +11,11 @@ class MovingEntity(pygame.sprite.Sprite):
     speed = 0.1
     size = 0
 
-    def __init__(self, init_pos, init_dir, bounds=None):
+    def __init__(self, init_pos, init_dir):
         super(MovingEntity, self).__init__()
         self.id = "%r-%r" % (self.__class__.__name__, uuid.uuid4())
         self.set_position(init_pos)
         self.set_direction(init_dir)
-        self.bounds = bounds
         self.base_rect = pygame.Rect(0, 0, self.size, self.size)
         self.rect = self.base_rect.copy()
         self.update_location()
@@ -39,12 +38,6 @@ class MovingEntity(pygame.sprite.Sprite):
                 "y": self.direction.y
             },
             "speed": self.speed,
-            "bounds": {
-                "left": self.bounds.left,
-                "top": self.bounds.top,
-                "height": self.bounds.height,
-                "width": self.bounds.width
-            }
         }
 
     def update(self, time_passed):
@@ -90,8 +83,8 @@ class Tank(MovingEntity):
     turret_rate = 0.2
     size = 46
 
-    def __init__(self, init_pos, init_dir, bounds=None):
-        super(Tank, self).__init__(init_pos, init_dir, bounds)
+    def __init__(self, init_pos, init_dir):
+        super(Tank, self).__init__(init_pos, init_dir)
         self.set_aim(init_dir)
         self.speed = 0.0
         self.target_direction = self.direction

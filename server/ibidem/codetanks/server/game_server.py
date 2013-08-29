@@ -30,7 +30,7 @@ class GameServer(object):
     def _add_random_tank(self):
         position = self._create_random_position()
         direction = self._create_random_direction()
-        tank = Tank(position, direction, self.bounds)
+        tank = Tank(position, direction)
         self.tanks.add(tank)
         self.entities.add(tank)
 
