@@ -22,24 +22,9 @@ class MovingEntity(pygame.sprite.Sprite):
         self.position = vec2d(data_dict["position"]["x"], data_dict["position"]["y"])
         self.direction = vec2d(data_dict["direction"]["x"], data_dict["direction"]["y"])
         self.speed = data_dict["speed"]
-        bounds = data_dict["bounds"]
-        self.bounds = pygame.Rect(bounds["left"], bounds["top"], bounds["width"], bounds["height"])
         self.update_visuals()
-
-    def update(self, time_passed):
-        displacement = vec2d(
-            self.direction.x * self.speed * time_passed,
-            self.direction.y * self.speed * time_passed
-        )
-        self.position += displacement
-        self.update_visuals()
-        if not self.bounds.contains(self.rect):
-            self.on_wall_collision()
 
     def update_visuals(self):
-        raise NotImplementedError()
-
-    def on_wall_collision(self):
         raise NotImplementedError()
 
 
@@ -59,9 +44,6 @@ class Bullet(MovingEntity):
             self.position.x - self.image_w / 2,
             self.position.y - self.image_h / 2
         )
-
-    def on_wall_collision(self):
-        self.kill()
 
 
 class Tank(MovingEntity):
@@ -89,9 +71,6 @@ class Tank(MovingEntity):
             self.position.x - self.image_w / 2,
             self.position.y - self.image_h / 2
         )
-
-    def on_wall_collision(self):
-        self.speed = 0.0
 
 
 if __name__ == "__main__":

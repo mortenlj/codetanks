@@ -35,15 +35,19 @@ class ServerProxy(object):
         self._update_socket.connect(update_url)
 
     def _update_entities(self, updates, entities, sprite_group, entity_class):
+        to_kill = sprite_group.copy()
         for update in updates:
             entity_id = update["id"]
             if entities.has_key(entity_id):
                 entity = entities[entity_id]
                 entity.update_from_dict(update)
+                to_kill.remove(entity)
             else:
                 entity = entity_class(update)
                 sprite_group.add(entity)
                 entities[entity.id] = entity
+        for entity in to_kill:
+            entity.kill()
 
     def _update_game_data(self, game_data):
         self._update_entities(game_data["tanks"], self._tanks, self.tanks, Tank)
