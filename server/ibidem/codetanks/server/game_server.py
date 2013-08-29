@@ -36,9 +36,9 @@ class GameServer(object):
 
     def _apply_dummy_actions(self):
         for t in self.tanks:
-            rnd = randint(0, 60)
+            rnd = randint(0, 120)
             if rnd == 0:
-                t.cmd_move(self._create_random_position())
+                t.cmd_move(randint(10, 100))
             if rnd == 1:
                 t.cmd_turn(self._create_random_direction())
             if rnd == 2:
@@ -65,7 +65,7 @@ class GameServer(object):
                 other.on_collision(entity)
             if not self.bounds.contains(entity_rect):
                 entity.on_collision(None)
-                entity_rect.clamp_ip(self.bounds)
+                entity.clamp(self.bounds)
 
     def build_game_data(self):
         game_data = {}

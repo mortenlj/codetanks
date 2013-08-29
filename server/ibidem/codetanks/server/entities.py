@@ -56,6 +56,10 @@ class MovingEntity(pygame.sprite.Sprite):
         self.position += displacement
         self.update_location()
 
+    def clamp(self, bounds):
+        self.rect.clamp_ip(bounds)
+        self.position = vec2d(self.rect.center)
+
     def update_vector(self, time_passed):
         raise NotImplementedError()
 
@@ -82,11 +86,17 @@ class Bullet(MovingEntity):
 
 class Tank(MovingEntity):
     speed = 0.1
+    turn_rate = 0.1
+    turret_rate = 0.2
     size = 46
 
     def __init__(self, init_pos, init_dir, bounds=None):
         super(Tank, self).__init__(init_pos, init_dir, bounds)
         self.set_aim(init_dir)
+        self.speed = 0.0
+        self.target_direction = self.direction
+        self.target_aim = self.aim
+        self.target_rect = pygame.Rect(self.position.x - 1, self.position.y - 1, 2, 2)
 
     def set_aim(self, init_dir):
         self.aim = vec2d(init_dir).normalized()
@@ -99,24 +109,43 @@ class Tank(MovingEntity):
         }
         return d
 
+    def _calculate_angle_adjustment(self, time_passed, current, target, rate):
+        adjustment = 0
+        angle = current.get_angle_between(target)
+        if angle:
+            adjustment = rate * time_passed
+            if abs(angle) < adjustment:
+                adjustment = angle
+            elif angle < 0:
+                adjustment = -adjustment
+        return adjustment
+
     def update_vector(self, time_passed):
-        pass
+        adjustment = self._calculate_angle_adjustment(time_passed, self.direction, self.target_direction, Tank.turn_rate)
+        self.direction.rotate(adjustment)
+        adjustment = self._calculate_angle_adjustment(time_passed, self.aim, self.target_aim, Tank.turret_rate)
+        self.aim.rotate(adjustment)
+
+    def update_location(self):
+        super(Tank, self).update_location()
+        if hasattr(self, "target_rect") and self.target_rect.colliderect(self.rect):
+            self.speed = 0.0
 
     def on_collision(self, other):
         self.speed = 0.0
 
-    def cmd_move(self, position):
-        # TODO: Make movement smooth
-        self.set_position(position)
-        self.speed = 0.1
+    def cmd_move(self, distance):
+        movement = vec2d(self.direction)
+        movement.length = distance
+        target_position = self.position + movement
+        self.target_rect = pygame.Rect(target_position.x - 1, target_position.y - 1, 2, 2)
+        self.speed = Tank.speed
 
     def cmd_turn(self, direction):
-        # TODO: Make movement smooth
-        self.set_direction(direction)
+        self.target_direction = direction
 
     def cmd_aim(self, direction):
-        # TODO: Make movement smooth
-        self.set_aim(direction)
+        self.target_aim = direction
 
 if __name__ == "__main__":
     pass
