@@ -54,7 +54,7 @@ class MovingEntity(pygame.sprite.Sprite):
         self.position = vec2d(self.rect.center)
 
     def update_vector(self, time_passed):
-        raise NotImplementedError()
+        pass
 
     def update_location(self):
         self.rect = self.base_rect.move(
@@ -65,13 +65,11 @@ class MovingEntity(pygame.sprite.Sprite):
     def on_collision(self, other):
         raise NotImplementedError()
 
+
 class Bullet(MovingEntity):
     """A bullet that moves forward until it hits something"""
-    speed = 0.5
+    speed = 0.3
     size = 5
-
-    def update_vector(self, time_passed):
-        pass
 
     def on_collision(self, other):
         self.kill()
@@ -128,9 +126,7 @@ class Tank(MovingEntity):
         self.speed = 0.0
 
     def cmd_move(self, distance):
-        movement = vec2d(self.direction)
-        movement.length = distance
-        target_position = self.position + movement
+        target_position = self.position + (self.direction * distance)
         self.target_rect = pygame.Rect(target_position.x - 1, target_position.y - 1, 2, 2)
         self.speed = Tank.speed
 
@@ -139,6 +135,11 @@ class Tank(MovingEntity):
 
     def cmd_aim(self, direction):
         self.target_aim = direction
+
+    def cmd_shoot(self):
+        position = self.position + (self.aim * self.size)
+        bullet = Bullet(position, self.aim)
+        return bullet
 
 if __name__ == "__main__":
     pass

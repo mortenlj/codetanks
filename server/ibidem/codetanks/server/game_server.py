@@ -38,11 +38,15 @@ class GameServer(object):
         for t in self.tanks:
             rnd = randint(0, 120)
             if rnd == 0:
-                t.cmd_move(randint(10, 100))
+                t.cmd_move(100)
             if rnd == 1:
                 t.cmd_turn(self._create_random_direction())
             if rnd == 2:
                 t.cmd_aim(self._create_random_direction())
+            if rnd == 3:
+                bullet = t.cmd_shoot()
+                self.bullets.add(bullet)
+                self.entities.add(bullet)
 
     def update(self):
         if self.clock is None:
