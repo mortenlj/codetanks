@@ -17,19 +17,38 @@ class GameServer(object):
         for i in range(4):
             self._add_random_tank()
 
-    def _add_random_tank(self):
+    def _create_random_position(self):
         position = (randint(32, self.bounds.width - 32), randint(32, self.bounds.height - 32))
+        return position
+
+    def _create_random_direction(self):
         direction = (randint(-5, 5), randint(-5, 5))
         while direction == (0, 0):
             direction = (randint(-5, 5), randint(-5, 5))
+        return direction
+
+    def _add_random_tank(self):
+        position = self._create_random_position()
+        direction = self._create_random_direction()
         tank = Tank(position, direction, self.bounds)
         self.tanks.add(tank)
         self.entities.add(tank)
+
+    def _apply_dummy_actions(self):
+        for t in self.tanks:
+            rnd = randint(0, 60)
+            if rnd == 0:
+                t.cmd_move(self._create_random_position())
+            if rnd == 1:
+                t.cmd_turn(self._create_random_direction())
+            if rnd == 2:
+                t.cmd_aim(self._create_random_direction())
 
     def update(self):
         if self.clock is None:
             self.clock = pygame.time.Clock()
         time_passed = self.clock.tick(50)
+        self._apply_dummy_actions()
         self.entities.update(time_passed)
         self._check_collisions()
 
