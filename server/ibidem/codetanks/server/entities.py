@@ -50,8 +50,6 @@ class MovingEntity(pygame.sprite.Sprite):
         )
         self.position += displacement
         self.update_location()
-        if not self.bounds.contains(self.rect):
-            self.on_wall_collision()
 
     def update_vector(self, time_passed):
         raise NotImplementedError()
@@ -62,9 +60,8 @@ class MovingEntity(pygame.sprite.Sprite):
             self.position.y - self.size / 2
         )
 
-    def on_wall_collision(self):
+    def on_collision(self, other):
         raise NotImplementedError()
-
 
 class Bullet(MovingEntity):
     """A bullet that moves forward until it hits something"""
@@ -74,7 +71,7 @@ class Bullet(MovingEntity):
     def update_vector(self, time_passed):
         pass
 
-    def on_wall_collision(self):
+    def on_collision(self, other):
         self.kill()
 
 
@@ -97,7 +94,7 @@ class Tank(MovingEntity):
     def update_vector(self, time_passed):
         self.aim.rotate(randint(0, 5))
 
-    def on_wall_collision(self):
+    def on_collision(self, other):
         self.speed = 0.0
 
 
