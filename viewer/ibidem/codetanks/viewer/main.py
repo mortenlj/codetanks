@@ -8,14 +8,27 @@ from ibidem.codetanks.viewer.widgets import Arena
 BG_COLOR = 20, 20, 20
 
 
+def initialize_and_display_splash():
+    pygame.init()
+    screen = pygame.display.set_mode((320, 200))
+    rect = screen.get_rect()
+    font = pygame.font.Font(None, 20)
+    text = font.render("Initializing, please wait...", True, (255, 255, 255))
+    textRect = text.get_rect()
+    x = rect.centerx - (textRect.width / 2)
+    y = rect.centery - (textRect.height / 2)
+    textRect.topleft = (x, y)
+    screen.blit(text, textRect)
+    pygame.display.flip()
+
+
 def main():
+    initialize_and_display_splash()
     import sys
     server_url = sys.argv[1]
     server = ServerProxy(server_url)
-    pygame.init()
-    #TODO: Show splash while setting up, then change mode after we know how large the arena is
-    screen = pygame.display.set_mode([server.arena.width + 200, server.arena.height+64])
     arena = Arena(server.arena.width, server.arena.height)
+    screen = pygame.display.set_mode([arena.get_width() + 256, arena.get_height()])
     screen.fill(BG_COLOR)
     arena.draw(screen, (0, 0))
     pygame.display.flip()
