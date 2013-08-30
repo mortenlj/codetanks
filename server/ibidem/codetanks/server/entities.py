@@ -1,11 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 
-import uuid
 import pygame
 
 from ibidem.codetanks.server.vec2d import vec2d
 
+def id_generator():
+    i = 0
+    while True:
+        yield i
+        i += 1
+
+id_series = id_generator()
 
 class MovingEntity(pygame.sprite.Sprite):
     speed = 0.1
@@ -13,7 +19,7 @@ class MovingEntity(pygame.sprite.Sprite):
 
     def __init__(self, init_pos, init_dir):
         super(MovingEntity, self).__init__()
-        self.id = "%r-%r" % (self.__class__.__name__, uuid.uuid4())
+        self.id = "%s-%s" % (self.__class__.__name__, id_series.next())
         self.set_position(init_pos)
         self.set_direction(init_dir)
         self.base_rect = pygame.Rect(0, 0, self.size, self.size)
@@ -65,17 +71,30 @@ class MovingEntity(pygame.sprite.Sprite):
     def on_collision(self, other):
         raise NotImplementedError()
 
+    def __str__(self):
+        return self.id
+
 
 class Bullet(MovingEntity):
     """A bullet that moves forward until it hits something"""
     speed = 0.3
     size = 5
+    imparted_damage = 5
+
+    def __init__(self, init_pos, init_dir, parent):
+        super(Bullet, self).__init__(init_pos, init_dir)
+        self.parent = parent
 
     def on_collision(self, other):
         self.kill()
 
+    def __str__(self):
+        return super(Bullet, self).__str__() + ", fired by %s" % self.parent
+
 
 class Tank(MovingEntity):
+    health = 100
+    imparted_damage = 1
     speed = 0.1
     turn_rate = 0.1
     turret_rate = 0.2
@@ -83,14 +102,11 @@ class Tank(MovingEntity):
 
     def __init__(self, init_pos, init_dir):
         super(Tank, self).__init__(init_pos, init_dir)
-        self.set_aim(init_dir)
+        self.aim = vec2d(init_dir).normalized()
         self.speed = 0.0
         self.target_direction = self.direction
         self.target_aim = self.aim
         self.target_rect = pygame.Rect(self.position.x - 1, self.position.y - 1, 2, 2)
-
-    def set_aim(self, init_dir):
-        self.aim = vec2d(init_dir).normalized()
 
     def as_dict(self):
         d = super(Tank, self).as_dict()
@@ -98,6 +114,7 @@ class Tank(MovingEntity):
             "x": self.aim.x,
             "y": self.aim.y
         }
+        d["health"] = self.health
         return d
 
     def _calculate_angle_adjustment(self, time_passed, current, target, rate):
@@ -121,8 +138,13 @@ class Tank(MovingEntity):
         super(Tank, self).update_location()
         if hasattr(self, "target_rect") and self.target_rect.colliderect(self.rect):
             self.speed = 0.0
+        if self.health < 0:
+            self.kill()
 
     def on_collision(self, other):
+        if other:
+            self.health -= other.imparted_damage
+            print "%s was hit by %s, taking %d damage, left with %d health" % (self, other, other.imparted_damage, self.health)
         self.speed = 0.0
 
     def cmd_move(self, distance):
@@ -138,7 +160,7 @@ class Tank(MovingEntity):
 
     def cmd_shoot(self):
         position = self.position + (self.aim * self.size)
-        bullet = Bullet(position, self.aim)
+        bullet = Bullet(position, self.aim, self)
         return bullet
 
 if __name__ == "__main__":

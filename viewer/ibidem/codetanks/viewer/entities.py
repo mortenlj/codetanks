@@ -58,6 +58,7 @@ class Tank(MovingEntity):
 
     def update_from_dict(self, data_dict):
         self.aim = vec2d(data_dict["aim"]["x"], data_dict["aim"]["y"])
+        self.health = data_dict["health"]
         super(Tank, self).update_from_dict(data_dict)
 
     def update_visuals(self):
