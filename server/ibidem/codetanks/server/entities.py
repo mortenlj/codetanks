@@ -87,7 +87,8 @@ class Bullet(MovingEntity):
         self.parent = parent
 
     def on_collision(self, other):
-        self.kill()
+        if not isinstance(other, Bullet) and not other == self.parent:
+            self.kill()
 
     def __str__(self):
         return super(Bullet, self).__str__() + ", fired by %s" % self.parent
@@ -95,7 +96,7 @@ class Bullet(MovingEntity):
 
 class Tank(MovingEntity):
     health = 100
-    imparted_damage = 1
+    imparted_damage = 0
     speed = 0.1
     turn_rate = 0.1
     turret_rate = 0.2
@@ -109,6 +110,7 @@ class Tank(MovingEntity):
         self.target_direction = self.direction
         self.target_aim = self.aim
         self.target_rect = pygame.Rect(self.position.x - 1, self.position.y - 1, 2, 2)
+        self.bullets = pygame.sprite.Group()
 
     def as_dict(self):
         d = super(Tank, self).as_dict()
@@ -141,14 +143,16 @@ class Tank(MovingEntity):
         super(Tank, self).update_location()
         if hasattr(self, "target_rect") and self.target_rect.colliderect(self.rect):
             self.speed = 0.0
-        if self.health < 0:
+        if self.health <= 0:
             self.kill()
 
     def on_collision(self, other):
+        if other in self.bullets:
+            return
         if other:
             self.health -= other.imparted_damage
-            print "%s was hit by %s, taking %d damage, left with %d health" % (self, other, other.imparted_damage, self.health)
-        self.speed = 0.0
+        if not isinstance(other, Bullet):
+            self.speed = 0.0
 
     def cmd_move(self, distance):
         target_position = self.position + (self.direction * distance)
@@ -162,8 +166,9 @@ class Tank(MovingEntity):
         self.target_aim = direction
 
     def cmd_shoot(self):
-        position = self.position + (self.aim * self.size)
+        position = self.position + (self.aim * (self.size / 2))
         bullet = Bullet(position, self.aim, self)
+        self.bullets.add(bullet)
         return bullet
 
 if __name__ == "__main__":
