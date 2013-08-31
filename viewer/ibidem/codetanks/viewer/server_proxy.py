@@ -4,6 +4,7 @@ from Queue import Empty
 import pygame
 import zmq
 from ibidem.codetanks.viewer.entities import Tank, Bullet
+from ibidem.codetanks.viewer.events import Killed, Created
 
 
 class ServerProxy(object):
@@ -46,8 +47,10 @@ class ServerProxy(object):
                 entity = entity_class(update)
                 sprite_group.add(entity)
                 entities[entity.id] = entity
+                pygame.event.post(Created(entity))
         for entity in to_kill:
             entity.kill()
+            pygame.event.post(Killed(entity))
 
     def _update_game_data(self, game_data):
         self._update_entities(game_data["tanks"], self._tanks, self.tanks, Tank)

@@ -2,6 +2,8 @@
 # -*- coding: utf-8
 
 import pygame
+from ibidem.codetanks.viewer.entities import Tank
+from ibidem.codetanks.viewer.events import CREATED
 from ibidem.codetanks.viewer.server_proxy import ServerProxy
 from ibidem.codetanks.viewer.widgets import Arena, TankInfo
 
@@ -32,13 +34,16 @@ def main():
     screen.fill(BG_COLOR)
     arena.draw(screen, (0, 0))
     pygame.display.flip()
-    tank_infos = {}
+    tank_infos = []
 
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 return
+            elif event.type == CREATED:
+                if isinstance(event.entity, Tank):
+                    tank_infos.append(TankInfo(event.entity))
 
         # Update and redraw all entities
         tanks, bullets = server.update()
@@ -47,12 +52,7 @@ def main():
             group.draw(arena.game_field)
 
         y = 16
-        for tank in tanks:
-            if tank_infos.has_key(tank.id):
-                tank_info = tank_infos[tank.id]
-            else:
-                tank_info = TankInfo(tank)
-                tank_infos[tank.id] = tank_info
+        for tank_info in tank_infos:
             tank_info.draw(screen, (arena.get_width(), y))
             y += 80
 
