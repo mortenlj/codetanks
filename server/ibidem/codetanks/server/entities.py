@@ -12,6 +12,7 @@ def id_generator():
         i += 1
 
 id_series = id_generator()
+player_series = id_generator()
 
 class MovingEntity(pygame.sprite.Sprite):
     speed = 0.1
@@ -102,6 +103,7 @@ class Tank(MovingEntity):
 
     def __init__(self, init_pos, init_dir):
         super(Tank, self).__init__(init_pos, init_dir)
+        self.player_number = player_series.next()
         self.aim = vec2d(init_dir).normalized()
         self.speed = 0.0
         self.target_direction = self.direction
@@ -110,6 +112,7 @@ class Tank(MovingEntity):
 
     def as_dict(self):
         d = super(Tank, self).as_dict()
+        d["player_number"] = self.player_number
         d["aim"] = {
             "x": self.aim.x,
             "y": self.aim.y
