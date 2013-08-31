@@ -48,12 +48,18 @@ class Bullet(MovingEntity):
 
 class Tank(MovingEntity):
     body_image_name = pkg_resources.resource_filename("ibidem.codetanks.viewer.resources", "tank1_base_grey.png")
-    turret_image_name = pkg_resources.resource_filename("ibidem.codetanks.viewer.resources", "tank1_turret_grey.png")
+    turret_image_names = (
+        pkg_resources.resource_filename("ibidem.codetanks.viewer.resources", "red_turret.png"),
+        pkg_resources.resource_filename("ibidem.codetanks.viewer.resources", "blue_turret.png"),
+        pkg_resources.resource_filename("ibidem.codetanks.viewer.resources", "green_turret.png"),
+        pkg_resources.resource_filename("ibidem.codetanks.viewer.resources", "yellow_turret.png")
+    )
     speed = 0.1
 
     def __init__(self, init_dict):
+        self.player_number = init_dict["player_number"]
         self.base_body_image = pygame.image.load(self.body_image_name).convert_alpha()
-        self.base_turret_image = pygame.image.load(self.turret_image_name).convert_alpha()
+        self.base_turret_image = pygame.image.load(self.turret_image_names[self.player_number]).convert_alpha()
         super(Tank, self).__init__(init_dict)
 
     def update_from_dict(self, data_dict):
