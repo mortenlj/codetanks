@@ -36,5 +36,24 @@ class Arena(object):
     def get_height(self):
         return self.surface.get_height()
 
+
+class TankInfo(object):
+    foreground_color = (255, 255, 255)
+    background_color = (32, 32, 32)
+
+    def __init__(self, tank):
+        self.tank = tank
+        self.surface = pygame.Surface((256, 64))
+        self.font = pygame.font.Font(None, 16)
+        self.name = self.font.render(self.tank.id, True, self.foreground_color, self.background_color)
+
+    def draw(self, target, dest):
+        self.surface.fill(self.background_color)
+        self.surface.blit(self.tank.image, (8, 8))
+        health = self.font.render(unicode(self.tank.health), True, self.foreground_color, self.background_color)
+        self.surface.blit(self.name, (64, 8))
+        self.surface.blit(health, (64, 32))
+        target.blit(self.surface, dest)
+
 if __name__ == "__main__":
     pass
