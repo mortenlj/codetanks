@@ -3,7 +3,7 @@
 
 import pygame
 from ibidem.codetanks.viewer.server_proxy import ServerProxy
-from ibidem.codetanks.viewer.widgets import Arena
+from ibidem.codetanks.viewer.widgets import Arena, TankInfo
 
 BG_COLOR = 20, 20, 20
 
@@ -32,6 +32,7 @@ def main():
     screen.fill(BG_COLOR)
     arena.draw(screen, (0, 0))
     pygame.display.flip()
+    tank_infos = {}
 
     while True:
         for event in pygame.event.get():
@@ -40,10 +41,20 @@ def main():
                 return
 
         # Update and redraw all entities
-        entity_groups = server.update()
-        for group in entity_groups:
+        tanks, bullets = server.update()
+        for group in tanks, bullets:
             group.clear(arena.game_field, arena.background)
             group.draw(arena.game_field)
+
+        y = 16
+        for tank in tanks:
+            if tank_infos.has_key(tank.id):
+                tank_info = tank_infos[tank.id]
+            else:
+                tank_info = TankInfo(tank)
+                tank_infos[tank.id] = tank_info
+            tank_info.draw(screen, (arena.get_width(), y))
+            y += 80
 
         arena.draw(screen, (0, 0))
         pygame.display.flip()
