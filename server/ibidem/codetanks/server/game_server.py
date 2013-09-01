@@ -14,7 +14,7 @@ class GameServer(object):
         self.bullets = pygame.sprite.Group()
         self.bounds = pygame.Rect(0, 0, 500, 500)
         self.clock = None
-        for i in range(4):
+        for i in range(1):
             self._add_random_tank()
 
     def _create_random_position(self):
