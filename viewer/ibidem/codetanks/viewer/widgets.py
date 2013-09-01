@@ -40,6 +40,8 @@ class Arena(object):
 class TankInfo(object):
     foreground_color = (255, 255, 255)
     background_color = (32, 32, 32)
+    health_start = (255, 0, 0)
+    health_end = (0, 255, 0)
 
     def __init__(self, tank):
         self.tank = tank
@@ -49,11 +51,48 @@ class TankInfo(object):
 
     def draw(self, target, dest):
         self.surface.fill(self.background_color)
-        self.surface.blit(self.tank.image, (8, 8))
-        health = self.font.render(unicode(self.tank.health), True, self.foreground_color, self.background_color)
-        self.surface.blit(self.name, (64, 8))
-        self.surface.blit(health, (64, 32))
+        self._draw_health_bar()
+        self._draw_health_number()
+        self._draw_tank()
+        self._draw_name()
         target.blit(self.surface, dest)
+
+    def _draw_health_bar(self):
+        health_bar = self.surface.subsurface((64, 24, 64, 16))
+        end_x = int((health_bar.get_width() / 100.0) * self.tank.health)
+        self._draw_gradient(health_bar, end_x)
+
+    def _draw_health_number(self):
+        health = self.font.render(unicode(self.tank.health), True, self.foreground_color, self.background_color)
+        self.surface.blit(health, (136, 32))
+
+    def _draw_tank(self):
+        self.surface.blit(self.tank.image, (8, 8))
+
+    def _draw_name(self):
+        self.surface.blit(self.name, (136, 8))
+
+    def _draw_gradient(self, surface, end_x):
+        rect = surface.get_rect()
+        x1, x2 = rect.left, rect.right
+        y1, y2 = rect.top, rect.bottom
+        h = x2 - x1
+        a = self.health_start
+        b = self.health_end
+        rate = (
+            float(b[0] - a[0]) / h,
+            float(b[1] - a[1]) / h,
+            float(b[2] - a[2]) / h
+        )
+        fn_line = pygame.draw.line
+        for col in range(x1, end_x):
+            color = (
+                min(max(a[0] + (rate[0] * (col - x1)), 0), 255),
+                min(max(a[1] + (rate[1] * (col - x1)), 0), 255),
+                min(max(a[2] + (rate[2] * (col - x1)), 0), 255)
+            )
+            fn_line(surface, color, (col, y1), (col, y2))
+
 
 if __name__ == "__main__":
     pass
