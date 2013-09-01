@@ -24,9 +24,9 @@ def initialize_and_display_splash():
     pygame.display.flip()
 
 
-def main():
-    initialize_and_display_splash()
+def initialize_main():
     import sys
+
     server_url = sys.argv[1]
     server = ServerProxy(server_url)
     arena = Arena(server.arena.width, server.arena.height)
@@ -34,6 +34,29 @@ def main():
     screen.fill(BG_COLOR)
     arena.draw(screen, (0, 0))
     pygame.display.flip()
+    return arena, screen, server
+
+
+def draw_tank_info_widgets(arena, screen, tank_infos):
+    y = 16
+    for tank_info in tank_infos:
+        tank_info.draw(screen, (arena.get_width(), y))
+        y += 80
+
+
+def draw_arena(arena, screen):
+    arena.draw(screen, (0, 0))
+
+
+def draw_entities(arena, bullets, tanks):
+    for group in tanks, bullets:
+        group.clear(arena.game_field, arena.background)
+        group.draw(arena.game_field)
+
+
+def main():
+    initialize_and_display_splash()
+    arena, screen, server = initialize_main()
     tank_infos = []
 
     while True:
@@ -45,18 +68,12 @@ def main():
                 if isinstance(event.entity, Tank):
                     tank_infos.append(TankInfo(event.entity))
 
-        # Update and redraw all entities
         tanks, bullets = server.update()
-        for group in tanks, bullets:
-            group.clear(arena.game_field, arena.background)
-            group.draw(arena.game_field)
 
-        y = 16
-        for tank_info in tank_infos:
-            tank_info.draw(screen, (arena.get_width(), y))
-            y += 80
+        draw_entities(arena, bullets, tanks)
+        draw_tank_info_widgets(arena, screen, tank_infos)
+        draw_arena(arena, screen)
 
-        arena.draw(screen, (0, 0))
         pygame.display.flip()
 
 
