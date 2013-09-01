@@ -25,7 +25,7 @@ class MovingEntity(pygame.sprite.Sprite):
         self.set_direction(init_dir)
         self.base_rect = pygame.Rect(0, 0, self.size, self.size)
         self.rect = self.base_rect.copy()
-        self.update_location()
+        self.update_location(0)
 
     def set_direction(self, init_dir):
         self.direction = vec2d(init_dir).normalized()
@@ -49,12 +49,7 @@ class MovingEntity(pygame.sprite.Sprite):
 
     def update(self, time_passed):
         self.update_vector(time_passed)
-        displacement = vec2d(
-            self.direction.x * self.speed * time_passed,
-            self.direction.y * self.speed * time_passed
-        )
-        self.position += displacement
-        self.update_location()
+        self.update_location(time_passed)
 
     def clamp(self, bounds):
         self.rect.clamp_ip(bounds)
@@ -63,7 +58,12 @@ class MovingEntity(pygame.sprite.Sprite):
     def update_vector(self, time_passed):
         pass
 
-    def update_location(self):
+    def update_location(self, time_passed):
+        displacement = vec2d(
+            self.direction.x * self.speed * time_passed,
+            self.direction.y * self.speed * time_passed
+        )
+        self.position += displacement
         self.rect = self.base_rect.move(
             self.position.x - self.size / 2,
             self.position.y - self.size / 2
@@ -133,18 +133,18 @@ class Tank(MovingEntity):
                 adjustment = -adjustment
         return adjustment
 
+    def update(self, time_passed):
+        super(Tank, self).update(time_passed)
+        if hasattr(self, "target_rect") and self.target_rect.colliderect(self.rect):
+            self.speed = 0.0
+        if self.health <= 0:
+            self.kill()
+
     def update_vector(self, time_passed):
         adjustment = self._calculate_angle_adjustment(time_passed, self.direction, self.target_direction, Tank.turn_rate)
         self.direction.rotate(adjustment)
         adjustment = self._calculate_angle_adjustment(time_passed, self.aim, self.target_aim, Tank.turret_rate)
         self.aim.rotate(adjustment)
-
-    def update_location(self):
-        super(Tank, self).update_location()
-        if hasattr(self, "target_rect") and self.target_rect.colliderect(self.rect):
-            self.speed = 0.0
-        if self.health <= 0:
-            self.kill()
 
     def on_collision(self, other):
         if other in self.bullets:
