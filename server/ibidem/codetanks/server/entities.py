@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
+from Queue import Queue, Empty
 
 import pygame
+from ibidem.codetanks.server.commands import Move, Command, Turn, Aim
 
 from ibidem.codetanks.server.vec2d import vec2d
 
@@ -59,11 +61,6 @@ class MovingEntity(pygame.sprite.Sprite):
         pass
 
     def update_location(self, time_passed):
-        displacement = vec2d(
-            self.direction.x * self.speed * time_passed,
-            self.direction.y * self.speed * time_passed
-        )
-        self.position += displacement
         self.rect = self.base_rect.move(
             self.position.x - self.size / 2,
             self.position.y - self.size / 2
@@ -85,6 +82,14 @@ class Bullet(MovingEntity):
     def __init__(self, init_pos, init_dir, parent):
         super(Bullet, self).__init__(init_pos, init_dir)
         self.parent = parent
+
+    def update_location(self, time_passed):
+        displacement = vec2d(
+            self.direction.x * self.speed * time_passed,
+            self.direction.y * self.speed * time_passed
+        )
+        self.position += displacement
+        super(Bullet, self).update_location(time_passed)
 
     def on_collision(self, other):
         if not isinstance(other, Bullet) and not other == self.parent:
@@ -111,6 +116,8 @@ class Tank(MovingEntity):
         self.target_aim = self.aim
         self.target_rect = pygame.Rect(self.position.x - 1, self.position.y - 1, 2, 2)
         self.bullets = pygame.sprite.Group()
+        self.cmd_queue = Queue()
+        self.cmd = Command(self)
 
     def as_dict(self):
         d = super(Tank, self).as_dict()
@@ -134,15 +141,17 @@ class Tank(MovingEntity):
         return adjustment
 
     def update(self, time_passed):
+        self.cmd.update(time_passed)
         super(Tank, self).update(time_passed)
-        if hasattr(self, "target_rect") and self.target_rect.colliderect(self.rect):
-            self.speed = 0.0
+        if self.cmd.finished():
+            try:
+                self.cmd = self.cmd_queue.get_nowait()
+            except Empty:
+                self.cmd = Command(self)
         if self.health <= 0:
             self.kill()
 
     def update_vector(self, time_passed):
-        adjustment = self._calculate_angle_adjustment(time_passed, self.direction, self.target_direction, Tank.turn_rate)
-        self.direction.rotate(adjustment)
         adjustment = self._calculate_angle_adjustment(time_passed, self.aim, self.target_aim, Tank.turret_rate)
         self.aim.rotate(adjustment)
 
@@ -152,18 +161,16 @@ class Tank(MovingEntity):
         if other:
             self.health -= other.imparted_damage
         if not isinstance(other, Bullet):
-            self.speed = 0.0
+            self.cmd.abort()
 
     def cmd_move(self, distance):
-        target_position = self.position + (self.direction * distance)
-        self.target_rect = pygame.Rect(target_position.x - 1, target_position.y - 1, 2, 2)
-        self.speed = Tank.speed
+        self.cmd_queue.put(Move(self, distance))
 
     def cmd_turn(self, direction):
-        self.target_direction = direction
+        self.cmd_queue.put(Turn(self, direction))
 
     def cmd_aim(self, direction):
-        self.target_aim = direction
+        self.cmd_queue.put(Aim(self, direction))
 
     def cmd_shoot(self):
         position = self.position + (self.aim * (self.size / 2))
