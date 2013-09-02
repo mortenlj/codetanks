@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 import argparse
+from random import randint
 
 import zmq
+from ibidem.codetanks.server import events
 from ibidem.codetanks.server.game_server import GameServer
 
 # Socket names
@@ -19,7 +21,6 @@ class App(object):
         self.poller = zmq.Poller()
         self.poller.register(self._sockets[REGISTRATION])
         self.game_server = GameServer()
-        self.viewers = 0
 
     def _init_socket(self, socket_type, name, port=None, zmq_context=None):
         if not zmq_context:
@@ -35,6 +36,15 @@ class App(object):
 
     def run(self):
         while True:
+            # TODO: Replace with proper creation based on registration
+            if not self.game_server.started() and randint(0, 5000) == 0:
+                print "Creating a new tank"
+                self.game_server._add_random_tank()
+
+            for event in events.get():
+                if event == events.START_GAME:
+                    self.game_server.start()
+
             socks = dict(self.poller.poll(1))
             reg_socket = self._sockets[REGISTRATION]
             if reg_socket in socks and socks[reg_socket] == zmq.POLLIN:
@@ -42,8 +52,8 @@ class App(object):
                 print "Received registration: %r" % registration
                 reg_socket.send_json({"update_url": self._socket_urls[UPDATE],
                                       "game_info": self.game_server.build_game_info()})
-                self.viewers += 1
-            if self.viewers:
+
+            if self.game_server.started():
                 self.game_server.update()
                 game_data = self.game_server.build_game_data()
                 self._sockets[UPDATE].send_json(game_data)

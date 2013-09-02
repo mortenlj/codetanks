@@ -3,6 +3,7 @@
 from random import randint
 import pygame
 from pygame.sprite import Sprite
+from ibidem.codetanks.server import events
 from ibidem.codetanks.server.entities import Tank
 
 
@@ -14,8 +15,6 @@ class GameServer(object):
         self.bullets = pygame.sprite.Group()
         self.bounds = pygame.Rect(0, 0, 500, 500)
         self.clock = None
-        for i in range(1):
-            self._add_random_tank()
 
     def _create_random_position(self):
         position = (randint(32, self.bounds.width - 32), randint(32, self.bounds.height - 32))
@@ -33,6 +32,8 @@ class GameServer(object):
         tank = Tank(position, direction)
         self.tanks.add(tank)
         self.entities.add(tank)
+        if len(self.tanks) >= 4:
+            events.put(events.START_GAME)
 
     def _apply_dummy_actions(self):
         for t in self.tanks:
@@ -48,13 +49,18 @@ class GameServer(object):
                 self.bullets.add(bullet)
                 self.entities.add(bullet)
 
+    def start(self):
+        self.clock = pygame.time.Clock()
+
+    def started(self):
+        return self.clock is not None
+
     def update(self):
-        if self.clock is None:
-            self.clock = pygame.time.Clock()
-        time_passed = self.clock.tick(50)
-        self._apply_dummy_actions()
-        self.entities.update(time_passed)
-        self._check_collisions()
+        if self.clock:
+            time_passed = self.clock.tick(50)
+            self._apply_dummy_actions()
+            self.entities.update(time_passed)
+            self._check_collisions()
 
     def _check_collisions(self):
         tmp = list(self.entities)
