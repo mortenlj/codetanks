@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
+
+__all__ = ["Tank", "Bullet"]
+
 from Queue import Queue, Empty
 
 import pygame
 from ibidem.codetanks.server.commands import Move, Command, Turn, Aim
 
 from ibidem.codetanks.server.vec2d import vec2d
+
 
 def id_generator():
     i = 0
@@ -15,6 +19,41 @@ def id_generator():
 
 id_series = id_generator()
 player_series = id_generator()
+
+
+class EntityEncoder(object):
+    def to_serializable(self, o):
+        name = "_encode_" + o.__class__.__name__.lower()
+        m = getattr(self, name, self._identity)
+        return m(o)
+
+    def _identity(self, o):
+        return o
+
+    def _encode_tank(self, tank):
+        d = self._encode_common_moving(tank)
+        d["player_number"] = tank.player_number
+        d["aim"] = self.to_serializable(tank.aim)
+        d["health"] = tank.health
+        return d
+
+    def _encode_bullet(self, bullet):
+        return self._encode_common_moving(bullet)
+
+    def _encode_common_moving(self, moving):
+        return {
+            "id": moving.id,
+            "position": self.to_serializable(moving.position),
+            "direction": self.to_serializable(moving.direction),
+            "speed": moving.speed
+        }
+
+    def _encode_vec2d(self, vector):
+        return {
+            "x": vector.x,
+            "y": vector.y
+        }
+
 
 class MovingEntity(pygame.sprite.Sprite):
     speed = 0.1
@@ -83,6 +122,9 @@ class Bullet(MovingEntity):
         super(Bullet, self).__init__(init_pos, init_dir)
         self.parent = parent
 
+    def as_dict(self):
+        return EntityEncoder().to_serializable(self)
+
     def update_location(self, time_passed):
         displacement = vec2d(
             self.direction.x * self.speed * time_passed,
@@ -120,14 +162,7 @@ class Tank(MovingEntity):
         self.cmd = Command(self)
 
     def as_dict(self):
-        d = super(Tank, self).as_dict()
-        d["player_number"] = self.player_number
-        d["aim"] = {
-            "x": self.aim.x,
-            "y": self.aim.y
-        }
-        d["health"] = self.health
-        return d
+        return EntityEncoder().to_serializable(self)
 
     def _calculate_angle_adjustment(self, time_passed, current, target, rate):
         adjustment = 0
