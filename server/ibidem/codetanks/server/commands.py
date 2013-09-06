@@ -48,6 +48,8 @@ class Move(Command):
 
 
 class AngleAdjuster(Command):
+    rate = 0.0
+
     def __init__(self, tank, direction):
         super(AngleAdjuster, self).__init__(tank)
         self.direction = vec2d(direction).normalized()
@@ -65,6 +67,9 @@ class AngleAdjuster(Command):
     def _finished_internal(self):
         angle = self.get_vector().get_angle_between(self.direction)
         return abs(angle) < 0.000001
+
+    def get_vector(self):
+        raise NotImplementedError()
 
 
 class Turn(AngleAdjuster):
