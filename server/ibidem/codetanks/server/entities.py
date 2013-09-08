@@ -182,7 +182,8 @@ class Tank(MovingEntity):
             try:
                 self.cmd = self.cmd_queue.get_nowait()
             except Empty:
-                self.cmd = Command(self)
+                if not isinstance(self.cmd, Command):
+                    self.cmd = Command(self)
         if self.health <= 0:
             self.kill()
 
@@ -197,6 +198,12 @@ class Tank(MovingEntity):
             self.health -= other.imparted_damage
         if not isinstance(other, Bullet):
             self.cmd.abort()
+
+    def is_moving(self):
+        return self.speed > 0.0
+
+    def backup(self, rects):
+        pass # TODO: Handle collision
 
     def cmd_move(self, distance):
         self.cmd_queue.put(Move(self, distance))
