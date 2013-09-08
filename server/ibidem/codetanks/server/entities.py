@@ -62,17 +62,23 @@ class MovingEntity(pygame.sprite.Sprite):
     def __init__(self, init_pos, init_dir):
         super(MovingEntity, self).__init__()
         self.id = "%s-%s" % (self.__class__.__name__, id_series.next())
-        self.set_position(init_pos)
         self.set_direction(init_dir)
-        self.base_rect = pygame.Rect(0, 0, self.size, self.size)
-        self.rect = self.base_rect.copy()
+        self.rect = pygame.Rect(0, 0, self.size, self.size)
+        self.position = init_pos
         self.update_location(0)
 
     def set_direction(self, init_dir):
         self.direction = vec2d(init_dir).normalized()
 
-    def set_position(self, init_pos):
-        self.position = vec2d(init_pos)
+    @property
+    def position(self):
+        return vec2d(self.rect.center)
+
+    @position.setter
+    def position(self, vec_or_pair):
+        if isinstance(vec_or_pair, vec2d):
+            vec_or_pair = (vec_or_pair.x, vec_or_pair.y)
+        self.rect.center = vec_or_pair
 
     def as_dict(self):
         return {
@@ -94,16 +100,12 @@ class MovingEntity(pygame.sprite.Sprite):
 
     def clamp(self, bounds):
         self.rect.clamp_ip(bounds)
-        self.position = vec2d(self.rect.center)
 
     def update_vector(self, time_passed):
         pass
 
     def update_location(self, time_passed):
-        self.rect = self.base_rect.move(
-            self.position.x - self.size / 2,
-            self.position.y - self.size / 2
-        )
+        pass
 
     def on_collision(self, other):
         raise NotImplementedError()
@@ -154,26 +156,12 @@ class Tank(MovingEntity):
         self.player_number = player_series.next()
         self.aim = vec2d(init_dir).normalized()
         self.speed = 0.0
-        self.target_direction = self.direction
-        self.target_aim = self.aim
-        self.target_rect = pygame.Rect(self.position.x - 1, self.position.y - 1, 2, 2)
         self.bullets = pygame.sprite.Group()
         self.cmd_queue = Queue()
         self.cmd = Command(self)
 
     def as_dict(self):
         return EntityEncoder().to_serializable(self)
-
-    def _calculate_angle_adjustment(self, time_passed, current, target, rate):
-        adjustment = 0
-        angle = current.get_angle_between(target)
-        if angle:
-            adjustment = rate * time_passed
-            if abs(angle) < adjustment:
-                adjustment = angle
-            elif angle < 0:
-                adjustment = -adjustment
-        return adjustment
 
     def update(self, time_passed):
         self.cmd.update(time_passed)
@@ -186,10 +174,6 @@ class Tank(MovingEntity):
         if self.health <= 0:
             self.kill()
 
-    def update_vector(self, time_passed):
-        adjustment = self._calculate_angle_adjustment(time_passed, self.aim, self.target_aim, Tank.turret_rate)
-        self.aim.rotate(adjustment)
-
     def on_collision(self, other):
         if other in self.bullets:
             return
@@ -197,6 +181,12 @@ class Tank(MovingEntity):
             self.health -= other.imparted_damage
         if not isinstance(other, Bullet):
             self.cmd.abort()
+
+    def is_moving(self):
+        return self.speed > 0.0
+
+    def backup(self, rects):
+        pass # TODO: Handle collision
 
     def cmd_move(self, distance):
         self.cmd_queue.put(Move(self, distance))
