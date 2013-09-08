@@ -170,7 +170,8 @@ class Tank(MovingEntity):
             try:
                 self.cmd = self.cmd_queue.get_nowait()
             except Empty:
-                self.cmd = Command(self)
+                if not isinstance(self.cmd, Command):
+                    self.cmd = Command(self)
         if self.health <= 0:
             self.kill()
 
