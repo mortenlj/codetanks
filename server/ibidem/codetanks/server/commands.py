@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
+from ibidem.codetanks.server.collider import Collider
 
 from ibidem.codetanks.server.vec2d import vec2d
 
@@ -32,16 +33,22 @@ class Command(object):
 class Move(Command):
     speed = 0.1
 
-    def __init__(self, tank, distance):
+    def __init__(self, tank, distance, tanks, walls):
         super(Move, self).__init__(tank)
         self.target_position = tank.position + (tank.direction * distance)
+        self.tanks = tanks
+        self.walls = walls
 
     def _update_internal(self, time_passed):
         displacement = vec2d(
             self.tank.direction.x * self.speed * time_passed,
             self.tank.direction.y * self.speed * time_passed
         )
-        self.tank.position += displacement
+        collider = Collider(self.tank, self.tanks, self.walls, displacement)
+        moved_rect, other_rect = collider.collide()
+        if other_rect:
+            self.abort()
+        self.tank.rect = moved_rect
 
     def _finished_internal(self):
         return self.tank.rect.collidepoint(self.target_position)

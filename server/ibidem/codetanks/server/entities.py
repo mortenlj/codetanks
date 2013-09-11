@@ -133,7 +133,6 @@ class Bullet(MovingEntity):
             self.direction.y * self.speed * time_passed
         )
         self.position += displacement
-        super(Bullet, self).update_location(time_passed)
 
     def on_collision(self, other):
         if not isinstance(other, Bullet) and not other == self.parent:
@@ -183,14 +182,8 @@ class Tank(MovingEntity):
         if not isinstance(other, Bullet):
             self.cmd.abort()
 
-    def is_moving(self):
-        return self.speed > 0.0
-
-    def backup(self, rects):
-        pass # TODO: Handle collision
-
-    def cmd_move(self, distance):
-        self.cmd_queue.put(Move(self, distance))
+    def cmd_move(self, distance, tanks, walls):
+        self.cmd_queue.put(Move(self, distance, tanks, walls))
 
     def cmd_turn(self, direction):
         self.cmd_queue.put(Turn(self, direction))

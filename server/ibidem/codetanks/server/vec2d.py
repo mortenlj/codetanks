@@ -10,11 +10,11 @@ class vec2d(object):
  
     def __init__(self, x_or_pair, y = None):
         if y == None:
-            self.x = x_or_pair[0]
-            self.y = x_or_pair[1]
+            self.x = float(x_or_pair[0])
+            self.y = float(x_or_pair[1])
         else:
-            self.x = x_or_pair
-            self.y = y
+            self.x = float(x_or_pair)
+            self.y = float(y)
  
     def __len__(self):
         return 2
