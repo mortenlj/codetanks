@@ -37,7 +37,7 @@ class App(object):
     def run(self):
         while True:
             # TODO: Replace with proper creation based on registration
-            if not self.game_server.started() and randint(0, 5000) == 0:
+            if not self.game_server.started() and randint(0, 500) == 0:
                 print "Creating a new tank"
                 self.game_server._add_random_tank()
 

@@ -14,7 +14,18 @@ class GameServer(object):
         self.tanks = pygame.sprite.Group()
         self.bullets = pygame.sprite.Group()
         self.bounds = pygame.Rect(0, 0, 500, 500)
+        self.walls = self._init_walls()
         self.clock = None
+
+    def _init_walls(self):
+        walls = []
+        walls.append(pygame.Rect(self.bounds.left, 0, -32, self.bounds.height))
+        walls.append(pygame.Rect(self.bounds.right, 0, 32, self.bounds.height))
+        walls.append(pygame.Rect(0, self.bounds.top, self.bounds.width, -32))
+        walls.append(pygame.Rect(0, self.bounds.bottom, self.bounds.width, 32))
+        for wall in walls:
+            wall.normalize()
+        return walls
 
     def _create_random_position(self):
         position = (randint(32, self.bounds.width - 32), randint(32, self.bounds.height - 32))
@@ -39,7 +50,7 @@ class GameServer(object):
         for t in self.tanks:
             rnd = randint(0, 120)
             if rnd == 0:
-                t.cmd_move(100)
+                t.cmd_move(100, self.tanks, self.walls)
             if rnd == 1:
                 t.cmd_turn(self._create_random_direction())
             if rnd == 2:
