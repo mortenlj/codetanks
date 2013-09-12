@@ -1,15 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
+
 from random import randint
 import pygame
 from pygame.sprite import Sprite
+import pymunk
 from ibidem.codetanks.server import events
-from ibidem.codetanks.server.entities import Tank
+from ibidem.codetanks.server.bodies import Tank
 
 
 class GameServer(object):
     def __init__(self):
         pygame.init()
+        self.space = pymunk.Space()
         self.entities = pygame.sprite.Group()
         self.tanks = pygame.sprite.Group()
         self.bullets = pygame.sprite.Group()
@@ -19,12 +22,11 @@ class GameServer(object):
 
     def _init_walls(self):
         walls = []
-        walls.append(pygame.Rect(self.bounds.left, 0, -32, self.bounds.height))
-        walls.append(pygame.Rect(self.bounds.right, 0, 32, self.bounds.height))
-        walls.append(pygame.Rect(0, self.bounds.top, self.bounds.width, -32))
-        walls.append(pygame.Rect(0, self.bounds.bottom, self.bounds.width, 32))
-        for wall in walls:
-            wall.normalize()
+        walls.append(pymunk.Segment(None, self.bounds.topleft, self.bounds.topright, 1))
+        walls.append(pymunk.Segment(None, self.bounds.topright, self.bounds.bottomright, 1))
+        walls.append(pymunk.Segment(None, self.bounds.bottomright, self.bounds.bottomleft, 1))
+        walls.append(pymunk.Segment(None, self.bounds.bottomleft, self.bounds.topleft, 1))
+        #self.space.add(*walls)
         return walls
 
     def _create_random_position(self):
@@ -35,7 +37,7 @@ class GameServer(object):
         direction = (randint(-5, 5), randint(-5, 5))
         while direction == (0, 0):
             direction = (randint(-5, 5), randint(-5, 5))
-        return direction
+        return pymunk.Vec2d(direction)
 
     def _add_random_tank(self):
         position = self._create_random_position()
@@ -43,6 +45,7 @@ class GameServer(object):
         tank = Tank(position, direction)
         self.tanks.add(tank)
         self.entities.add(tank)
+        self.space.add(tank.body, tank.shape)
         if len(self.tanks) >= 4:
             events.put(events.START_GAME)
 
@@ -69,9 +72,10 @@ class GameServer(object):
     def update(self):
         if self.clock:
             time_passed = self.clock.tick(50)
+            #self.space.step(1)
             self._apply_dummy_actions()
             self.entities.update(time_passed)
-            self._check_collisions()
+            #self._check_collisions()
 
     def _check_collisions(self):
         tmp = list(self.entities)

@@ -45,7 +45,6 @@ class EntityEncoder(object):
             "id": moving.id,
             "position": self.to_serializable(moving.position),
             "direction": self.to_serializable(moving.direction),
-            "speed": moving.speed
         }
 
     def _encode_vec2d(self, vector):
@@ -81,18 +80,7 @@ class MovingEntity(pygame.sprite.Sprite):
         self.rect.center = vec_or_pair
 
     def as_dict(self):
-        return {
-            "id": self.id,
-            "position": {
-                "x": self.position.x,
-                "y": self.position.y
-            },
-            "direction": {
-                "x": self.direction.x,
-                "y": self.direction.y
-            },
-            "speed": self.speed,
-        }
+        pass
 
     def update(self, time_passed):
         self.update_vector(time_passed)

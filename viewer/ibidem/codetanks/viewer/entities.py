@@ -11,8 +11,6 @@ from ibidem.codetanks.viewer.vec2d import vec2d
 class MovingEntity(pygame.sprite.Sprite):
     """A moving entity.
     """
-    speed = 0.1
-
     def __init__(self, init_dict):
         super(MovingEntity, self).__init__()
         self.id = init_dict["id"]
@@ -21,7 +19,6 @@ class MovingEntity(pygame.sprite.Sprite):
     def update_from_dict(self, data_dict):
         self.position = vec2d(data_dict["position"]["x"], data_dict["position"]["y"])
         self.direction = vec2d(data_dict["direction"]["x"], data_dict["direction"]["y"])
-        self.speed = data_dict["speed"]
         self.update_visuals()
 
     def update_visuals(self):
@@ -31,7 +28,6 @@ class MovingEntity(pygame.sprite.Sprite):
 class Bullet(MovingEntity):
     """A bullet that moves forward until it hits something"""
     image_name = pkg_resources.resource_filename("ibidem.codetanks.viewer.resources", 'bullet_grey.png')
-    speed = 0.2
 
     def __init__(self, init_dict):
         self.base_image = pygame.image.load(self.image_name).convert_alpha()
@@ -54,7 +50,6 @@ class Tank(MovingEntity):
         pkg_resources.resource_filename("ibidem.codetanks.viewer.resources", "green_turret.png"),
         pkg_resources.resource_filename("ibidem.codetanks.viewer.resources", "yellow_turret.png")
     )
-    speed = 0.1
 
     def __init__(self, init_dict):
         self.player_number = init_dict["player_number"]
