@@ -22,7 +22,7 @@ player_series = id_generator()
 class Tank(pygame.sprite.Sprite):
     health = 100
     mass = 10
-    size = 48
+    size = 16
     moment = pymunk.moment_for_circle(mass, 0, size)
 
     def __init__(self, position, direction):
