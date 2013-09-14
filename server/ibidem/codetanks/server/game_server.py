@@ -5,13 +5,18 @@ from random import randint
 import pygame
 from pygame.sprite import Sprite
 import pymunk
+import pymunk.pygame_util
 from ibidem.codetanks.server import events
 from ibidem.codetanks.server.bodies import Tank
 
 
 class GameServer(object):
-    def __init__(self):
+    def __init__(self, debug):
         pygame.init()
+        if debug:
+            self.screen = pygame.display.set_mode((500, 500))
+        else:
+            self.screen = None
         self.space = pymunk.Space()
         self.entities = pygame.sprite.Group()
         self.tanks = pygame.sprite.Group()
@@ -76,6 +81,9 @@ class GameServer(object):
             self._apply_dummy_actions()
             self.entities.update(time_passed)
             #self._check_collisions()
+            if self.screen:
+                pymunk.pygame_util.draw(self.screen, self.space)
+                pygame.display.flip()
 
     def _check_collisions(self):
         tmp = list(self.entities)

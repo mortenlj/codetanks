@@ -13,14 +13,14 @@ UPDATE = "update"
 
 
 class App(object):
-    def __init__(self, registration_port):
+    def __init__(self, registration_port, debug):
         self._sockets = {}
         self._socket_urls = {}
         self._init_socket(zmq.REP, REGISTRATION, registration_port)
         self._init_socket(zmq.PUB, UPDATE)
         self.poller = zmq.Poller()
         self.poller.register(self._sockets[REGISTRATION])
-        self.game_server = GameServer()
+        self.game_server = GameServer(debug)
 
     def _init_socket(self, socket_type, name, port=None, zmq_context=None):
         if not zmq_context:
@@ -62,8 +62,9 @@ class App(object):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--port", type=int)
+    parser.add_argument("-d", "--debugview", action="store_true")
     args = parser.parse_args()
-    app = App(args.port)
+    app = App(args.port, args.debugview)
     app.run()
 
 if __name__ == "__main__":
