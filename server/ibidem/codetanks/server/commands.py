@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
-
-from ibidem.codetanks.server.vec2d import vec2d
+import math
+from pymunk import Vec2d
 
 
 class Command(object):
@@ -28,6 +28,9 @@ class Command(object):
     def abort(self):
         self._abort = True
 
+    def __repr__(self):
+        return repr(self.__class__.__name__)
+
 
 class Move(Command):
     speed = 0.1
@@ -52,23 +55,26 @@ class Move(Command):
     # def _finished_internal(self):
     #     return self.tank.rect.collidepoint(self.target_position)
 
+    def __repr__(self):
+        return "%r(target=%r, current=%r)" % (self.__class__.__name__, self.target_position, self.tank.position)
+
 
 class AngleAdjuster(Command):
     rate = 0.0
 
     def __init__(self, tank, direction):
         super(AngleAdjuster, self).__init__(tank)
-        self.direction = vec2d(direction).normalized()
+        self.direction = Vec2d(direction)
 
     def _update_internal(self, time_passed):
         angle = self.get_vector().get_angle_between(self.direction)
         if angle:
-            adjustment = self.rate * time_passed
+            adjustment = math.radians(self.rate) * time_passed
             if abs(angle) < adjustment:
                 adjustment = angle
             elif angle < 0:
                 adjustment = -adjustment
-            self.get_vector().rotate(adjustment)
+            self.set_vector(adjustment)
 
     def _finished_internal(self):
         angle = self.get_vector().get_angle_between(self.direction)
@@ -77,6 +83,12 @@ class AngleAdjuster(Command):
     def get_vector(self):
         raise NotImplementedError()
 
+    def set_vector(self, adjustment):
+        raise NotImplementedError()
+
+    def __repr__(self):
+        return "%r(target=%r, current=%r)" % (self.__class__.__name__, self.direction, self.tank.direction)
+
 
 class Turn(AngleAdjuster):
     rate = 0.1
@@ -84,12 +96,22 @@ class Turn(AngleAdjuster):
     def get_vector(self):
         return self.tank.direction
 
+    def set_vector(self, adjustment):
+        v = self.tank.direction
+        v.rotate(adjustment)
+        self.tank.direction = v
+
 
 class Aim(AngleAdjuster):
     rate = 0.3
 
     def get_vector(self):
         return self.tank.aim
+
+    def set_vector(self, adjustment):
+        v = self.tank.aim
+        v.rotate(adjustment)
+        self.tank.aim = v
 
 
 if __name__ == "__main__":

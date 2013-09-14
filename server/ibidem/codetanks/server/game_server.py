@@ -77,7 +77,7 @@ class GameServer(object):
     def update(self):
         if self.clock:
             time_passed = self.clock.tick(50)
-            #self.space.step(1)
+            self.space.step(time_passed)
             self._apply_dummy_actions()
             self.entities.update(time_passed)
             #self._check_collisions()
