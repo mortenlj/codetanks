@@ -3,6 +3,7 @@
 
 from random import randint
 import pygame
+from pygame.color import THECOLORS
 from pygame.sprite import Sprite
 import pymunk
 import pymunk.pygame_util
@@ -58,7 +59,7 @@ class GameServer(object):
         for t in self.tanks:
             rnd = randint(0, 120)
             if rnd == 0:
-                t.cmd_move(100, self.tanks, self.walls)
+                t.cmd_move(self.space, 100)
             if rnd == 1:
                 t.cmd_turn(self._create_random_direction())
             if rnd == 2:
@@ -77,28 +78,14 @@ class GameServer(object):
     def update(self):
         if self.clock:
             time_passed = self.clock.tick(50)
-            self.space.step(time_passed)
+            dt = 1.0 / 50.0
+            self.space.step(dt)
             self._apply_dummy_actions()
             self.entities.update(time_passed)
-            #self._check_collisions()
             if self.screen:
+                self.screen.fill(THECOLORS["black"])
                 pymunk.pygame_util.draw(self.screen, self.space)
                 pygame.display.flip()
-
-    def _check_collisions(self):
-        tmp = list(self.entities)
-        tmp_rects = [x.rect for x in tmp]
-        while tmp:
-            entity = tmp.pop()
-            entity_rect = tmp_rects.pop()
-            idx = entity_rect.collidelistall(tmp_rects)
-            for i in idx:
-                other = tmp[i]
-                entity.on_collision(other)
-                other.on_collision(entity)
-            if not self.bounds.contains(entity_rect):
-                entity.on_collision(None)
-                entity.clamp(self.bounds)
 
     def build_game_data(self):
         game_data = {}

@@ -49,8 +49,8 @@ class Tank(pygame.sprite.Sprite):
                 if not isinstance(self.cmd, Command):
                     self.cmd = Command(self)
 
-    def cmd_move(self, distance, tanks, walls):
-        self.cmd_queue.put(Move(self, distance, tanks, walls))
+    def cmd_move(self, space, distance):
+        self.cmd_queue.put(Move(space, self, distance))
 
     def cmd_turn(self, direction):
         self.cmd_queue.put(Turn(self, direction))
@@ -94,6 +94,10 @@ class Tank(pygame.sprite.Sprite):
     @property
     def position(self):
         return self.body.position
+
+    @property
+    def collision_type(self):
+        return self.shape.group
 
     def __str__(self):
         return self.id
