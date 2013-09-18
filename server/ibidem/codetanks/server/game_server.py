@@ -27,12 +27,13 @@ class GameServer(object):
         self.clock = None
 
     def _init_walls(self):
+        wallbody = pymunk.Body()
         walls = []
-        walls.append(pymunk.Segment(None, self.bounds.topleft, self.bounds.topright, 1))
-        walls.append(pymunk.Segment(None, self.bounds.topright, self.bounds.bottomright, 1))
-        walls.append(pymunk.Segment(None, self.bounds.bottomright, self.bounds.bottomleft, 1))
-        walls.append(pymunk.Segment(None, self.bounds.bottomleft, self.bounds.topleft, 1))
-        #self.space.add(*walls)
+        walls.append(pymunk.Segment(wallbody, self.bounds.topleft, self.bounds.topright, 1))
+        walls.append(pymunk.Segment(wallbody, self.bounds.topright, self.bounds.bottomright, 1))
+        walls.append(pymunk.Segment(wallbody, self.bounds.bottomright, self.bounds.bottomleft, 1))
+        walls.append(pymunk.Segment(wallbody, self.bounds.bottomleft, self.bounds.topleft, 1))
+        self.space.add(*walls)
         return walls
 
     def _create_random_position(self):
