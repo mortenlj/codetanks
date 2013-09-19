@@ -32,6 +32,7 @@ class Tank(pygame.sprite.Sprite):
         self.body.position = position
         self.shape = pymunk.Circle(self.body, self.size)
         self.shape.group = player_series.next()
+        self.shape.tank = self
         self.direction = direction
         self.aim = self.direction
         self.cmd_queue = Queue()
@@ -63,6 +64,10 @@ class Tank(pygame.sprite.Sprite):
         bullet = Bullet(self.position, self.aim, self)
         return bullet
 
+    def stop(self):
+        self.body.reset_forces()
+        self.body.velocity = (0, 0)
+
     @property
     def player_number(self):
         return self.shape.group
@@ -79,17 +84,6 @@ class Tank(pygame.sprite.Sprite):
             self.body.angle = angle
         else:
             self.body.angle = angle.angle
-
-    @property
-    def speed(self):
-        return self.body.velocity.length
-
-    @speed.setter
-    def speed(self, speed):
-        v = pymunk.Vec2d.ones()
-        v.length = speed
-        v.angle = self.direction.angle
-        self.body.velocity = v
 
     @property
     def position(self):
