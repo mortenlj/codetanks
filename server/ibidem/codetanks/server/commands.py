@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
-from ibidem.codetanks.server.collider import Collider
 
 from ibidem.codetanks.server.vec2d import vec2d
 
@@ -44,11 +43,7 @@ class Move(Command):
             self.tank.direction.x * self.speed * time_passed,
             self.tank.direction.y * self.speed * time_passed
         )
-        collider = Collider(self.tank, self.tanks, self.walls, displacement)
-        moved_rect, other_rect = collider.collide()
-        if other_rect:
-            self.abort()
-        self.tank.rect = moved_rect
+        self.tank.position += displacement
 
     def _finished_internal(self):
         return self.tank.rect.collidepoint(self.target_position)
