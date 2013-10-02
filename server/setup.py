@@ -4,11 +4,13 @@ from setuptools import setup
 
 import re
 
+
 def read(filename):
     f = open(filename)
     contents = f.read()
     f.close()
     return contents
+
 
 def parse_requirements(file_name):
     requirements = []
@@ -25,22 +27,23 @@ def parse_requirements(file_name):
 
 
 setup(
-    name = "Codetanks Server",
-    version = "0.1",
-    packages = ["ibidem", "ibidem.codetanks", "ibidem.codetanks.server"],
+    name="Codetanks Server",
+    version="0.1",
+    packages=["ibidem", "ibidem.codetanks", "ibidem.codetanks.server"],
     install_requires=parse_requirements("requirements.txt"),
-    namespace_packages = ["ibidem", "ibidem.codetanks"],
-    zip_safe = True,
+    namespace_packages=["ibidem", "ibidem.codetanks"],
+    zip_safe=True,
+    test_suite="nose.collector",
 
     # Metadata
-    author = "Morten Lied Johansen",
-    author_email = "mortenjo@ifi.uio.no",
-    license = "LGPL",
-    keywords = "ibidem codetanks",
-    url = "https://bitbucket.org/mortenlj/codetanks",
+    author="Morten Lied Johansen",
+    author_email="mortenjo@ifi.uio.no",
+    license="LGPL",
+    keywords="ibidem codetanks",
+    url="https://bitbucket.org/mortenlj/codetanks",
 
     # Entry points
-    entry_points = {
+    entry_points={
         "console_scripts": [
             "codetanks = ibidem.codetanks.server.main:main"
         ],
