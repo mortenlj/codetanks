@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
+
 import argparse
-from random import randint
 
 import zmq
 from ibidem.codetanks.server import events
+
 from ibidem.codetanks.server.game_server import GameServer
+
 
 # Socket names
 REGISTRATION = "registration"
@@ -36,11 +38,6 @@ class App(object):
 
     def run(self):
         while True:
-            # TODO: Replace with proper creation based on registration
-            if not self.game_server.started() and randint(0, 500) == 0:
-                print "Creating a new tank"
-                self.game_server._add_random_tank()
-
             for event in events.get():
                 if event == events.START_GAME:
                     self.game_server.start()
