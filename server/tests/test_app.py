@@ -7,13 +7,11 @@ from mock import patch, MagicMock
 from nose.tools import eq_, ok_
 
 from ibidem.codetanks.server.main import App, REGISTRATION, UPDATE
+from ibidem.codetanks.server import events
 
 
 def _regex_match(actual, expected):
     ok_(re.match(expected, actual), "%r does not match %r" % (actual, expected))
-
-def _has_key(key, dictionary):
-    ok_(dictionary.has_key(key), "%r does not contain key %r" % (dictionary, key))
 
 
 class TestApp(object):
@@ -32,7 +30,8 @@ class TestApp(object):
         eq_(update_socket.socket_type, zmq.PUB)
 
     def test_registering_clients_get_update_url_and_game_info_back(self):
-        with patch("zmq.Context.instance", spec=True, new=MagicMock) as context, patch("zmq.Poller", autospec=True) as Poller:
+        with patch("zmq.Context.instance", spec=True, new=MagicMock) as context, \
+             patch("zmq.Poller", autospec=True) as Poller:
             app = App(None)
             reg_socket = app._sockets[REGISTRATION]
             poller = Poller.return_value
@@ -44,10 +43,25 @@ class TestApp(object):
             })
 
     def test_start_event_starts_game_server(self):
-        pass
+        with patch("ibidem.codetanks.server.main.GameServer", autospec=True) as GameServer, \
+             patch("ibidem.codetanks.server.main.events.get", autospec=True) as events_get:
+            app = App(None)
+            game_server = GameServer.return_value
+            events_get.return_value = [events.START_GAME]
+            game_server.build_game_data.return_value = []
+            app.run(True)
+            game_server.start.assert_called_once_with()
 
     def test_started_app_sends_game_data_to_update_socket(self):
-        pass
+        with patch("ibidem.codetanks.server.main.GameServer", autospec=True) as GameServer:
+            app = App(None)
+            game_server = GameServer.return_value
+            game_server.started.return_value = True
+            game_data = ["game_data"]
+            game_server.build_game_data.return_value = game_data
+            app._sockets[UPDATE] = MagicMock()
+            app.run(True)
+            app._sockets[UPDATE].send_json.assert_called_once_with(game_data)
 
 
 if __name__ == "__main__":
