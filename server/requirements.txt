@@ -1,4 +1,6 @@
 -e hg+http://bitbucket.org/pygame/pygame#egg=pygame
+-e git+https://github.com/rgalanakis/goless.git#egg=goless
+gevent
 pyzmq
 nose
 mock
