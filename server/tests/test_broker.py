@@ -2,7 +2,8 @@
 # -*- coding: utf-8
 
 from mock import create_autospec, patch, call
-from nose.tools import eq_, assert_true
+from nose.tools import eq_
+from hamcrest import assert_that, starts_with
 import zmq.green as zmq
 from goless.channels import GoChannel
 
@@ -39,7 +40,7 @@ class TestSockets(Shared):
         with patch("ibidem.codetanks.server.broker.gethostname", return_value=self.hostname):
             broker = Broker(self.zmq_context, self.zmq_poller, self.game_server_channel, self.port)
             eq_(broker.registration_socket.url, "tcp://%s:%d" % (self.hostname, self.port))
-            assert_true(broker.update_socket.url.startswith("tcp://%s" % self.hostname))
+            assert_that(broker.update_socket.url, starts_with("tcp://%s" % self.hostname))
 
     def test_are_registered_with_poller(self):
         broker = Broker(self.zmq_context, self.zmq_poller, self.game_server_channel)
@@ -48,18 +49,36 @@ class TestSockets(Shared):
 
 
 class TestRegistration(Shared):
+    viewer_registration = {"id": "viewer_id", "type": "viewer"}
+    bot_registration = {"id": "bot_id", "type": "bot"}
+
     def test_client_gets_update_url_back(self):
         broker = Broker(self.zmq_context, self.zmq_poller, self.game_server_channel)
         self.zmq_poller.poll.return_value = [(broker.registration_socket.zmq_socket, zmq.POLLIN)]
         broker._run_once()
         broker.registration_socket.zmq_socket.send_json.assert_called_once_with({"update_url": broker.update_socket.url})
 
-    def test_client_id_is_sent_to_game_server_channel(self):
+    def test_viewer_registration_is_forwarded_to_game_server(self):
         broker = Broker(self.zmq_context, self.zmq_poller, self.game_server_channel)
         self.zmq_poller.poll.return_value = [(broker.registration_socket.zmq_socket, zmq.POLLIN)]
-        broker.registration_socket.zmq_socket.recv_json.return_value = {"id": "client_id"}
+        broker.registration_socket.zmq_socket.recv_json.return_value = self.viewer_registration
         broker._run_once()
-        self.game_server_channel.send.assert_called_once_with({"event": "registration", "id": "client_id"})
+        self.game_server_channel.send.assert_called_once_with({
+            "event": "registration",
+            "id": "viewer_id",
+            "type": "viewer"
+        })
+
+    def test_bot_registration_is_forwarded_to_game_server(self):
+        broker = Broker(self.zmq_context, self.zmq_poller, self.game_server_channel)
+        self.zmq_poller.poll.return_value = [(broker.registration_socket.zmq_socket, zmq.POLLIN)]
+        broker.registration_socket.zmq_socket.recv_json.return_value = self.bot_registration
+        broker._run_once()
+        self.game_server_channel.send.assert_called_once_with({
+            "event": "registration",
+            "id": "bot_id",
+            "type": "bot"
+        })
 
 
 if __name__ == "__main__":

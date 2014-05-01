@@ -51,7 +51,7 @@ class Broker(object):
             if pair == (self.registration_socket.zmq_socket, zmq.POLLIN):
                 event = self.registration_socket.recv_json()
                 self.registration_socket.send_json({"update_url": self.update_socket.url})
-                self.game_server_channel.send({"event": "registration", "id": event["id"]})
+                self.game_server_channel.send({"event": "registration", "id": event["id"], "type": event["type"]})
 
 
 if __name__ == "__main__":
