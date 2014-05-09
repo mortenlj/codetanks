@@ -4,6 +4,7 @@
 from socket import gethostname
 
 from pinject import copy_args_to_public_fields
+from goless import dcase, rcase, select
 import zmq.green as zmq
 
 
@@ -33,19 +34,25 @@ def create_socket(zmq_context, socket_type, port):
 
 
 class Broker(object):
-    def __init__(self, zmq_context, zmq_poller, game_server_channel, registration_port=None):
+    def __init__(self, zmq_context, zmq_poller, game_server_channel, update_channel, registration_port=None):
         self.registration_socket = create_socket(zmq_context, zmq.REP, registration_port)
         self.update_socket = create_socket(zmq_context, zmq.PUB, None)
         self.zmq_poller = zmq_poller
         self.zmq_poller.register(self.registration_socket)
         self.zmq_poller.register(self.update_socket)
         self.game_server_channel = game_server_channel
+        self.update_channel = update_channel
+        self.dcase = dcase()
+        self.cases = {
+            self.dcase: lambda x: x,
+            rcase(self.update_channel): self.update_socket.send_json
+        }
 
     def run(self):
         while True:
             self._run_once()
 
-    def _run_once(self):
+    def _check_sockets(self):
         socks = self.zmq_poller.poll(1)
         for pair in socks:
             if pair == (self.registration_socket.zmq_socket, zmq.POLLIN):
@@ -53,6 +60,16 @@ class Broker(object):
                 self.registration_socket.send_json({"update_url": self.update_socket.url})
                 self.game_server_channel.send({"event": "registration", "id": event["id"], "type": event["type"]})
 
+    def _check_channels(self):
+        case = None
+        while case != self.dcase:
+            case, value = select(self.cases.keys())
+            func = self.cases[case]
+            func(value)
+
+    def _run_once(self):
+        self._check_sockets()
+        self._check_channels()
 
 if __name__ == "__main__":
     pass
