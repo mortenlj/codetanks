@@ -11,6 +11,8 @@ from ibidem.codetanks.server.broker import Broker
 
 
 class Shared(object):
+    port = 1234
+
     # Mocks
     zmq_context = None
     zmq_poller = None
@@ -26,11 +28,10 @@ class Shared(object):
 
 
 class TestSockets(Shared):
-    port = 1234
     hostname = "test.com"
 
     def test_are_opened(self):
-        Broker(self.zmq_context, self.zmq_poller, self.game_server_channel, self.update_channel)
+        Broker(self.zmq_context, self.zmq_poller, self.game_server_channel, self.update_channel, self.port)
         expected_calls = [call(zmq.REP), call(zmq.PUB)]
         eq_(self.zmq_context.socket.call_args_list, expected_calls)
 
@@ -45,8 +46,8 @@ class TestSockets(Shared):
             assert_that(broker.update_socket.url, starts_with("tcp://%s" % self.hostname))
 
     def test_are_registered_with_poller(self):
-        broker = Broker(self.zmq_context, self.zmq_poller, self.game_server_channel, self.update_channel)
-        expected_calls = [call(broker.registration_socket), call(broker.update_socket)]
+        broker = Broker(self.zmq_context, self.zmq_poller, self.game_server_channel, self.update_channel, self.port)
+        expected_calls = [call(broker.registration_socket.zmq_socket), call(broker.update_socket.zmq_socket)]
         eq_(self.zmq_poller.register.call_args_list, expected_calls)
 
 
@@ -56,7 +57,7 @@ class TestRegistration(Shared):
 
     def setup(self):
         super(TestRegistration, self).setup()
-        self.broker = Broker(self.zmq_context, self.zmq_poller, self.game_server_channel, self.update_channel)
+        self.broker = Broker(self.zmq_context, self.zmq_poller, self.game_server_channel, self.update_channel, self.port)
 
     def test_client_gets_update_url_back(self):
         self.zmq_poller.poll.return_value = [(self.broker.registration_socket.zmq_socket, zmq.POLLIN)]
@@ -89,7 +90,7 @@ class TestChannels(Shared):
 
     def setup(self):
         super(TestChannels, self).setup()
-        self.broker = Broker(self.zmq_context, self.zmq_poller, self.game_server_channel, self.update_channel)
+        self.broker = Broker(self.zmq_context, self.zmq_poller, self.game_server_channel, self.update_channel, self.port)
 
     def test_forwards_messages_on_update_socket(self):
         values = [True, False]
