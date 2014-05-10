@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
+from gevent import sleep
 
 from goless import dcase, rcase, select
-from pinject import copy_args_to_public_fields
 import pygame
 
 
 class GameServer(object):
-    @copy_args_to_public_fields
-    def __init__(self, input_channel, update_channel):
+    def __init__(self, game_server_channel, update_channel):
+        self.input_channel = game_server_channel
+        self.update_channel = update_channel
         pygame.init()
         self.bounds = pygame.Rect(0, 0, 500, 500)
         self.clock = None
@@ -28,6 +29,7 @@ class GameServer(object):
         pass
 
     def run(self):
+        print "GameServer starting"
         self.start()
         while True:
             self._run_once()
@@ -35,10 +37,15 @@ class GameServer(object):
     def _run_once(self):
         case, value = select(self.cases.keys())
         if case != self.dcase:
+            print "GameServer received message: %r" % value
             self.cases[case](value)
+        sleep(.01)
 
     def _handle_input(self, value):
-        self.update_channel.send(self.build_game_info())
+        print "GameServer sending game_info"
+        game_info_message = {"type": "game_info"}
+        game_info_message.update(self.build_game_info())
+        self.update_channel.send(game_info_message)
 
     def build_game_data(self):
         game_data = {}

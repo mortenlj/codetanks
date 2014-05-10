@@ -50,7 +50,9 @@ class TestRegistration(Shared):
         self.server._run_once()
         assert_true(self.update_channel.recv_ready())
         game_info = self.update_channel.recv()
-        assert_equal(game_info, self.server.build_game_info())
+        game_info_message = {"type": "game_info"}
+        game_info_message.update(self.server.build_game_info())
+        assert_equal(game_info, game_info_message)
 
     def test_registration_triggers_sending_game_info(self):
         for id, type in (("viewer_id", "viewer"), ("bot_id", "bot")):
