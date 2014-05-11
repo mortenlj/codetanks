@@ -26,7 +26,7 @@ class ObjectGraph(pinject.BindingSpec):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-p", "--port", type=int)
+    parser.add_argument("-p", "--port", type=int, default=13337)
     args = parser.parse_args()
     obj_graph = pinject.new_object_graph(binding_specs=[ObjectGraph(args.port)])
     for cls in [Broker, GameServer]:
