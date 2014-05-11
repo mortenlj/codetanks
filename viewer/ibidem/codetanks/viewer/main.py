@@ -2,10 +2,12 @@
 # -*- coding: utf-8
 
 import pygame
+
 from ibidem.codetanks.viewer.entities import Tank
 from ibidem.codetanks.viewer.events import CREATED
 from ibidem.codetanks.viewer.server_proxy import ServerProxy
 from ibidem.codetanks.viewer.widgets import Arena, TankInfo
+
 
 BG_COLOR = 20, 20, 20
 
@@ -29,6 +31,7 @@ def initialize_main():
 
     server_url = sys.argv[1]
     server = ServerProxy(server_url)
+    server.update()
     arena = Arena(server.arena.width, server.arena.height)
     screen = pygame.display.set_mode([arena.get_width() + 256, arena.get_height()])
     screen.fill(BG_COLOR)
