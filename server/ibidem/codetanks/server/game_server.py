@@ -4,6 +4,7 @@ from gevent import sleep
 
 from goless import dcase, rcase, select
 import pygame
+from ibidem.codetanks.domain.ttypes import Arena, GameInfo
 
 
 class GameServer(object):
@@ -43,21 +44,15 @@ class GameServer(object):
 
     def _handle_input(self, value):
         print "GameServer sending game_info"
-        game_info_message = {"type": "game_info"}
-        game_info_message.update(self.build_game_info())
-        self.update_channel.send(game_info_message)
+        self.update_channel.send(self.build_game_info())
 
     def build_game_data(self):
         game_data = {}
         return game_data
 
     def build_game_info(self):
-        return {
-            "arena": {
-                "width": self.bounds.width,
-                "height": self.bounds.height,
-            }
-        }
+        arena = Arena(self.bounds.width, self.bounds.height)
+        return GameInfo(arena)
 
 
 if __name__ == "__main__":

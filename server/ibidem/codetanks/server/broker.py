@@ -5,7 +5,33 @@ from socket import gethostname
 
 from gevent import sleep
 from goless import dcase, rcase, select
+from thrift.protocol import TBinaryProtocol
+from thrift.transport import TTransport
 import zmq.green as zmq
+from ibidem.codetanks.domain import ttypes
+
+
+def serialize(value, protocol_factory=TBinaryProtocol.TBinaryProtocolFactory()):
+    transport = TTransport.TMemoryBuffer()
+    protocol = protocol_factory.getProtocol(transport)
+    protocol.writeMessageBegin(value.__class__.__name__, 255, 0)
+    value.write(protocol)
+    protocol.writeMessageEnd()
+    data = transport.getvalue()
+    return data
+
+
+def deserialize(data, protocol_factory=TBinaryProtocol.TBinaryProtocolFactory()):
+    transport = TTransport.TMemoryBuffer(data)
+    protocol = protocol_factory.getProtocol(transport)
+    (tname, _, _) = protocol.readMessageBegin()
+    value_class = getattr(ttypes, tname)
+    if value_class is None:
+        raise TypeError("%s is not a valid type" % tname)
+    value = value_class()
+    value.read(protocol)
+    protocol.readMessageEnd()
+    return value
 
 
 class Socket(object):
@@ -17,11 +43,14 @@ class Socket(object):
     def url(self):
         return "tcp://%s:%d" % (gethostname(), self.port)
 
-    def recv_json(self):
-        return self.zmq_socket.recv_json()
+    def recv(self):
+        data = self.zmq_socket.recv()
+        value = deserialize(data)
+        return value
 
-    def send_json(self, value):
-        self.zmq_socket.send_json(value)
+    def send(self, value):
+        data = serialize(value)
+        self.zmq_socket.send(data)
 
 
 def create_socket(zmq_context, socket_type, port):
@@ -45,7 +74,7 @@ class Broker(object):
         self.dcase = dcase()
         self.cases = {
             self.dcase: lambda x: x,
-            rcase(self.update_channel): self.update_socket.send_json
+            rcase(self.update_channel): self.update_socket.send
         }
 
     def run(self):
@@ -57,9 +86,9 @@ class Broker(object):
         socks = self.zmq_poller.poll(1)
         for pair in socks:
             if pair == (self.registration_socket.zmq_socket, zmq.POLLIN):
-                event = self.registration_socket.recv_json()
-                self.registration_socket.send_json({"update_url": self.update_socket.url})
-                self.game_server_channel.send({"event": "registration", "id": event["id"], "type": event["type"]})
+                event = self.registration_socket.recv()
+                self.registration_socket.send(ttypes.RegistrationReply(self.update_socket.url))
+                self.game_server_channel.send(event)
 
     def _check_channels(self):
         case = None
