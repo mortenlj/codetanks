@@ -3,6 +3,7 @@
 
 from goless.channels import chan
 from nose.tools import assert_is_not_none, assert_equal, assert_false, assert_true
+from ibidem.codetanks.domain.ttypes import Registration
 
 from ibidem.codetanks.server.game_server import GameServer
 
@@ -26,9 +27,9 @@ class TestBounds(Shared):
 
     def test_server_returns_bounds_in_info(self):
         game_info = self.server.build_game_info()
-        bounds = game_info["arena"]
-        assert_equal(bounds["height"], self.server.bounds.height)
-        assert_equal(bounds["width"], self.server.bounds.width)
+        arena = game_info.arena
+        assert_equal(arena.height, self.server.bounds.height)
+        assert_equal(arena.width, self.server.bounds.width)
 
 
 class TestState(Shared):
@@ -42,16 +43,11 @@ class TestState(Shared):
 
 class TestRegistration(Shared):
     def _registration_triggers_sending_game_info(self, id, type):
-        self.input_channel.send({
-            "event": "registration",
-            "id": id,
-            "type": type
-        })
+        self.input_channel.send(Registration(type, id))
         self.server._run_once()
         assert_true(self.update_channel.recv_ready())
         game_info = self.update_channel.recv()
-        game_info_message = {"type": "game_info"}
-        game_info_message.update(self.server.build_game_info())
+        game_info_message = self.server.build_game_info()
         assert_equal(game_info, game_info_message)
 
     def test_registration_triggers_sending_game_info(self):

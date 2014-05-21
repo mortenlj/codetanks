@@ -6,8 +6,8 @@ from nose.tools import eq_
 from hamcrest import assert_that, starts_with
 import zmq.green as zmq
 from goless.channels import GoChannel
-
-from ibidem.codetanks.server.broker import Broker
+from ibidem.codetanks.domain.ttypes import Registration, RegistrationReply, GameInfo, Arena, ClientType
+from ibidem.codetanks.server.broker import Broker, serialize, deserialize
 
 
 class Shared(object):
@@ -52,8 +52,8 @@ class TestSockets(Shared):
 
 
 class TestRegistration(Shared):
-    viewer_registration = {"id": "viewer_id", "type": "viewer"}
-    bot_registration = {"id": "bot_id", "type": "bot"}
+    viewer_registration = Registration(ClientType.VIEWER, "viewer_id")
+    bot_registration = Registration(ClientType.BOT, "bot_id")
 
     def setup(self):
         super(TestRegistration, self).setup()
@@ -61,32 +61,26 @@ class TestRegistration(Shared):
 
     def test_client_gets_update_url_back(self):
         self.zmq_poller.poll.return_value = [(self.broker.registration_socket.zmq_socket, zmq.POLLIN)]
+        self.broker.registration_socket.zmq_socket.recv.return_value = serialize(self.bot_registration)
         self.broker._run_once()
-        self.broker.registration_socket.zmq_socket.send_json.assert_called_once_with({"update_url": self.broker.update_socket.url})
+        serialized_reply = serialize(RegistrationReply(self.broker.update_socket.url))
+        self.broker.registration_socket.zmq_socket.send.assert_called_once_with(serialized_reply)
 
     def test_viewer_registration_is_forwarded_to_game_server(self):
         self.zmq_poller.poll.return_value = [(self.broker.registration_socket.zmq_socket, zmq.POLLIN)]
-        self.broker.registration_socket.zmq_socket.recv_json.return_value = self.viewer_registration
+        self.broker.registration_socket.zmq_socket.recv.return_value = serialize(self.viewer_registration)
         self.broker._run_once()
-        self.game_server_channel.send.assert_called_once_with({
-            "event": "registration",
-            "id": "viewer_id",
-            "type": "viewer"
-        })
+        self.game_server_channel.send.assert_called_once_with(self.viewer_registration)
 
     def test_bot_registration_is_forwarded_to_game_server(self):
         self.zmq_poller.poll.return_value = [(self.broker.registration_socket.zmq_socket, zmq.POLLIN)]
-        self.broker.registration_socket.zmq_socket.recv_json.return_value = self.bot_registration
+        self.broker.registration_socket.zmq_socket.recv.return_value = serialize(self.bot_registration)
         self.broker._run_once()
-        self.game_server_channel.send.assert_called_once_with({
-            "event": "registration",
-            "id": "bot_id",
-            "type": "bot"
-        })
+        self.game_server_channel.send.assert_called_once_with(self.bot_registration)
 
 
 class TestChannels(Shared):
-    update_message = {"update": "message"}
+    update_message = GameInfo(Arena(10, 90))
 
     def setup(self):
         super(TestChannels, self).setup()
@@ -101,8 +95,14 @@ class TestChannels(Shared):
         self.broker.update_channel.recv_ready.side_effect = return_value
         self.broker.update_channel.recv.return_value = self.update_message
         self.broker._run_once()
-        self.broker.update_socket.zmq_socket.send_json.assert_called_once_with(self.update_message)
+        self.broker.update_socket.zmq_socket.send.assert_called_once_with(serialize(self.update_message))
 
+
+class TestSerialization():
+    def test_back_and_forth(self):
+        gi = GameInfo(Arena(10, 90))
+        data = serialize(gi)
+        eq_(gi, deserialize(data))
 
 if __name__ == "__main__":
     import nose

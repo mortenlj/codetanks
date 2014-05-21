@@ -6,3 +6,4 @@ nose
 mock
 PyHamcrest
 pinject
+Codetanks-Domain
