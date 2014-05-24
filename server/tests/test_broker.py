@@ -6,8 +6,9 @@ from nose.tools import eq_
 from hamcrest import assert_that, starts_with
 import zmq.green as zmq
 from goless.channels import GoChannel
+
 from ibidem.codetanks.domain.ttypes import Registration, RegistrationReply, GameInfo, Arena, ClientType
-from ibidem.codetanks.server.broker import Broker, serialize, deserialize
+from ibidem.codetanks.server.broker import Broker, serialize
 
 
 class Shared(object):
@@ -97,12 +98,6 @@ class TestChannels(Shared):
         self.broker._run_once()
         self.broker.update_socket.zmq_socket.send.assert_called_once_with(serialize(self.update_message))
 
-
-class TestSerialization():
-    def test_back_and_forth(self):
-        gi = GameInfo(Arena(10, 90))
-        data = serialize(gi)
-        eq_(gi, deserialize(data))
 
 if __name__ == "__main__":
     import nose
