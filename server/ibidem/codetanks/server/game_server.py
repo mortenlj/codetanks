@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 from gevent import sleep
-
 from goless import dcase, rcase, select
 import pygame
-from ibidem.codetanks.domain.ttypes import Arena, GameInfo
+
+from ibidem.codetanks.domain.ttypes import Arena, GameInfo, GameData
 
 
 class GameServer(object):
@@ -40,6 +40,7 @@ class GameServer(object):
         if case != self.dcase:
             print "GameServer received message: %r" % value
             self.cases[case](value)
+        self.update_channel.send(self.build_game_data())
         sleep(.01)
 
     def _handle_input(self, value):
@@ -47,8 +48,7 @@ class GameServer(object):
         self.update_channel.send(self.build_game_info())
 
     def build_game_data(self):
-        game_data = {}
-        return game_data
+        return GameData([], [])
 
     def build_game_info(self):
         arena = Arena(self.bounds.width, self.bounds.height)

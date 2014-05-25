@@ -6,7 +6,7 @@
 #  options string: py:new_style,utf8strings
 #
 
-from thrift.Thrift import TType, TMessageType, TException, TApplicationException
+from thrift.Thrift import TType
 
 from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol, TProtocol
@@ -294,6 +294,431 @@ class GameInfo(object):
   def validate(self):
     if self.arena is None:
       raise TProtocol.TProtocolException(message='Required field arena is unset!')
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class Point(object):
+  """
+  Attributes:
+   - x
+   - y
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.DOUBLE, 'x', None, None, ), # 1
+    (2, TType.DOUBLE, 'y', None, None, ), # 2
+  )
+
+  def __init__(self, x=None, y=None,):
+    self.x = x
+    self.y = y
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.DOUBLE:
+          self.x = iprot.readDouble();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.DOUBLE:
+          self.y = iprot.readDouble();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('Point')
+    if self.x is not None:
+      oprot.writeFieldBegin('x', TType.DOUBLE, 1)
+      oprot.writeDouble(self.x)
+      oprot.writeFieldEnd()
+    if self.y is not None:
+      oprot.writeFieldBegin('y', TType.DOUBLE, 2)
+      oprot.writeDouble(self.y)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    if self.x is None:
+      raise TProtocol.TProtocolException(message='Required field x is unset!')
+    if self.y is None:
+      raise TProtocol.TProtocolException(message='Required field y is unset!')
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class Bullet(object):
+  """
+  Attributes:
+   - id
+   - position
+   - direction
+   - speed
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I32, 'id', None, None, ), # 1
+    (2, TType.STRUCT, 'position', (Point, Point.thrift_spec), None, ), # 2
+    (3, TType.STRUCT, 'direction', (Point, Point.thrift_spec), None, ), # 3
+    (4, TType.DOUBLE, 'speed', None, None, ), # 4
+  )
+
+  def __init__(self, id=None, position=None, direction=None, speed=None,):
+    self.id = id
+    self.position = position
+    self.direction = direction
+    self.speed = speed
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I32:
+          self.id = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRUCT:
+          self.position = Point()
+          self.position.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.STRUCT:
+          self.direction = Point()
+          self.direction.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.DOUBLE:
+          self.speed = iprot.readDouble();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('Bullet')
+    if self.id is not None:
+      oprot.writeFieldBegin('id', TType.I32, 1)
+      oprot.writeI32(self.id)
+      oprot.writeFieldEnd()
+    if self.position is not None:
+      oprot.writeFieldBegin('position', TType.STRUCT, 2)
+      self.position.write(oprot)
+      oprot.writeFieldEnd()
+    if self.direction is not None:
+      oprot.writeFieldBegin('direction', TType.STRUCT, 3)
+      self.direction.write(oprot)
+      oprot.writeFieldEnd()
+    if self.speed is not None:
+      oprot.writeFieldBegin('speed', TType.DOUBLE, 4)
+      oprot.writeDouble(self.speed)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    if self.id is None:
+      raise TProtocol.TProtocolException(message='Required field id is unset!')
+    if self.position is None:
+      raise TProtocol.TProtocolException(message='Required field position is unset!')
+    if self.direction is None:
+      raise TProtocol.TProtocolException(message='Required field direction is unset!')
+    if self.speed is None:
+      raise TProtocol.TProtocolException(message='Required field speed is unset!')
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class Tank(object):
+  """
+  Attributes:
+   - id
+   - bot_id
+   - position
+   - direction
+   - aim
+   - speed
+   - health
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I32, 'id', None, None, ), # 1
+    (2, TType.STRING, 'bot_id', None, None, ), # 2
+    (3, TType.STRUCT, 'position', (Point, Point.thrift_spec), None, ), # 3
+    (4, TType.STRUCT, 'direction', (Point, Point.thrift_spec), None, ), # 4
+    (5, TType.STRUCT, 'aim', (Point, Point.thrift_spec), None, ), # 5
+    (6, TType.DOUBLE, 'speed', None, None, ), # 6
+    (7, TType.DOUBLE, 'health', None, None, ), # 7
+  )
+
+  def __init__(self, id=None, bot_id=None, position=None, direction=None, aim=None, speed=None, health=None,):
+    self.id = id
+    self.bot_id = bot_id
+    self.position = position
+    self.direction = direction
+    self.aim = aim
+    self.speed = speed
+    self.health = health
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I32:
+          self.id = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRING:
+          self.bot_id = iprot.readString().decode('utf-8')
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.STRUCT:
+          self.position = Point()
+          self.position.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.STRUCT:
+          self.direction = Point()
+          self.direction.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 5:
+        if ftype == TType.STRUCT:
+          self.aim = Point()
+          self.aim.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 6:
+        if ftype == TType.DOUBLE:
+          self.speed = iprot.readDouble();
+        else:
+          iprot.skip(ftype)
+      elif fid == 7:
+        if ftype == TType.DOUBLE:
+          self.health = iprot.readDouble();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('Tank')
+    if self.id is not None:
+      oprot.writeFieldBegin('id', TType.I32, 1)
+      oprot.writeI32(self.id)
+      oprot.writeFieldEnd()
+    if self.bot_id is not None:
+      oprot.writeFieldBegin('bot_id', TType.STRING, 2)
+      oprot.writeString(self.bot_id.encode('utf-8'))
+      oprot.writeFieldEnd()
+    if self.position is not None:
+      oprot.writeFieldBegin('position', TType.STRUCT, 3)
+      self.position.write(oprot)
+      oprot.writeFieldEnd()
+    if self.direction is not None:
+      oprot.writeFieldBegin('direction', TType.STRUCT, 4)
+      self.direction.write(oprot)
+      oprot.writeFieldEnd()
+    if self.aim is not None:
+      oprot.writeFieldBegin('aim', TType.STRUCT, 5)
+      self.aim.write(oprot)
+      oprot.writeFieldEnd()
+    if self.speed is not None:
+      oprot.writeFieldBegin('speed', TType.DOUBLE, 6)
+      oprot.writeDouble(self.speed)
+      oprot.writeFieldEnd()
+    if self.health is not None:
+      oprot.writeFieldBegin('health', TType.DOUBLE, 7)
+      oprot.writeDouble(self.health)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    if self.id is None:
+      raise TProtocol.TProtocolException(message='Required field id is unset!')
+    if self.bot_id is None:
+      raise TProtocol.TProtocolException(message='Required field bot_id is unset!')
+    if self.position is None:
+      raise TProtocol.TProtocolException(message='Required field position is unset!')
+    if self.direction is None:
+      raise TProtocol.TProtocolException(message='Required field direction is unset!')
+    if self.aim is None:
+      raise TProtocol.TProtocolException(message='Required field aim is unset!')
+    if self.speed is None:
+      raise TProtocol.TProtocolException(message='Required field speed is unset!')
+    if self.health is None:
+      raise TProtocol.TProtocolException(message='Required field health is unset!')
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class GameData(object):
+  """
+  Attributes:
+   - bullets
+   - tanks
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.LIST, 'bullets', (TType.STRUCT,(Bullet, Bullet.thrift_spec)), None, ), # 1
+    (2, TType.LIST, 'tanks', (TType.STRUCT,(Tank, Tank.thrift_spec)), None, ), # 2
+  )
+
+  def __init__(self, bullets=None, tanks=None,):
+    self.bullets = bullets
+    self.tanks = tanks
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.LIST:
+          self.bullets = []
+          (_etype3, _size0) = iprot.readListBegin()
+          for _i4 in xrange(_size0):
+            _elem5 = Bullet()
+            _elem5.read(iprot)
+            self.bullets.append(_elem5)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.LIST:
+          self.tanks = []
+          (_etype9, _size6) = iprot.readListBegin()
+          for _i10 in xrange(_size6):
+            _elem11 = Tank()
+            _elem11.read(iprot)
+            self.tanks.append(_elem11)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('GameData')
+    if self.bullets is not None:
+      oprot.writeFieldBegin('bullets', TType.LIST, 1)
+      oprot.writeListBegin(TType.STRUCT, len(self.bullets))
+      for iter12 in self.bullets:
+        iter12.write(oprot)
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    if self.tanks is not None:
+      oprot.writeFieldBegin('tanks', TType.LIST, 2)
+      oprot.writeListBegin(TType.STRUCT, len(self.tanks))
+      for iter13 in self.tanks:
+        iter13.write(oprot)
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    if self.bullets is None:
+      raise TProtocol.TProtocolException(message='Required field bullets is unset!')
+    if self.tanks is None:
+      raise TProtocol.TProtocolException(message='Required field tanks is unset!')
     return
 
 

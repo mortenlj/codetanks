@@ -1,12 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 from Queue import Empty
+import socket
+from uuid import uuid4
 
 import pygame
 import zmq
 
 from ibidem.codetanks.viewer.entities import Tank, Bullet
 from ibidem.codetanks.viewer.events import Killed, Created
+from ibidem.codetanks.domain.util import serialize, deserialize
+from ibidem.codetanks.domain.ttypes import Registration, ClientType, GameInfo
 
 
 class ServerProxy(object):
@@ -27,11 +31,11 @@ class ServerProxy(object):
         zmq_context = zmq.Context.instance()
         registration_socket = zmq_context.socket(zmq.REQ)
         registration_socket.connect(server_url)
-        registration_socket.send_json({"type": "viewer", "id": "viewer"})
-        data = registration_socket.recv_json()
+        registration_socket.send(serialize(Registration(ClientType.VIEWER, "%s:%s" % (socket.gethostname(), uuid4()))))
+        reply = deserialize(registration_socket.recv())
         self._update_socket = zmq_context.socket(zmq.SUB)
         self._update_socket.set(zmq.SUBSCRIBE, "")
-        update_url = data["update_url"]
+        update_url = reply.update_url
         print "Subscribing to %s" % update_url
         self._update_socket.connect(update_url)
 
@@ -53,15 +57,15 @@ class ServerProxy(object):
             pygame.event.post(Killed(entity))
 
     def _update_game_data(self, game_data):
-        if game_data.get("type", None) == "game_info":
-            arena = game_data["arena"]
-            self.arena = pygame.Rect(0, 0, arena["width"], arena["height"])
+        if isinstance(game_data, GameInfo):
+            arena = game_data.arena
+            self.arena = pygame.Rect(0, 0, arena.width, arena.height)
         else:
-            self._update_entities(game_data["tanks"], self._tanks, self.tanks, Tank)
-            self._update_entities(game_data["bullets"], self._bullets, self.bullets, Bullet)
+            self._update_entities(game_data.tanks, self._tanks, self.tanks, Tank)
+            self._update_entities(game_data.bullets, self._bullets, self.bullets, Bullet)
 
     def _get_server_update(self):
-        return self._update_socket.recv_json()
+        return deserialize(self._update_socket.recv())
 
     def update(self):
         try:

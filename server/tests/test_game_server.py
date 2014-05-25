@@ -2,16 +2,16 @@
 # -*- coding: utf-8
 
 from goless.channels import chan
-from nose.tools import assert_is_not_none, assert_equal, assert_false, assert_true
-from ibidem.codetanks.domain.ttypes import Registration
+from nose.tools import assert_is_not_none, assert_equal, assert_false, assert_true, assert_is_instance
 
+from ibidem.codetanks.domain.ttypes import Registration, GameData
 from ibidem.codetanks.server.game_server import GameServer
 
 
 class Shared(object):
     def setup(self):
         self.input_channel = chan(1)
-        self.update_channel = chan(1)
+        self.update_channel = chan(2)
         self.server = GameServer(self.input_channel, self.update_channel)
 
 
@@ -45,7 +45,7 @@ class TestRegistration(Shared):
     def _registration_triggers_sending_game_info(self, id, type):
         self.input_channel.send(Registration(type, id))
         self.server._run_once()
-        assert_true(self.update_channel.recv_ready())
+        assert_true(self.update_channel.recv_ready(), "Update channel is not ready to receive")
         game_info = self.update_channel.recv()
         game_info_message = self.server.build_game_info()
         assert_equal(game_info, game_info_message)
@@ -53,6 +53,22 @@ class TestRegistration(Shared):
     def test_registration_triggers_sending_game_info(self):
         for id, type in (("viewer_id", "viewer"), ("bot_id", "bot")):
             yield self._registration_triggers_sending_game_info, id, type
+
+
+class TestGameData(Shared):
+    def test_game_data_sent_once_per_loop(self):
+        self.server._run_once()
+        assert_true(self.update_channel.recv_ready(), "Update channel is not ready to receive")
+        game_data = self.update_channel.recv()
+        assert_is_instance(game_data, GameData)
+        assert_false(self.update_channel.recv_ready(), "Update channel has more messages")
+
+    def test_game_data_is_initialized_with_lists(self):
+        self.server._run_once()
+        game_data = self.update_channel.recv()
+        assert_is_instance(game_data.bullets, list)
+        assert_is_instance(game_data.tanks, list)
+
 
 if __name__ == "__main__":
     import nose
