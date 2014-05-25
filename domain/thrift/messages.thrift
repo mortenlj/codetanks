@@ -22,3 +22,30 @@ struct Arena {
 struct GameInfo {
     1: required Arena arena;
 }
+
+struct Point {
+    1: required double x;
+    2: required double y;
+}
+
+struct Bullet {
+    1: required i32 id;
+    2: required Point position;
+    3: required Point direction;
+    4: required double speed;
+}
+
+struct Tank {
+    1: required i32 id;
+    2: required string bot_id;
+    3: required Point position;
+    4: required Point direction;
+    5: required Point aim;
+    6: required double speed;
+    7: required double health;
+}
+
+struct GameData {
+    1: required list<Bullet> bullets;
+    2: required list<Tank> tanks;
+}
