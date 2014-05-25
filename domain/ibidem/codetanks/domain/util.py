@@ -8,6 +8,7 @@ from ibidem.codetanks.domain import ttypes
 
 
 def serialize(value, protocol_factory=TBinaryProtocol.TBinaryProtocolFactory()):
+    value.validate()
     transport = TTransport.TMemoryBuffer()
     protocol = protocol_factory.getProtocol(transport)
     protocol.writeMessageBegin(value.__class__.__name__, 255, 0)
@@ -27,6 +28,7 @@ def deserialize(data, protocol_factory=TBinaryProtocol.TBinaryProtocolFactory())
     value = value_class()
     value.read(protocol)
     protocol.readMessageEnd()
+    value.validate()
     return value
 
 
