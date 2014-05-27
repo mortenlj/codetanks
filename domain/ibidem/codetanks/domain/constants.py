@@ -3,9 +3,6 @@
 #
 # DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
 #
-#  options string: py:new_style,utf8strings
+#  options string: py:new_style,utf8strings,slots
 #
-
-from thrift.Thrift import TType, TMessageType, TException, TApplicationException
-from ttypes import *
 
