@@ -1,42 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
-
-from socket import gethostname
-
 from gevent import sleep
 from goless import dcase, rcase, select
 import zmq.green as zmq
 
+from ibidem.codetanks.server.zmqwrapper import create_socket
+
 from ibidem.codetanks.domain import ttypes
-from ibidem.codetanks.domain.util import serialize, deserialize
-
-
-class Socket(object):
-    def __init__(self, zmq_socket, port):
-        self.zmq_socket = zmq_socket
-        self.port = port
-
-    @property
-    def url(self):
-        return "tcp://%s:%d" % (gethostname(), self.port)
-
-    def recv(self):
-        data = self.zmq_socket.recv()
-        value = deserialize(data)
-        return value
-
-    def send(self, value):
-        data = serialize(value)
-        self.zmq_socket.send(data)
-
-
-def create_socket(zmq_context, socket_type, port):
-    zmq_socket = zmq_context.socket(socket_type)
-    if port:
-        zmq_socket.bind("tcp://*:%d" % port)
-    else:
-        port = zmq_socket.bind_to_random_port("tcp://*")
-    return Socket(zmq_socket, port)
 
 
 class Broker(object):
@@ -68,11 +38,11 @@ class Broker(object):
                 self.game_server_channel.send(event)
 
     def _check_channels(self):
-        case = None
+        case, value = select(self.cases.keys())
         while case != self.dcase:
-            case, value = select(self.cases.keys())
             func = self.cases[case]
             func(value)
+            case, value = select(self.cases.keys())
 
     def _run_once(self):
         self._check_sockets()
