@@ -40,18 +40,18 @@ def create_socket(zmq_context, socket_type, port):
 
 
 class Broker(object):
-    def __init__(self, zmq_context, zmq_poller, game_server_channel, update_channel, registration_port):
+    def __init__(self, zmq_context, zmq_poller, game_server_channel, viewer_channel, registration_port):
         self.registration_socket = create_socket(zmq_context, zmq.REP, registration_port)
-        self.update_socket = create_socket(zmq_context, zmq.PUB, None)
+        self.viewer_socket = create_socket(zmq_context, zmq.PUB, None)
         self.zmq_poller = zmq_poller
         self.zmq_poller.register(self.registration_socket.zmq_socket)
-        self.zmq_poller.register(self.update_socket.zmq_socket)
+        self.zmq_poller.register(self.viewer_socket.zmq_socket)
         self.game_server_channel = game_server_channel
-        self.update_channel = update_channel
+        self.viewer_channel = viewer_channel
         self.dcase = dcase()
         self.cases = {
             self.dcase: lambda x: x,
-            rcase(self.update_channel): self.update_socket.send
+            rcase(self.viewer_channel): self.viewer_socket.send
         }
 
     def run(self):
@@ -64,7 +64,7 @@ class Broker(object):
         for pair in socks:
             if pair == (self.registration_socket.zmq_socket, zmq.POLLIN):
                 event = self.registration_socket.recv()
-                self.registration_socket.send(ttypes.RegistrationReply(self.update_socket.url))
+                self.registration_socket.send(ttypes.RegistrationReply(self.viewer_socket.url))
                 self.game_server_channel.send(event)
 
     def _check_channels(self):
