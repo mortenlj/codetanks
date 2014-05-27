@@ -16,7 +16,7 @@ class Thrift(Command):
         pass
 
     def run(self):
-        self.spawn(["thrift-0.9.1", "--gen", "py:new_style,utf8strings", "-out", ".", self.thrift_file])
+        self.spawn(["thrift-0.9.1", "--gen", "py:new_style,utf8strings,slots", "-out", ".", self.thrift_file])
         os.unlink("__init__.py")
         path = "."
         for folder in ("ibidem", "codetanks"):

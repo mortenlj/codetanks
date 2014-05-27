@@ -5,9 +5,21 @@ enum ClientType {
     BOT
 }
 
+enum BotStatus {
+    ALIVE,
+    DYING,
+    DEAD,
+    INACTIVE
+}
+
+struct Id {
+    1: required string name;
+    2: required i16 version;
+}
+
 struct Registration {
     1: required ClientType client_type;
-    2: required string id;
+    2: required Id id;
 }
 
 struct RegistrationReply {
@@ -37,12 +49,13 @@ struct Bullet {
 
 struct Tank {
     1: required i32 id;
-    2: required string bot_id;
+    2: required Id bot_id;
     3: required Point position;
     4: required Point direction;
     5: required Point aim;
     6: required double speed;
-    7: required double health;
+    7: required byte health;
+    8: required BotStatus status;
 }
 
 struct GameData {

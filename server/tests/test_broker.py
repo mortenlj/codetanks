@@ -7,7 +7,7 @@ from hamcrest import assert_that, starts_with
 import zmq.green as zmq
 from goless.channels import GoChannel
 
-from ibidem.codetanks.domain.ttypes import Registration, RegistrationReply, GameInfo, Arena, ClientType
+from ibidem.codetanks.domain.ttypes import Registration, RegistrationReply, GameInfo, Arena, ClientType, Id
 from ibidem.codetanks.server.broker import Broker, serialize
 
 
@@ -53,8 +53,8 @@ class TestSockets(Shared):
 
 
 class TestRegistration(Shared):
-    viewer_registration = Registration(ClientType.VIEWER, "viewer_id")
-    bot_registration = Registration(ClientType.BOT, "bot_id")
+    viewer_registration = Registration(ClientType.VIEWER, Id("viewer_id", 1))
+    bot_registration = Registration(ClientType.BOT, Id("bot_id", 1))
 
     def setup(self):
         super(TestRegistration, self).setup()

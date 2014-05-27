@@ -3,7 +3,7 @@
 #
 # DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
 #
-#  options string: py:new_style,utf8strings
+#  options string: py:new_style,utf8strings,slots
 #
 
 from thrift.Thrift import TType
@@ -30,6 +30,115 @@ class ClientType(object):
     "BOT": 1,
   }
 
+class BotStatus(object):
+  ALIVE = 0
+  DYING = 1
+  DEAD = 2
+  INACTIVE = 3
+
+  _VALUES_TO_NAMES = {
+    0: "ALIVE",
+    1: "DYING",
+    2: "DEAD",
+    3: "INACTIVE",
+  }
+
+  _NAMES_TO_VALUES = {
+    "ALIVE": 0,
+    "DYING": 1,
+    "DEAD": 2,
+    "INACTIVE": 3,
+  }
+
+
+class Id(object):
+  """
+  Attributes:
+   - name
+   - version
+  """
+
+  __slots__ = [ 
+    'name',
+    'version',
+   ]
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'name', None, None, ), # 1
+    (2, TType.I16, 'version', None, None, ), # 2
+  )
+
+  def __init__(self, name=None, version=None,):
+    self.name = name
+    self.version = version
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.name = iprot.readString().decode('utf-8')
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I16:
+          self.version = iprot.readI16();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('Id')
+    if self.name is not None:
+      oprot.writeFieldBegin('name', TType.STRING, 1)
+      oprot.writeString(self.name.encode('utf-8'))
+      oprot.writeFieldEnd()
+    if self.version is not None:
+      oprot.writeFieldBegin('version', TType.I16, 2)
+      oprot.writeI16(self.version)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    if self.name is None:
+      raise TProtocol.TProtocolException(message='Required field name is unset!')
+    if self.version is None:
+      raise TProtocol.TProtocolException(message='Required field version is unset!')
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, getattr(self, key))
+      for key in self.__slots__]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    if not isinstance(other, self.__class__):
+      return False
+    for attr in self.__slots__:
+      my_val = getattr(self, attr)
+      other_val = getattr(other, attr)
+      if my_val != other_val:
+        return False
+    return True
+
+  def __ne__(self, other):
+    return not (self == other)
+
 
 class Registration(object):
   """
@@ -38,10 +147,15 @@ class Registration(object):
    - id
   """
 
+  __slots__ = [ 
+    'client_type',
+    'id',
+   ]
+
   thrift_spec = (
     None, # 0
     (1, TType.I32, 'client_type', None, None, ), # 1
-    (2, TType.STRING, 'id', None, None, ), # 2
+    (2, TType.STRUCT, 'id', (Id, Id.thrift_spec), None, ), # 2
   )
 
   def __init__(self, client_type=None, id=None,):
@@ -63,8 +177,9 @@ class Registration(object):
         else:
           iprot.skip(ftype)
       elif fid == 2:
-        if ftype == TType.STRING:
-          self.id = iprot.readString().decode('utf-8')
+        if ftype == TType.STRUCT:
+          self.id = Id()
+          self.id.read(iprot)
         else:
           iprot.skip(ftype)
       else:
@@ -82,8 +197,8 @@ class Registration(object):
       oprot.writeI32(self.client_type)
       oprot.writeFieldEnd()
     if self.id is not None:
-      oprot.writeFieldBegin('id', TType.STRING, 2)
-      oprot.writeString(self.id.encode('utf-8'))
+      oprot.writeFieldBegin('id', TType.STRUCT, 2)
+      self.id.write(oprot)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -97,21 +212,33 @@ class Registration(object):
 
 
   def __repr__(self):
-    L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.iteritems()]
+    L = ['%s=%r' % (key, getattr(self, key))
+      for key in self.__slots__]
     return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
-    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+    if not isinstance(other, self.__class__):
+      return False
+    for attr in self.__slots__:
+      my_val = getattr(self, attr)
+      other_val = getattr(other, attr)
+      if my_val != other_val:
+        return False
+    return True
 
   def __ne__(self, other):
     return not (self == other)
+
 
 class RegistrationReply(object):
   """
   Attributes:
    - update_url
   """
+
+  __slots__ = [ 
+    'update_url',
+   ]
 
   thrift_spec = (
     None, # 0
@@ -159,15 +286,23 @@ class RegistrationReply(object):
 
 
   def __repr__(self):
-    L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.iteritems()]
+    L = ['%s=%r' % (key, getattr(self, key))
+      for key in self.__slots__]
     return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
-    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+    if not isinstance(other, self.__class__):
+      return False
+    for attr in self.__slots__:
+      my_val = getattr(self, attr)
+      other_val = getattr(other, attr)
+      if my_val != other_val:
+        return False
+    return True
 
   def __ne__(self, other):
     return not (self == other)
+
 
 class Arena(object):
   """
@@ -175,6 +310,11 @@ class Arena(object):
    - width
    - height
   """
+
+  __slots__ = [ 
+    'width',
+    'height',
+   ]
 
   thrift_spec = (
     None, # 0
@@ -235,21 +375,33 @@ class Arena(object):
 
 
   def __repr__(self):
-    L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.iteritems()]
+    L = ['%s=%r' % (key, getattr(self, key))
+      for key in self.__slots__]
     return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
-    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+    if not isinstance(other, self.__class__):
+      return False
+    for attr in self.__slots__:
+      my_val = getattr(self, attr)
+      other_val = getattr(other, attr)
+      if my_val != other_val:
+        return False
+    return True
 
   def __ne__(self, other):
     return not (self == other)
+
 
 class GameInfo(object):
   """
   Attributes:
    - arena
   """
+
+  __slots__ = [ 
+    'arena',
+   ]
 
   thrift_spec = (
     None, # 0
@@ -298,15 +450,23 @@ class GameInfo(object):
 
 
   def __repr__(self):
-    L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.iteritems()]
+    L = ['%s=%r' % (key, getattr(self, key))
+      for key in self.__slots__]
     return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
-    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+    if not isinstance(other, self.__class__):
+      return False
+    for attr in self.__slots__:
+      my_val = getattr(self, attr)
+      other_val = getattr(other, attr)
+      if my_val != other_val:
+        return False
+    return True
 
   def __ne__(self, other):
     return not (self == other)
+
 
 class Point(object):
   """
@@ -314,6 +474,11 @@ class Point(object):
    - x
    - y
   """
+
+  __slots__ = [ 
+    'x',
+    'y',
+   ]
 
   thrift_spec = (
     None, # 0
@@ -374,15 +539,23 @@ class Point(object):
 
 
   def __repr__(self):
-    L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.iteritems()]
+    L = ['%s=%r' % (key, getattr(self, key))
+      for key in self.__slots__]
     return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
-    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+    if not isinstance(other, self.__class__):
+      return False
+    for attr in self.__slots__:
+      my_val = getattr(self, attr)
+      other_val = getattr(other, attr)
+      if my_val != other_val:
+        return False
+    return True
 
   def __ne__(self, other):
     return not (self == other)
+
 
 class Bullet(object):
   """
@@ -392,6 +565,13 @@ class Bullet(object):
    - direction
    - speed
   """
+
+  __slots__ = [ 
+    'id',
+    'position',
+    'direction',
+    'speed',
+   ]
 
   thrift_spec = (
     None, # 0
@@ -480,15 +660,23 @@ class Bullet(object):
 
 
   def __repr__(self):
-    L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.iteritems()]
+    L = ['%s=%r' % (key, getattr(self, key))
+      for key in self.__slots__]
     return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
-    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+    if not isinstance(other, self.__class__):
+      return False
+    for attr in self.__slots__:
+      my_val = getattr(self, attr)
+      other_val = getattr(other, attr)
+      if my_val != other_val:
+        return False
+    return True
 
   def __ne__(self, other):
     return not (self == other)
+
 
 class Tank(object):
   """
@@ -500,20 +688,33 @@ class Tank(object):
    - aim
    - speed
    - health
+   - status
   """
+
+  __slots__ = [ 
+    'id',
+    'bot_id',
+    'position',
+    'direction',
+    'aim',
+    'speed',
+    'health',
+    'status',
+   ]
 
   thrift_spec = (
     None, # 0
     (1, TType.I32, 'id', None, None, ), # 1
-    (2, TType.STRING, 'bot_id', None, None, ), # 2
+    (2, TType.STRUCT, 'bot_id', (Id, Id.thrift_spec), None, ), # 2
     (3, TType.STRUCT, 'position', (Point, Point.thrift_spec), None, ), # 3
     (4, TType.STRUCT, 'direction', (Point, Point.thrift_spec), None, ), # 4
     (5, TType.STRUCT, 'aim', (Point, Point.thrift_spec), None, ), # 5
     (6, TType.DOUBLE, 'speed', None, None, ), # 6
-    (7, TType.DOUBLE, 'health', None, None, ), # 7
+    (7, TType.BYTE, 'health', None, None, ), # 7
+    (8, TType.I32, 'status', None, None, ), # 8
   )
 
-  def __init__(self, id=None, bot_id=None, position=None, direction=None, aim=None, speed=None, health=None,):
+  def __init__(self, id=None, bot_id=None, position=None, direction=None, aim=None, speed=None, health=None, status=None,):
     self.id = id
     self.bot_id = bot_id
     self.position = position
@@ -521,6 +722,7 @@ class Tank(object):
     self.aim = aim
     self.speed = speed
     self.health = health
+    self.status = status
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -537,8 +739,9 @@ class Tank(object):
         else:
           iprot.skip(ftype)
       elif fid == 2:
-        if ftype == TType.STRING:
-          self.bot_id = iprot.readString().decode('utf-8')
+        if ftype == TType.STRUCT:
+          self.bot_id = Id()
+          self.bot_id.read(iprot)
         else:
           iprot.skip(ftype)
       elif fid == 3:
@@ -565,8 +768,13 @@ class Tank(object):
         else:
           iprot.skip(ftype)
       elif fid == 7:
-        if ftype == TType.DOUBLE:
-          self.health = iprot.readDouble();
+        if ftype == TType.BYTE:
+          self.health = iprot.readByte();
+        else:
+          iprot.skip(ftype)
+      elif fid == 8:
+        if ftype == TType.I32:
+          self.status = iprot.readI32();
         else:
           iprot.skip(ftype)
       else:
@@ -584,8 +792,8 @@ class Tank(object):
       oprot.writeI32(self.id)
       oprot.writeFieldEnd()
     if self.bot_id is not None:
-      oprot.writeFieldBegin('bot_id', TType.STRING, 2)
-      oprot.writeString(self.bot_id.encode('utf-8'))
+      oprot.writeFieldBegin('bot_id', TType.STRUCT, 2)
+      self.bot_id.write(oprot)
       oprot.writeFieldEnd()
     if self.position is not None:
       oprot.writeFieldBegin('position', TType.STRUCT, 3)
@@ -604,8 +812,12 @@ class Tank(object):
       oprot.writeDouble(self.speed)
       oprot.writeFieldEnd()
     if self.health is not None:
-      oprot.writeFieldBegin('health', TType.DOUBLE, 7)
-      oprot.writeDouble(self.health)
+      oprot.writeFieldBegin('health', TType.BYTE, 7)
+      oprot.writeByte(self.health)
+      oprot.writeFieldEnd()
+    if self.status is not None:
+      oprot.writeFieldBegin('status', TType.I32, 8)
+      oprot.writeI32(self.status)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -625,19 +837,29 @@ class Tank(object):
       raise TProtocol.TProtocolException(message='Required field speed is unset!')
     if self.health is None:
       raise TProtocol.TProtocolException(message='Required field health is unset!')
+    if self.status is None:
+      raise TProtocol.TProtocolException(message='Required field status is unset!')
     return
 
 
   def __repr__(self):
-    L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.iteritems()]
+    L = ['%s=%r' % (key, getattr(self, key))
+      for key in self.__slots__]
     return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
-    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+    if not isinstance(other, self.__class__):
+      return False
+    for attr in self.__slots__:
+      my_val = getattr(self, attr)
+      other_val = getattr(other, attr)
+      if my_val != other_val:
+        return False
+    return True
 
   def __ne__(self, other):
     return not (self == other)
+
 
 class GameData(object):
   """
@@ -645,6 +867,11 @@ class GameData(object):
    - bullets
    - tanks
   """
+
+  __slots__ = [ 
+    'bullets',
+    'tanks',
+   ]
 
   thrift_spec = (
     None, # 0
@@ -723,12 +950,20 @@ class GameData(object):
 
 
   def __repr__(self):
-    L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.iteritems()]
+    L = ['%s=%r' % (key, getattr(self, key))
+      for key in self.__slots__]
     return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
-    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+    if not isinstance(other, self.__class__):
+      return False
+    for attr in self.__slots__:
+      my_val = getattr(self, attr)
+      other_val = getattr(other, attr)
+      if my_val != other_val:
+        return False
+    return True
 
   def __ne__(self, other):
     return not (self == other)
+
