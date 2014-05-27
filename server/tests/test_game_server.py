@@ -11,8 +11,8 @@ from ibidem.codetanks.server.game_server import GameServer
 class Shared(object):
     def setup(self):
         self.input_channel = chan(1)
-        self.update_channel = chan(2)
-        self.server = GameServer(self.input_channel, self.update_channel)
+        self.viewer_channel = chan(2)
+        self.server = GameServer(self.input_channel, self.viewer_channel)
 
 
 class TestBounds(Shared):
@@ -45,8 +45,8 @@ class TestRegistration(Shared):
     def _registration_triggers_sending_game_info(self, id, type):
         self.input_channel.send(Registration(type, id))
         self.server._run_once()
-        assert_true(self.update_channel.recv_ready(), "Update channel is not ready to receive")
-        game_info = self.update_channel.recv()
+        assert_true(self.viewer_channel.recv_ready(), "Viewer channel is not ready to receive")
+        game_info = self.viewer_channel.recv()
         game_info_message = self.server.build_game_info()
         assert_equal(game_info, game_info_message)
 
@@ -58,14 +58,14 @@ class TestRegistration(Shared):
 class TestGameData(Shared):
     def test_game_data_sent_once_per_loop(self):
         self.server._run_once()
-        assert_true(self.update_channel.recv_ready(), "Update channel is not ready to receive")
-        game_data = self.update_channel.recv()
+        assert_true(self.viewer_channel.recv_ready(), "Viewer channel is not ready to receive")
+        game_data = self.viewer_channel.recv()
         assert_is_instance(game_data, GameData)
-        assert_false(self.update_channel.recv_ready(), "Update channel has more messages")
+        assert_false(self.viewer_channel.recv_ready(), "Viewer channel has more messages")
 
     def test_game_data_is_initialized_with_lists(self):
         self.server._run_once()
-        game_data = self.update_channel.recv()
+        game_data = self.viewer_channel.recv()
         assert_is_instance(game_data.bullets, list)
         assert_is_instance(game_data.tanks, list)
 

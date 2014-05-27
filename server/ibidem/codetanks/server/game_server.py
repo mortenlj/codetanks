@@ -8,9 +8,9 @@ from ibidem.codetanks.domain.ttypes import Arena, GameInfo, GameData
 
 
 class GameServer(object):
-    def __init__(self, game_server_channel, update_channel):
+    def __init__(self, game_server_channel, viewer_channel):
         self.input_channel = game_server_channel
-        self.update_channel = update_channel
+        self.viewer_channel = viewer_channel
         pygame.init()
         self.bounds = pygame.Rect(0, 0, 500, 500)
         self.clock = None
@@ -40,12 +40,12 @@ class GameServer(object):
         if case != self.dcase:
             print "GameServer received message: %r" % value
             self.cases[case](value)
-        self.update_channel.send(self.build_game_data())
+        self.viewer_channel.send(self.build_game_data())
         sleep(.01)
 
     def _handle_input(self, value):
         print "GameServer sending game_info"
-        self.update_channel.send(self.build_game_info())
+        self.viewer_channel.send(self.build_game_info())
 
     def build_game_data(self):
         return GameData([], [])

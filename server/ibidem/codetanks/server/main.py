@@ -20,7 +20,7 @@ class ObjectGraph(pinject.BindingSpec):
         bind("zmq_context", to_instance=zmq.Context.instance())
         bind("zmq_poller", to_class=zmq.Poller, in_scope=pinject.PROTOTYPE)
         bind("game_server_channel", to_instance=goless.chan())
-        bind("update_channel", to_instance=goless.chan())
+        bind("viewer_channel", to_instance=goless.chan())
         bind("registration_port", to_instance=self._registration_port)
 
 
