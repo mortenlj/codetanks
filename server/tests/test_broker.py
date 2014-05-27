@@ -8,7 +8,8 @@ import zmq.green as zmq
 from goless.channels import GoChannel
 
 from ibidem.codetanks.domain.ttypes import Registration, RegistrationReply, GameInfo, Arena, ClientType, Id
-from ibidem.codetanks.server.broker import Broker, serialize
+from ibidem.codetanks.domain.util import serialize
+from ibidem.codetanks.server.broker import Broker
 
 
 class Shared(object):
@@ -41,7 +42,7 @@ class TestSockets(Shared):
         eq_(broker.registration_socket.port, self.port)
 
     def test_has_valid_urls(self):
-        with patch("ibidem.codetanks.server.broker.gethostname", return_value=self.hostname):
+        with patch("ibidem.codetanks.server.zmqwrapper.gethostname", return_value=self.hostname):
             broker = Broker(self.zmq_context, self.zmq_poller, self.game_server_channel, self.viewer_channel, self.port)
             eq_(broker.registration_socket.url, "tcp://%s:%d" % (self.hostname, self.port))
             assert_that(broker.viewer_socket.url, starts_with("tcp://%s" % self.hostname))
