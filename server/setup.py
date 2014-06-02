@@ -45,7 +45,8 @@ setup(
     # Entry points
     entry_points={
         "console_scripts": [
-            "codetanks = ibidem.codetanks.server.main:main"
+            "codetanks = ibidem.codetanks.server.main:main",
+            "codetanks_bot = ibidem.codetanks.server.cli_bot:main"
         ],
     }
 )
