@@ -5,7 +5,6 @@ from goless import dcase, rcase, select
 import zmq.green as zmq
 
 from ibidem.codetanks.server.zmqwrapper import create_socket
-
 from ibidem.codetanks.domain import ttypes
 
 
@@ -25,7 +24,7 @@ class Broker(object):
         }
 
     def run(self):
-        print "Broker starting"
+        print "Broker starting, listening for registrations on %s" % self.registration_socket.url
         while True:
             self._run_once()
 
