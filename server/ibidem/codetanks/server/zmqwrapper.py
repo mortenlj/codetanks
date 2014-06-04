@@ -16,13 +16,13 @@ class Socket(object):
         return "tcp://%s:%d" % (gethostname(), self.port)
 
     def recv(self):
-        data = self.zmq_socket.recv()
-        value = deserialize(data)
+        data = self.zmq_socket.recv(copy=False)
+        value = deserialize(data.buffer)
         return value
 
     def send(self, value):
         data = serialize(value)
-        self.zmq_socket.send(data)
+        self.zmq_socket.send(data, copy=False)
 
 
 def create_socket(zmq_context, socket_type, port):

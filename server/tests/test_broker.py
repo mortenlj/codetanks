@@ -12,6 +12,11 @@ from ibidem.codetanks.domain.util import serialize
 from ibidem.codetanks.server.broker import Broker
 
 
+class MockFrame(object):
+    def __init__(self, buffer):
+        self.buffer = buffer
+
+
 class Shared(object):
     port = 1234
 
@@ -63,20 +68,20 @@ class TestRegistration(Shared):
 
     def test_client_gets_update_url_back(self):
         self.zmq_poller.poll.return_value = [(self.broker.registration_socket.zmq_socket, zmq.POLLIN)]
-        self.broker.registration_socket.zmq_socket.recv.return_value = serialize(self.bot_registration)
+        self.broker.registration_socket.zmq_socket.recv.return_value = MockFrame(serialize(self.bot_registration))
         self.broker._run_once()
         serialized_reply = serialize(RegistrationReply(self.broker.viewer_socket.url))
-        self.broker.registration_socket.zmq_socket.send.assert_called_once_with(serialized_reply)
+        self.broker.registration_socket.zmq_socket.send.assert_called_once_with(serialized_reply, copy=False)
 
     def test_viewer_registration_is_forwarded_to_game_server(self):
         self.zmq_poller.poll.return_value = [(self.broker.registration_socket.zmq_socket, zmq.POLLIN)]
-        self.broker.registration_socket.zmq_socket.recv.return_value = serialize(self.viewer_registration)
+        self.broker.registration_socket.zmq_socket.recv.return_value = MockFrame(serialize(self.viewer_registration))
         self.broker._run_once()
         self.game_server_channel.send.assert_called_once_with(self.viewer_registration)
 
     def test_bot_registration_is_forwarded_to_game_server(self):
         self.zmq_poller.poll.return_value = [(self.broker.registration_socket.zmq_socket, zmq.POLLIN)]
-        self.broker.registration_socket.zmq_socket.recv.return_value = serialize(self.bot_registration)
+        self.broker.registration_socket.zmq_socket.recv.return_value = MockFrame(serialize(self.bot_registration))
         self.broker._run_once()
         self.game_server_channel.send.assert_called_once_with(self.bot_registration)
 
@@ -97,7 +102,7 @@ class TestChannels(Shared):
         self.broker.viewer_channel.recv_ready.side_effect = return_value
         self.broker.viewer_channel.recv.return_value = self.update_message
         self.broker._run_once()
-        self.broker.viewer_socket.zmq_socket.send.assert_called_once_with(serialize(self.update_message))
+        self.broker.viewer_socket.zmq_socket.send.assert_called_once_with(serialize(self.update_message), copy=False)
 
 
 if __name__ == "__main__":
