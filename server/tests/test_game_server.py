@@ -4,7 +4,7 @@
 from goless.channels import chan
 from nose.tools import assert_is_not_none, assert_equal, assert_false, assert_true, assert_is_instance
 
-from ibidem.codetanks.domain.ttypes import Registration, GameData
+from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id
 from ibidem.codetanks.server.game_server import GameServer
 
 
@@ -51,7 +51,7 @@ class TestRegistration(Shared):
         assert_equal(game_info, game_info_message)
 
     def test_registration_triggers_sending_game_info(self):
-        for id, type in (("viewer_id", "viewer"), ("bot_id", "bot")):
+        for id, type in ((Id("viewer", 1), ClientType.VIEWER), (Id("bot", 1), ClientType.BOT)):
             yield self._registration_triggers_sending_game_info, id, type
 
 
