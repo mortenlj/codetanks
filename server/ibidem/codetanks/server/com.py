@@ -6,7 +6,7 @@ from socket import gethostname
 from ibidem.codetanks.domain.util import deserialize, serialize
 
 
-class Socket(object):
+class _Socket(object):
     def __init__(self, zmq_socket, port):
         self.zmq_socket = zmq_socket
         self.port = port
@@ -25,13 +25,13 @@ class Socket(object):
         self.zmq_socket.send(data, copy=False)
 
 
-def create_socket(zmq_context, socket_type, port):
+def create(zmq_context, socket_type, port):
     zmq_socket = zmq_context.socket(socket_type)
     if port:
         zmq_socket.bind("tcp://*:%d" % port)
     else:
         port = zmq_socket.bind_to_random_port("tcp://*")
-    return Socket(zmq_socket, port)
+    return _Socket(zmq_socket, port)
 
 if __name__ == "__main__":
     pass

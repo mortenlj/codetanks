@@ -4,14 +4,14 @@ from gevent import sleep
 from goless import dcase, rcase, select
 import zmq.green as zmq
 
-from ibidem.codetanks.server.zmqwrapper import create_socket
+from ibidem.codetanks.server.com import create
 from ibidem.codetanks.domain import ttypes
 
 
 class Broker(object):
     def __init__(self, zmq_context, zmq_poller, game_server_channel, viewer_channel, registration_port):
-        self.registration_socket = create_socket(zmq_context, zmq.REP, registration_port)
-        self.viewer_socket = create_socket(zmq_context, zmq.PUB, None)
+        self.registration_socket = create(zmq_context, zmq.REP, registration_port)
+        self.viewer_socket = create(zmq_context, zmq.PUB, None)
         self.zmq_poller = zmq_poller
         self.zmq_poller.register(self.registration_socket.zmq_socket)
         self.zmq_poller.register(self.viewer_socket.zmq_socket)
