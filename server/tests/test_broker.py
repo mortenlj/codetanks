@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 
-from mock import create_autospec, patch, call
+from mock import create_autospec, call
 from nose.tools import eq_
-from hamcrest import assert_that, starts_with
 import zmq.green as zmq
 from goless.channels import GoChannel
 
@@ -45,12 +44,6 @@ class TestSockets(Shared):
     def test_registration_is_opened_on_given_port(self):
         broker = Broker(self.zmq_context, self.zmq_poller, self.game_server_channel, self.viewer_channel, self.port)
         eq_(broker.registration_socket.port, self.port)
-
-    def test_has_valid_urls(self):
-        with patch("ibidem.codetanks.server.zmqwrapper.gethostname", return_value=self.hostname):
-            broker = Broker(self.zmq_context, self.zmq_poller, self.game_server_channel, self.viewer_channel, self.port)
-            eq_(broker.registration_socket.url, "tcp://%s:%d" % (self.hostname, self.port))
-            assert_that(broker.viewer_socket.url, starts_with("tcp://%s" % self.hostname))
 
     def test_are_registered_with_poller(self):
         broker = Broker(self.zmq_context, self.zmq_poller, self.game_server_channel, self.viewer_channel, self.port)
