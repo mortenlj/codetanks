@@ -1,18 +1,33 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 
-from goless.channels import chan
-from nose.tools import assert_is_not_none, assert_equal, assert_false, assert_true, assert_is_instance
+from mock import create_autospec
+from nose.tools import assert_is_not_none, assert_equal
 
 from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id
+from ibidem.codetanks.server.com import Channel
 from ibidem.codetanks.server.game_server import GameServer
+
+
+class _TestMatcher(object):
+    def __init__(self, test):
+        self._test = test
+
+    def __eq__(self, other):
+        return self._test(other)
+
+
+def assert_arguments_matches(call_args, *matchers):
+    args, kwargs = call_args
+    assert_equal(args, matchers)
 
 
 class Shared(object):
     def setup(self):
-        self.input_channel = chan(1)
-        self.viewer_channel = chan(2)
-        self.server = GameServer(self.input_channel, self.viewer_channel)
+        self.registration_channel = create_autospec(Channel)
+        self.viewer_channel = create_autospec(Channel)
+        self.server = GameServer(self.registration_channel, self.viewer_channel)
+        self.server.start()
 
 
 class TestBounds(Shared):
@@ -32,23 +47,11 @@ class TestBounds(Shared):
         assert_equal(arena.width, self.server.bounds.width)
 
 
-class TestState(Shared):
-    def test_new_server_is_not_started(self):
-        assert_false(self.server.started())
-
-    def test_started_server_is_started(self):
-        self.server.start()
-        assert_true(self.server.started())
-
-
 class TestRegistration(Shared):
     def _registration_triggers_sending_game_info(self, id, type):
-        self.input_channel.send(Registration(type, id))
+        self.registration_channel.send(Registration(type, id))
         self.server._run_once()
-        assert_true(self.viewer_channel.recv_ready(), "Viewer channel is not ready to receive")
-        game_info = self.viewer_channel.recv()
-        game_info_message = self.server.build_game_info()
-        assert_equal(game_info, game_info_message)
+        assert_arguments_matches(self.viewer_channel.send.call_args_list[0], self.server.build_game_info())
 
     def test_registration_triggers_sending_game_info(self):
         for id, type in ((Id("viewer", 1), ClientType.VIEWER), (Id("bot", 1), ClientType.BOT)):
@@ -58,16 +61,15 @@ class TestRegistration(Shared):
 class TestGameData(Shared):
     def test_game_data_sent_once_per_loop(self):
         self.server._run_once()
-        assert_true(self.viewer_channel.recv_ready(), "Viewer channel is not ready to receive")
-        game_data = self.viewer_channel.recv()
-        assert_is_instance(game_data, GameData)
-        assert_false(self.viewer_channel.recv_ready(), "Viewer channel has more messages")
+        def argument_matcher(data):
+            return isinstance(data, GameData)
+        self.viewer_channel.send.assert_called_with(_TestMatcher(argument_matcher))
 
     def test_game_data_is_initialized_with_lists(self):
         self.server._run_once()
-        game_data = self.viewer_channel.recv()
-        assert_is_instance(game_data.bullets, list)
-        assert_is_instance(game_data.tanks, list)
+        def argument_matcher(data):
+            return isinstance(data.bullets, list) and isinstance(data.tanks, list)
+        self.viewer_channel.send.assert_called_with(_TestMatcher(argument_matcher))
 
 
 if __name__ == "__main__":
