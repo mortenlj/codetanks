@@ -5,7 +5,7 @@ import argparse
 
 import pinject
 
-from ibidem.codetanks.server.com import Channel, SocketType
+from ibidem.codetanks.server.com import Channel, ChannelType
 from ibidem.codetanks.server.game_server import GameServer
 
 
@@ -17,10 +17,10 @@ class ObjectGraph(pinject.BindingSpec):
         bind("registration_port", to_instance=self._registration_port)
 
     def provide_viewer_channel(self):
-        return Channel(SocketType.PUBLISH)
+        return Channel(ChannelType.PUBLISH)
 
     def provide_registration_channel(self, registration_port):
-        return Channel(SocketType.REPLY, registration_port)
+        return Channel(ChannelType.REPLY, registration_port)
 
 
 def main():
