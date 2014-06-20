@@ -8,7 +8,7 @@ import zmq
 from ibidem.codetanks.domain.util import deserialize, serialize
 
 
-class SocketType(object):
+class ChannelType(object):
     REQUEST = zmq.REQ
     REPLY = zmq.REP
     PUBLISH = zmq.PUB
@@ -19,9 +19,9 @@ class Channel(object):
     url_scheme = "tcp"
     url_wildcard = "*"
 
-    def __init__(self, socket_type, port=None):
+    def __init__(self, channel_type, port=None):
         ctx = zmq.Context.instance()
-        self.zmq_socket = ctx.socket(socket_type)
+        self.zmq_socket = ctx.socket(channel_type)
         self.port = self._bind_socket(port)
 
     def _bind_socket(self, port):

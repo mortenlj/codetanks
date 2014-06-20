@@ -5,7 +5,7 @@ from mock import patch
 from nose.tools import eq_
 
 from ibidem.codetanks.domain.ttypes import Id
-from ibidem.codetanks.server.com import Channel, SocketType
+from ibidem.codetanks.server.com import Channel, ChannelType
 
 
 def _test_bind(self, port):
@@ -24,15 +24,15 @@ class TestChannel(object):
 
     def test_has_valid_urls(self):
         with patch("ibidem.codetanks.server.com.gethostname", return_value=self.hostname):
-            socket = Channel(SocketType.PUBLISH, self.port)
+            socket = Channel(ChannelType.PUBLISH, self.port)
             eq_(socket.url, "tcp://%s:%d" % (self.hostname, self.port))
 
     def test_socket(self):
         with patch.object(Channel, "url_scheme", self.test_url_scheme), \
              patch.object(Channel, "url_wildcard", self.test_url_wildcard), \
              patch.object(Channel, "_bind_socket", _test_bind):
-            req_socket = Channel(SocketType.REQUEST, 1)
-            rep_socket = Channel(SocketType.REPLY, 0)
+            req_socket = Channel(ChannelType.REQUEST, 1)
+            rep_socket = Channel(ChannelType.REPLY, 0)
             value = Id("name", 1)
             req_socket.send(value)
             eq_(rep_socket.recv(), value)
