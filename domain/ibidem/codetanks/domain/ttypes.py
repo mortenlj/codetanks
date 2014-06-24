@@ -230,93 +230,6 @@ class Registration(object):
     return not (self == other)
 
 
-class RegistrationReply(object):
-  """
-  Attributes:
-   - event_url
-   - cmd_url
-  """
-
-  __slots__ = [ 
-    'event_url',
-    'cmd_url',
-   ]
-
-  thrift_spec = (
-    None, # 0
-    (1, TType.STRING, 'event_url', None, None, ), # 1
-    (2, TType.STRING, 'cmd_url', None, None, ), # 2
-  )
-
-  def __init__(self, event_url=None, cmd_url=None,):
-    self.event_url = event_url
-    self.cmd_url = cmd_url
-
-  def read(self, iprot):
-    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
-      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
-      return
-    iprot.readStructBegin()
-    while True:
-      (fname, ftype, fid) = iprot.readFieldBegin()
-      if ftype == TType.STOP:
-        break
-      if fid == 1:
-        if ftype == TType.STRING:
-          self.event_url = iprot.readString().decode('utf-8')
-        else:
-          iprot.skip(ftype)
-      elif fid == 2:
-        if ftype == TType.STRING:
-          self.cmd_url = iprot.readString().decode('utf-8')
-        else:
-          iprot.skip(ftype)
-      else:
-        iprot.skip(ftype)
-      iprot.readFieldEnd()
-    iprot.readStructEnd()
-
-  def write(self, oprot):
-    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
-      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
-      return
-    oprot.writeStructBegin('RegistrationReply')
-    if self.event_url is not None:
-      oprot.writeFieldBegin('event_url', TType.STRING, 1)
-      oprot.writeString(self.event_url.encode('utf-8'))
-      oprot.writeFieldEnd()
-    if self.cmd_url is not None:
-      oprot.writeFieldBegin('cmd_url', TType.STRING, 2)
-      oprot.writeString(self.cmd_url.encode('utf-8'))
-      oprot.writeFieldEnd()
-    oprot.writeFieldStop()
-    oprot.writeStructEnd()
-
-  def validate(self):
-    if self.event_url is None:
-      raise TProtocol.TProtocolException(message='Required field event_url is unset!')
-    return
-
-
-  def __repr__(self):
-    L = ['%s=%r' % (key, getattr(self, key))
-      for key in self.__slots__]
-    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
-
-  def __eq__(self, other):
-    if not isinstance(other, self.__class__):
-      return False
-    for attr in self.__slots__:
-      my_val = getattr(self, attr)
-      other_val = getattr(other, attr)
-      if my_val != other_val:
-        return False
-    return True
-
-  def __ne__(self, other):
-    return not (self == other)
-
-
 class Arena(object):
   """
   Attributes:
@@ -459,6 +372,109 @@ class GameInfo(object):
   def validate(self):
     if self.arena is None:
       raise TProtocol.TProtocolException(message='Required field arena is unset!')
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, getattr(self, key))
+      for key in self.__slots__]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    if not isinstance(other, self.__class__):
+      return False
+    for attr in self.__slots__:
+      my_val = getattr(self, attr)
+      other_val = getattr(other, attr)
+      if my_val != other_val:
+        return False
+    return True
+
+  def __ne__(self, other):
+    return not (self == other)
+
+
+class RegistrationReply(object):
+  """
+  Attributes:
+   - game_info
+   - event_url
+   - cmd_url
+  """
+
+  __slots__ = [ 
+    'game_info',
+    'event_url',
+    'cmd_url',
+   ]
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'game_info', (GameInfo, GameInfo.thrift_spec), None, ), # 1
+    (2, TType.STRING, 'event_url', None, None, ), # 2
+    (3, TType.STRING, 'cmd_url', None, None, ), # 3
+  )
+
+  def __init__(self, game_info=None, event_url=None, cmd_url=None,):
+    self.game_info = game_info
+    self.event_url = event_url
+    self.cmd_url = cmd_url
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.game_info = GameInfo()
+          self.game_info.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRING:
+          self.event_url = iprot.readString().decode('utf-8')
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.STRING:
+          self.cmd_url = iprot.readString().decode('utf-8')
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('RegistrationReply')
+    if self.game_info is not None:
+      oprot.writeFieldBegin('game_info', TType.STRUCT, 1)
+      self.game_info.write(oprot)
+      oprot.writeFieldEnd()
+    if self.event_url is not None:
+      oprot.writeFieldBegin('event_url', TType.STRING, 2)
+      oprot.writeString(self.event_url.encode('utf-8'))
+      oprot.writeFieldEnd()
+    if self.cmd_url is not None:
+      oprot.writeFieldBegin('cmd_url', TType.STRING, 3)
+      oprot.writeString(self.cmd_url.encode('utf-8'))
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    if self.game_info is None:
+      raise TProtocol.TProtocolException(message='Required field game_info is unset!')
+    if self.event_url is None:
+      raise TProtocol.TProtocolException(message='Required field event_url is unset!')
     return
 
 

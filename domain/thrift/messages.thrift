@@ -22,11 +22,6 @@ struct Registration {
     2: required Id id;
 }
 
-struct RegistrationReply {
-    1: required string event_url;
-    2: optional string cmd_url;
-}
-
 struct Arena {
     1: required i16 width;
     2: required i16 height;
@@ -34,6 +29,12 @@ struct Arena {
 
 struct GameInfo {
     1: required Arena arena;
+}
+
+struct RegistrationReply {
+    1: required GameInfo game_info;
+    2: required string event_url;
+    3: optional string cmd_url;
 }
 
 struct Point {
