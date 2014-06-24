@@ -48,13 +48,16 @@ class TestBounds(Shared):
 
 
 class TestRegistration(Shared):
-    def _registration_triggers_sending_game_info(self, id, type):
+    def _registration_triggers_sending_game_info(self, type, id):
         self.registration_channel.send(Registration(type, id))
         self.server._run_once()
         assert_arguments_matches(self.viewer_channel.send.call_args_list[0], self.server.build_game_info())
 
     def test_registration_triggers_sending_game_info(self):
-        for id, type in ((Id("viewer", 1), ClientType.VIEWER), (Id("bot", 1), ClientType.BOT)):
+        for id, type in (
+                (ClientType.VIEWER, Id("viewer", 1)),
+                (ClientType.BOT, Id("bot", 1))
+            ):
             yield self._registration_triggers_sending_game_info, id, type
 
 
