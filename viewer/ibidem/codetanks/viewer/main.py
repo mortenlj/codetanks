@@ -31,7 +31,6 @@ def initialize_main():
 
     server_url = sys.argv[1]
     server = ServerProxy(server_url)
-    server.update()
     arena = Arena(server.arena.width, server.arena.height)
     screen = pygame.display.set_mode([arena.get_width() + 256, arena.get_height()])
     screen.fill(BG_COLOR)
