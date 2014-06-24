@@ -233,20 +233,24 @@ class Registration(object):
 class RegistrationReply(object):
   """
   Attributes:
-   - update_url
+   - event_url
+   - cmd_url
   """
 
   __slots__ = [ 
-    'update_url',
+    'event_url',
+    'cmd_url',
    ]
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'update_url', None, None, ), # 1
+    (1, TType.STRING, 'event_url', None, None, ), # 1
+    (2, TType.STRING, 'cmd_url', None, None, ), # 2
   )
 
-  def __init__(self, update_url=None,):
-    self.update_url = update_url
+  def __init__(self, event_url=None, cmd_url=None,):
+    self.event_url = event_url
+    self.cmd_url = cmd_url
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -259,7 +263,12 @@ class RegistrationReply(object):
         break
       if fid == 1:
         if ftype == TType.STRING:
-          self.update_url = iprot.readString().decode('utf-8')
+          self.event_url = iprot.readString().decode('utf-8')
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRING:
+          self.cmd_url = iprot.readString().decode('utf-8')
         else:
           iprot.skip(ftype)
       else:
@@ -272,16 +281,20 @@ class RegistrationReply(object):
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('RegistrationReply')
-    if self.update_url is not None:
-      oprot.writeFieldBegin('update_url', TType.STRING, 1)
-      oprot.writeString(self.update_url.encode('utf-8'))
+    if self.event_url is not None:
+      oprot.writeFieldBegin('event_url', TType.STRING, 1)
+      oprot.writeString(self.event_url.encode('utf-8'))
+      oprot.writeFieldEnd()
+    if self.cmd_url is not None:
+      oprot.writeFieldBegin('cmd_url', TType.STRING, 2)
+      oprot.writeString(self.cmd_url.encode('utf-8'))
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
   def validate(self):
-    if self.update_url is None:
-      raise TProtocol.TProtocolException(message='Required field update_url is unset!')
+    if self.event_url is None:
+      raise TProtocol.TProtocolException(message='Required field event_url is unset!')
     return
 
 

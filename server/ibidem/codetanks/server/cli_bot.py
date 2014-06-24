@@ -55,9 +55,9 @@ class CliBot(Cmd):
         reply = deserialize(registration_socket.recv())
         self._update_socket = zmq_context.socket(zmq.SUB)
         self._update_socket.set(zmq.SUBSCRIBE, "")
-        update_url = reply.update_url
-        print "Subscribing to %s" % update_url
-        self._update_socket.connect(update_url)
+        event_url = reply.event_url
+        print "Subscribing to %s" % event_url
+        self._update_socket.connect(event_url)
 
     def do_exit(self, line):
         """Leave the bot-cli. Your bot will be left in whatever state it is in."""
