@@ -3,19 +3,22 @@
 
 import pygame
 
-from ibidem.codetanks.domain.ttypes import Arena, GameInfo, GameData, RegistrationReply
+from ibidem.codetanks.domain.ttypes import Arena, GameInfo, GameData, RegistrationReply, ClientType
+from ibidem.codetanks.server.com import ChannelType
 
 
 class GameServer(object):
-    def __init__(self, registration_channel, viewer_channel):
+    def __init__(self, registration_channel, viewer_channel, channel_factory):
         self._registration_channel = registration_channel
         self._viewer_channel = viewer_channel
+        self._channel_factory = channel_factory
         pygame.init()
         self.bounds = pygame.Rect(0, 0, 500, 500)
         self.clock = None
         self._handlers = {
             self._registration_channel: self._handle_registration
         }
+        self._bot_channels = {}
 
     def start(self):
         self.clock = pygame.time.Clock()
@@ -41,9 +44,18 @@ class GameServer(object):
 
     def _handle_registration(self, registration):
         print "GameServer received registration: %r" % registration
-        self._registration_channel.send(RegistrationReply(self._viewer_channel.url))
+        if registration.client_type == ClientType.BOT:
+            self._handle_bot_registration(registration)
+        else:
+            self._registration_channel.send(RegistrationReply(self._viewer_channel.url))
         print "GameServer sending game_info"
         self._viewer_channel.send(self.build_game_info())
+
+    def _handle_bot_registration(self, registration):
+        self._bot_channels[registration.id] = {
+            ChannelType.PUBLISH: self._channel_factory(ChannelType.PUBLISH),
+            ChannelType.REPLY: self._channel_factory(ChannelType.REPLY)
+        }
 
     def build_game_data(self):
         return GameData([], [])

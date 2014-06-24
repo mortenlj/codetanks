@@ -2,10 +2,10 @@
 # -*- coding: utf-8
 
 from mock import create_autospec
-from nose.tools import assert_is_not_none, assert_equal
+from nose.tools import assert_is_not_none, assert_equal, assert_in
 
 from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id
-from ibidem.codetanks.server.com import Channel
+from ibidem.codetanks.server.com import Channel, ChannelType
 from ibidem.codetanks.server.game_server import GameServer
 
 
@@ -22,12 +22,21 @@ def assert_arguments_matches(call_args, *matchers):
     assert_equal(args, matchers)
 
 
+def assert_has_key(d, key):
+    assert_in(key, d.keys(), "The key %r was not found in %r" % (key, d.keys()))
+
+
 class Shared(object):
     def setup(self):
         self.registration_channel = create_autospec(Channel)
+        self.registration_channel.ready.return_value = False
         self.viewer_channel = create_autospec(Channel)
-        self.server = GameServer(self.registration_channel, self.viewer_channel)
+        self.server = GameServer(self.registration_channel, self.viewer_channel, lambda x: create_autospec(Channel(x)))
         self.server.start()
+
+    def send_on_mock_channel(self, channel, value):
+        channel.ready.return_value = True
+        channel.recv.return_value = value
 
 
 class TestBounds(Shared):
@@ -49,7 +58,7 @@ class TestBounds(Shared):
 
 class TestRegistration(Shared):
     def _registration_triggers_sending_game_info(self, type, id):
-        self.registration_channel.send(Registration(type, id))
+        self.send_on_mock_channel(self.registration_channel, Registration(type, id))
         self.server._run_once()
         assert_arguments_matches(self.viewer_channel.send.call_args_list[0], self.server.build_game_info())
 
@@ -59,6 +68,14 @@ class TestRegistration(Shared):
                 (ClientType.BOT, Id("bot", 1))
             ):
             yield self._registration_triggers_sending_game_info, id, type
+
+    def test_registering_bots_are_associated_with_channels(self):
+        bot_id = Id("bot", 1)
+        self.send_on_mock_channel(self.registration_channel, Registration(ClientType.BOT, bot_id))
+        self.server._run_once()
+        assert_has_key(self.server._bot_channels, bot_id)
+        assert_has_key(self.server._bot_channels[bot_id], ChannelType.PUBLISH)
+        assert_has_key(self.server._bot_channels[bot_id], ChannelType.REPLY)
 
 
 class TestGameData(Shared):

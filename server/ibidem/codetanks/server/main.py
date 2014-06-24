@@ -22,6 +22,11 @@ class ObjectGraph(pinject.BindingSpec):
     def provide_registration_channel(self, registration_port):
         return Channel(ChannelType.REPLY, registration_port)
 
+    def provide_channel_factory(self):
+        def factory(channel_type):
+            return Channel(channel_type)
+        return factory
+
 
 def main():
     parser = argparse.ArgumentParser()
