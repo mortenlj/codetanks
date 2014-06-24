@@ -23,7 +23,8 @@ struct Registration {
 }
 
 struct RegistrationReply {
-    1: required string update_url;
+    1: required string event_url;
+    2: optional string cmd_url;
 }
 
 struct Arena {

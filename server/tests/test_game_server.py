@@ -4,7 +4,7 @@
 from mock import create_autospec
 from nose.tools import assert_is_not_none, assert_equal, assert_in
 
-from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id
+from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id, RegistrationReply
 from ibidem.codetanks.server.com import Channel, ChannelType
 from ibidem.codetanks.server.game_server import GameServer
 
@@ -77,6 +77,13 @@ class TestRegistration(Shared):
         assert_has_key(self.server._bot_channels[bot_id], ChannelType.PUBLISH)
         assert_has_key(self.server._bot_channels[bot_id], ChannelType.REPLY)
 
+    def test_registering_bots_get_dedicated_channel_urls(self):
+        bot_id = Id("bot", 1)
+        self.send_on_mock_channel(self.registration_channel, Registration(ClientType.BOT, bot_id))
+        self.server._run_once()
+        bot_channels = self.server._bot_channels[bot_id]
+        self.registration_channel.send.assert_called_once_with(
+            RegistrationReply(bot_channels[ChannelType.PUBLISH].url, bot_channels[ChannelType.REPLY].url))
 
 class TestGameData(Shared):
     def test_game_data_sent_once_per_loop(self):

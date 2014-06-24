@@ -52,10 +52,13 @@ class GameServer(object):
         self._viewer_channel.send(self.build_game_info())
 
     def _handle_bot_registration(self, registration):
+        event_channel = self._channel_factory(ChannelType.PUBLISH)
+        cmd_channel = self._channel_factory(ChannelType.REPLY)
         self._bot_channels[registration.id] = {
-            ChannelType.PUBLISH: self._channel_factory(ChannelType.PUBLISH),
-            ChannelType.REPLY: self._channel_factory(ChannelType.REPLY)
+            ChannelType.PUBLISH: event_channel,
+            ChannelType.REPLY: cmd_channel
         }
+        self._registration_channel.send(RegistrationReply(event_channel.url, cmd_channel.url))
 
     def build_game_data(self):
         return GameData([], [])
