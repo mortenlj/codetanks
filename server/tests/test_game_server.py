@@ -57,17 +57,13 @@ class TestBounds(Shared):
 
 
 class TestRegistration(Shared):
-    def _registration_triggers_sending_game_info(self, type, id):
-        self.send_on_mock_channel(self.registration_channel, Registration(type, id))
+    def test_registering_viewer_gets_generic_urls_and_game_info(self):
+        viewer_id = Id("viewer", 1)
+        self.send_on_mock_channel(self.registration_channel, Registration(ClientType.VIEWER, viewer_id))
         self.server._run_once()
-        assert_arguments_matches(self.viewer_channel.send.call_args_list[0], self.server.build_game_info())
-
-    def test_registration_triggers_sending_game_info(self):
-        for id, type in (
-                (ClientType.VIEWER, Id("viewer", 1)),
-                (ClientType.BOT, Id("bot", 1))
-            ):
-            yield self._registration_triggers_sending_game_info, id, type
+        self.registration_channel.send.assert_called_once_with(
+            RegistrationReply(self.server.build_game_info(), self.server._viewer_channel.url)
+        )
 
     def test_registering_bots_are_associated_with_channels(self):
         bot_id = Id("bot", 1)
@@ -77,13 +73,14 @@ class TestRegistration(Shared):
         assert_has_key(self.server._bot_channels[bot_id], ChannelType.PUBLISH)
         assert_has_key(self.server._bot_channels[bot_id], ChannelType.REPLY)
 
-    def test_registering_bots_get_dedicated_channel_urls(self):
+    def test_registering_bots_get_dedicated_channel_urls_and_game_info(self):
         bot_id = Id("bot", 1)
         self.send_on_mock_channel(self.registration_channel, Registration(ClientType.BOT, bot_id))
         self.server._run_once()
         bot_channels = self.server._bot_channels[bot_id]
         self.registration_channel.send.assert_called_once_with(
-            RegistrationReply(bot_channels[ChannelType.PUBLISH].url, bot_channels[ChannelType.REPLY].url))
+            RegistrationReply(self.server.build_game_info(), bot_channels[ChannelType.PUBLISH].url, bot_channels[ChannelType.REPLY].url)
+        )
 
 class TestGameData(Shared):
     def test_game_data_sent_once_per_loop(self):

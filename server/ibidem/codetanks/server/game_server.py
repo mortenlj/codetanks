@@ -47,9 +47,7 @@ class GameServer(object):
         if registration.client_type == ClientType.BOT:
             self._handle_bot_registration(registration)
         else:
-            self._registration_channel.send(RegistrationReply(self._viewer_channel.url))
-        print "GameServer sending game_info"
-        self._viewer_channel.send(self.build_game_info())
+            self._registration_channel.send(RegistrationReply(self.build_game_info(), self._viewer_channel.url))
 
     def _handle_bot_registration(self, registration):
         event_channel = self._channel_factory(ChannelType.PUBLISH)
@@ -58,7 +56,7 @@ class GameServer(object):
             ChannelType.PUBLISH: event_channel,
             ChannelType.REPLY: cmd_channel
         }
-        self._registration_channel.send(RegistrationReply(event_channel.url, cmd_channel.url))
+        self._registration_channel.send(RegistrationReply(self.build_game_info(), event_channel.url, cmd_channel.url))
 
     def build_game_data(self):
         return GameData([], [])
