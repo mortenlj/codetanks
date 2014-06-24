@@ -10,7 +10,7 @@ import zmq
 from ibidem.codetanks.viewer.entities import Tank, Bullet
 from ibidem.codetanks.viewer.events import Killed, Created
 from ibidem.codetanks.domain.util import serialize, deserialize
-from ibidem.codetanks.domain.ttypes import Registration, ClientType, GameInfo
+from ibidem.codetanks.domain.ttypes import Registration, ClientType, Id
 
 
 class ServerProxy(object):
@@ -31,10 +31,12 @@ class ServerProxy(object):
         zmq_context = zmq.Context.instance()
         registration_socket = zmq_context.socket(zmq.REQ)
         registration_socket.connect(server_url)
-        registration_socket.send(serialize(Registration(ClientType.VIEWER, "%s:%s" % (socket.gethostname(), uuid4()))))
+        registration_socket.send(serialize(Registration(ClientType.VIEWER, Id("viewer:%s:%s" % (socket.gethostname(), uuid4()), 1))))
         reply = deserialize(registration_socket.recv())
         self._update_socket = zmq_context.socket(zmq.SUB)
         self._update_socket.set(zmq.SUBSCRIBE, "")
+        arena = reply.game_info.arena
+        self.arena = pygame.Rect(0, 0, arena.width, arena.height)
         event_url = reply.event_url
         print "Subscribing to %s" % event_url
         self._update_socket.connect(event_url)
@@ -57,12 +59,8 @@ class ServerProxy(object):
             pygame.event.post(Killed(entity))
 
     def _update_game_data(self, game_data):
-        if isinstance(game_data, GameInfo):
-            arena = game_data.arena
-            self.arena = pygame.Rect(0, 0, arena.width, arena.height)
-        else:
-            self._update_entities(game_data.tanks, self._tanks, self.tanks, Tank)
-            self._update_entities(game_data.bullets, self._bullets, self.bullets, Bullet)
+        self._update_entities(game_data.tanks, self._tanks, self.tanks, Tank)
+        self._update_entities(game_data.bullets, self._bullets, self.bullets, Bullet)
 
     def _get_server_update(self):
         return deserialize(self._update_socket.recv())
