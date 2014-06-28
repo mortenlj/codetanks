@@ -34,10 +34,6 @@ class Shared(object):
         self.server = GameServer(self.registration_channel, self.viewer_channel, lambda x: create_autospec(Channel(x)))
         self.server.start()
 
-    def send_on_mock_channel(self, channel, value):
-        channel.ready.return_value = True
-        channel.recv.return_value = value
-
 
 class TestBounds(Shared):
     def test_server_has_bounds(self):
@@ -56,31 +52,47 @@ class TestBounds(Shared):
         assert_equal(arena.width, self.server.bounds.width)
 
 
-class TestRegistration(Shared):
+class RegistrationSetup(Shared):
+    client_type = None
+    client_id = None
+
+    def setup(self):
+        super(RegistrationSetup, self).setup()
+        self.send_on_mock_channel(self.registration_channel, Registration(self.client_type, self.client_id))
+
+    def send_on_mock_channel(self, channel, value):
+        channel.ready.return_value = True
+        channel.recv.return_value = value
+
+
+class TestViewerRegistration(RegistrationSetup):
+    client_type = ClientType.VIEWER
+    client_id = Id("viewer", 1)
+
     def test_registering_viewer_gets_generic_urls_and_game_info(self):
-        viewer_id = Id("viewer", 1)
-        self.send_on_mock_channel(self.registration_channel, Registration(ClientType.VIEWER, viewer_id))
         self.server._run_once()
         self.registration_channel.send.assert_called_once_with(
             RegistrationReply(self.server.build_game_info(), self.server._viewer_channel.url)
         )
 
+
+class TestBotRegistration(RegistrationSetup):
+    client_type = ClientType.BOT
+    client_id = Id("bot", 1)
+
     def test_registering_bots_are_associated_with_channels(self):
-        bot_id = Id("bot", 1)
-        self.send_on_mock_channel(self.registration_channel, Registration(ClientType.BOT, bot_id))
         self.server._run_once()
-        assert_has_key(self.server._bot_channels, bot_id)
-        assert_has_key(self.server._bot_channels[bot_id], ChannelType.PUBLISH)
-        assert_has_key(self.server._bot_channels[bot_id], ChannelType.REPLY)
+        assert_has_key(self.server._bot_channels, self.client_id)
+        assert_has_key(self.server._bot_channels[self.client_id], ChannelType.PUBLISH)
+        assert_has_key(self.server._bot_channels[self.client_id], ChannelType.REPLY)
 
     def test_registering_bots_get_dedicated_channel_urls_and_game_info(self):
-        bot_id = Id("bot", 1)
-        self.send_on_mock_channel(self.registration_channel, Registration(ClientType.BOT, bot_id))
         self.server._run_once()
-        bot_channels = self.server._bot_channels[bot_id]
+        bot_channels = self.server._bot_channels[self.client_id]
         self.registration_channel.send.assert_called_once_with(
             RegistrationReply(self.server.build_game_info(), bot_channels[ChannelType.PUBLISH].url, bot_channels[ChannelType.REPLY].url)
         )
+
 
 class TestGameData(Shared):
     def test_game_data_sent_once_per_loop(self):
