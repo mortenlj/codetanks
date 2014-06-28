@@ -36,7 +36,11 @@ class GameServer(object):
             self._run_once()
 
     def _run_once(self):
-        received_messages = len([self._handlers[channel](channel.recv()) for channel in self._handlers.keys() if channel.ready()])
+        received_messages = 0
+        for channel in self._handlers.keys():
+            if channel.ready():
+                self._handlers[channel](channel.recv())
+                received_messages += 1
         if received_messages > 0:
             print "GameServer processed %d messages" % received_messages
         self._viewer_channel.send(self.build_game_data())
