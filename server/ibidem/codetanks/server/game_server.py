@@ -2,23 +2,28 @@
 # -*- coding: utf-8
 
 import pygame
+from pinject import copy_args_to_internal_fields, copy_args_to_public_fields
 
 from ibidem.codetanks.domain.ttypes import Arena, GameInfo, GameData, RegistrationReply, ClientType
 from ibidem.codetanks.server.com import ChannelType
 
 
+class BotHolder(object):
+    @copy_args_to_public_fields
+    def __init__(self, bot_id, player_id, event_channel, cmd_channel):
+        pass
+
+
 class GameServer(object):
+    @copy_args_to_internal_fields
     def __init__(self, registration_channel, viewer_channel, channel_factory):
-        self._registration_channel = registration_channel
-        self._viewer_channel = viewer_channel
-        self._channel_factory = channel_factory
         pygame.init()
         self.bounds = pygame.Rect(0, 0, 500, 500)
         self.clock = None
         self._handlers = {
             self._registration_channel: self._handle_registration
         }
-        self._bot_channels = {}
+        self._bots = []
 
     def start(self):
         self.clock = pygame.time.Clock()
@@ -56,11 +61,14 @@ class GameServer(object):
     def _handle_bot_registration(self, registration):
         event_channel = self._channel_factory(ChannelType.PUBLISH)
         cmd_channel = self._channel_factory(ChannelType.REPLY)
-        self._bot_channels[registration.id] = {
-            ChannelType.PUBLISH: event_channel,
-            ChannelType.REPLY: cmd_channel
-        }
+        player_id = len(self._bots)
+        holder = BotHolder(registration.id, player_id, event_channel, cmd_channel)
+        self._bots.append(holder)
         self._registration_channel.send(RegistrationReply(self.build_game_info(), event_channel.url, cmd_channel.url))
+        self._handlers[holder.cmd_channel] = self._handle_bot_cmd
+
+    def _handle_bot_cmd(self, todo):
+        pass
 
     def build_game_data(self):
         return GameData([], [])
