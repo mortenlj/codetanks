@@ -5,7 +5,7 @@ from mock import create_autospec
 from nose.tools import assert_is_not_none, assert_equal, assert_in
 
 from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id, RegistrationReply
-from ibidem.codetanks.server.com import Channel, ChannelType
+from ibidem.codetanks.server.com import Channel
 from ibidem.codetanks.server.game_server import GameServer
 
 
@@ -64,6 +64,9 @@ class RegistrationSetup(Shared):
         channel.ready.return_value = True
         channel.recv.return_value = value
 
+    def reset_mock_channel(self, channel):
+        channel.ready.return_value = None
+
 
 class TestViewerRegistration(RegistrationSetup):
     client_type = ClientType.VIEWER
@@ -82,16 +85,25 @@ class TestBotRegistration(RegistrationSetup):
 
     def test_registering_bots_are_associated_with_channels(self):
         self.server._run_once()
-        assert_has_key(self.server._bot_channels, self.client_id)
-        assert_has_key(self.server._bot_channels[self.client_id], ChannelType.PUBLISH)
-        assert_has_key(self.server._bot_channels[self.client_id], ChannelType.REPLY)
+        holder = self.server._bots[0]
+        assert_is_not_none(holder)
+        assert_is_not_none(holder.event_channel)
+        assert_is_not_none(holder.cmd_channel)
+        assert_equal(holder.player_id, 0)
 
     def test_registering_bots_get_dedicated_channel_urls_and_game_info(self):
         self.server._run_once()
-        bot_channels = self.server._bot_channels[self.client_id]
+        holder = self.server._bots[0]
         self.registration_channel.send.assert_called_once_with(
-            RegistrationReply(self.server.build_game_info(), bot_channels[ChannelType.PUBLISH].url, bot_channels[ChannelType.REPLY].url)
+            RegistrationReply(self.server.build_game_info(), holder.event_channel.url, holder.cmd_channel.url)
         )
+
+    def test_bot_cmd_channel_is_polled(self):
+        self.server._run_once()
+        self.reset_mock_channel(self.registration_channel)
+        self.server._run_once()
+        holder = self.server._bots[0]
+        holder.cmd_channel.ready.assert_called_once_with()
 
 
 class TestGameData(Shared):
