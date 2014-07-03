@@ -11,10 +11,11 @@ class TestWorld(object):
     width = 500
     height = 500
 
-    def test_world_is_initialized_with_lists(self):
+    def test_game_data_is_initialized_with_lists(self):
         world = World(self.width, self.height)
-        assert_is_instance(world.bullets, list)
-        assert_is_instance(world.tanks, list)
+        game_data = world.build_game_data()
+        assert_is_instance(game_data.bullets, list)
+        assert_is_instance(game_data.tanks, list)
 
     def test_arena_is_given_size(self):
         world = World(self.width, self.height)

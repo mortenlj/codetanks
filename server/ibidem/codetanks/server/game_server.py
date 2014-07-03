@@ -47,7 +47,7 @@ class GameServer(object):
                 received_messages += 1
         if received_messages > 0:
             print "GameServer processed %d messages" % received_messages
-        self._viewer_channel.send(self.build_game_data())
+        self._viewer_channel.send(self._world.build_game_data())
         self.clock.tick(60)
 
     def _handle_registration(self, registration):
@@ -69,9 +69,6 @@ class GameServer(object):
 
     def _handle_bot_cmd(self, todo):
         pass
-
-    def build_game_data(self):
-        return self._world
 
     def build_game_info(self):
         return GameInfo(self._world.arena)

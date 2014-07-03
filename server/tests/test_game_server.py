@@ -2,29 +2,12 @@
 # -*- coding: utf-8
 
 from mock import create_autospec
-from nose.tools import assert_is_not_none, assert_equal, assert_in
+from nose.tools import assert_is_not_none, assert_equal
 
 from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id, RegistrationReply
 from ibidem.codetanks.server.com import Channel
 from ibidem.codetanks.server.game_server import GameServer
 from ibidem.codetanks.server.world import World
-
-
-class _TestMatcher(object):
-    def __init__(self, test):
-        self._test = test
-
-    def __eq__(self, other):
-        return self._test(other)
-
-
-def assert_arguments_matches(call_args, *matchers):
-    args, kwargs = call_args
-    assert_equal(args, matchers)
-
-
-def assert_has_key(d, key):
-    assert_in(key, d.keys(), "The key %r was not found in %r" % (key, d.keys()))
 
 
 class Shared(object):
@@ -97,10 +80,11 @@ class TestBotRegistration(RegistrationSetup):
 
 class TestGameData(Shared):
     def test_game_data_sent_once_per_loop(self):
+        game_data = GameData()
+        self.server._world.build_game_data.return_value = game_data
         self.server._run_once()
-        def argument_matcher(data):
-            return isinstance(data, GameData)
-        self.viewer_channel.send.assert_called_with(_TestMatcher(argument_matcher))
+        self.viewer_channel.send.assert_called_with(game_data)
+        self.server._world.build_game_data.assert_called_once_with()
 
 
 if __name__ == "__main__":
