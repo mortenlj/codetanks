@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 
+from random import randint
+
 from ibidem.codetanks.domain.ttypes import GameData, Arena, Tank, Point
 
 
@@ -16,7 +18,7 @@ class World(GameData):
         pass
 
     def _select_valid_position(self):
-        return Point(self.arena.width / 2, self.arena.height / 2)
+        return Point(randint(0, self.arena.width), randint(0, self.arena.height))
 
 
 if __name__ == "__main__":
