@@ -85,25 +85,25 @@ class TestBotRegistration(RegistrationSetup):
 
     def test_registering_bots_are_associated_with_channels(self):
         self.server._run_once()
-        holder = self.server._bots[0]
-        assert_is_not_none(holder)
-        assert_is_not_none(holder.event_channel)
-        assert_is_not_none(holder.cmd_channel)
-        assert_equal(holder.player_id, 0)
+        bot = self.server._bots[0]
+        assert_is_not_none(bot)
+        assert_is_not_none(bot.event_channel)
+        assert_is_not_none(bot.cmd_channel)
+        assert_equal(bot.player_id, 0)
 
     def test_registering_bots_get_dedicated_channel_urls_and_game_info(self):
         self.server._run_once()
-        holder = self.server._bots[0]
+        bot = self.server._bots[0]
         self.registration_channel.send.assert_called_once_with(
-            RegistrationReply(self.server.build_game_info(), holder.event_channel.url, holder.cmd_channel.url)
+            RegistrationReply(self.server.build_game_info(), bot.event_channel.url, bot.cmd_channel.url)
         )
 
     def test_bot_cmd_channel_is_polled(self):
         self.server._run_once()
         self.reset_mock_channel(self.registration_channel)
         self.server._run_once()
-        holder = self.server._bots[0]
-        holder.cmd_channel.ready.assert_called_once_with()
+        bot = self.server._bots[0]
+        bot.cmd_channel.ready.assert_called_once_with()
 
 
 class TestGameData(Shared):

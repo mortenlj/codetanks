@@ -8,7 +8,7 @@ from ibidem.codetanks.domain.ttypes import Arena, GameInfo, GameData, Registrati
 from ibidem.codetanks.server.com import ChannelType
 
 
-class BotHolder(object):
+class Bot(object):
     @copy_args_to_public_fields
     def __init__(self, bot_id, player_id, event_channel, cmd_channel):
         pass
@@ -62,10 +62,10 @@ class GameServer(object):
         event_channel = self._channel_factory(ChannelType.PUBLISH)
         cmd_channel = self._channel_factory(ChannelType.REPLY)
         player_id = len(self._bots)
-        holder = BotHolder(registration.id, player_id, event_channel, cmd_channel)
-        self._bots.append(holder)
+        bot = Bot(registration.id, player_id, event_channel, cmd_channel)
+        self._bots.append(bot)
         self._registration_channel.send(RegistrationReply(self.build_game_info(), event_channel.url, cmd_channel.url))
-        self._handlers[holder.cmd_channel] = self._handle_bot_cmd
+        self._handlers[bot.cmd_channel] = self._handle_bot_cmd
 
     def _handle_bot_cmd(self, todo):
         pass
