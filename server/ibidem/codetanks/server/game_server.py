@@ -4,21 +4,20 @@
 import pygame
 from pinject import copy_args_to_internal_fields, copy_args_to_public_fields
 
-from ibidem.codetanks.domain.ttypes import Arena, GameInfo, GameData, RegistrationReply, ClientType
+from ibidem.codetanks.domain.ttypes import GameInfo, RegistrationReply, ClientType
 from ibidem.codetanks.server.com import ChannelType
 
 
 class Bot(object):
     @copy_args_to_public_fields
-    def __init__(self, bot_id, player_id, event_channel, cmd_channel):
+    def __init__(self, bot_id, tank_id, event_channel, cmd_channel):
         pass
 
 
 class GameServer(object):
     @copy_args_to_internal_fields
-    def __init__(self, registration_channel, viewer_channel, channel_factory):
+    def __init__(self, registration_channel, viewer_channel, channel_factory, world):
         pygame.init()
-        self.bounds = pygame.Rect(0, 0, 500, 500)
         self.clock = None
         self._handlers = {
             self._registration_channel: self._handle_registration
@@ -61,9 +60,10 @@ class GameServer(object):
     def _handle_bot_registration(self, registration):
         event_channel = self._channel_factory(ChannelType.PUBLISH)
         cmd_channel = self._channel_factory(ChannelType.REPLY)
-        player_id = len(self._bots)
-        bot = Bot(registration.id, player_id, event_channel, cmd_channel)
+        tank_id = len(self._bots)
+        bot = Bot(registration.id, tank_id, event_channel, cmd_channel)
         self._bots.append(bot)
+        self._world.add_tank(bot)
         self._registration_channel.send(RegistrationReply(self.build_game_info(), event_channel.url, cmd_channel.url))
         self._handlers[bot.cmd_channel] = self._handle_bot_cmd
 
@@ -71,11 +71,10 @@ class GameServer(object):
         pass
 
     def build_game_data(self):
-        return GameData([], [])
+        return self._world
 
     def build_game_info(self):
-        arena = Arena(self.bounds.width, self.bounds.height)
-        return GameInfo(arena)
+        return GameInfo(self._world.arena)
 
 
 if __name__ == "__main__":
