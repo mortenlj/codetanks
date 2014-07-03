@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 
-from nose.tools import assert_is_instance, assert_equal, assert_greater, assert_less
+from nose.tools import assert_is_instance, assert_equal, assert_not_equal, assert_greater, assert_less
 
 from ibidem.codetanks.domain.ttypes import Arena, Id, Tank
 from ibidem.codetanks.server.bot import Bot
@@ -33,6 +33,16 @@ class TestWorld(object):
         assert_greater(tank.position.y, 0)
         assert_less(tank.position.x, self.width)
         assert_less(tank.position.y, self.height)
+
+    def test_second_tank_does_not_collide(self):
+        world = World(self.width, self.height)
+        world.add_tank(Bot(self.bot_id, 0, None, None))
+        world.add_tank(Bot(self.bot_id, 1, None, None))
+        tank1 = world.tanks[0]
+        tank2 = world.tanks[1]
+        assert_not_equal(tank1.position.x, tank2.position.x)
+        assert_not_equal(tank1.position.y, tank2.position.y)
+
 
 
 if __name__ == "__main__":
