@@ -7,6 +7,7 @@ import pinject
 
 from ibidem.codetanks.server.com import Channel, ChannelType
 from ibidem.codetanks.server.game_server import GameServer
+from ibidem.codetanks.server.world import World
 
 
 class ObjectGraph(pinject.BindingSpec):
@@ -14,7 +15,10 @@ class ObjectGraph(pinject.BindingSpec):
         self._registration_port = registration_port
 
     def configure(self, bind):
+        bind("world_width", to_instance=500)
+        bind("world_height", to_instance=500)
         bind("registration_port", to_instance=self._registration_port)
+        bind("world", to_class=World)
 
     def provide_viewer_channel(self):
         return Channel(ChannelType.PUBLISH)
