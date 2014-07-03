@@ -81,10 +81,9 @@ class TestBotRegistration(RegistrationSetup):
 class TestGameData(Shared):
     def test_game_data_sent_once_per_loop(self):
         game_data = GameData()
-        self.server._world.build_game_data.return_value = game_data
+        self.server._world = game_data
         self.server._run_once()
         self.viewer_channel.send.assert_called_with(game_data)
-        self.server._world.build_game_data.assert_called_once_with()
 
 
 if __name__ == "__main__":

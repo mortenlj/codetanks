@@ -2,16 +2,11 @@
 # -*- coding: utf-8
 
 import pygame
-from pinject import copy_args_to_internal_fields, copy_args_to_public_fields
+from pinject import copy_args_to_internal_fields
 
 from ibidem.codetanks.domain.ttypes import GameInfo, RegistrationReply, ClientType
+from ibidem.codetanks.server.bot import Bot
 from ibidem.codetanks.server.com import ChannelType
-
-
-class Bot(object):
-    @copy_args_to_public_fields
-    def __init__(self, bot_id, tank_id, event_channel, cmd_channel):
-        pass
 
 
 class GameServer(object):
@@ -47,7 +42,7 @@ class GameServer(object):
                 received_messages += 1
         if received_messages > 0:
             print "GameServer processed %d messages" % received_messages
-        self._viewer_channel.send(self._world.build_game_data())
+        self._viewer_channel.send(self._world)
         self.clock.tick(60)
 
     def _handle_registration(self, registration):
