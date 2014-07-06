@@ -3,6 +3,7 @@
 
 from mock import create_autospec
 from nose.tools import assert_is_not_none, assert_equal
+from hamcrest import match_equality, instance_of
 
 from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id, RegistrationReply
 from ibidem.codetanks.server.com import Channel
@@ -80,10 +81,8 @@ class TestBotRegistration(RegistrationSetup):
 
 class TestGameData(Shared):
     def test_game_data_sent_once_per_loop(self):
-        game_data = GameData()
-        self.server._world = game_data
         self.server._run_once()
-        self.viewer_channel.send.assert_called_with(game_data)
+        self.viewer_channel.send.assert_called_with(match_equality(instance_of(GameData)))
 
 
 if __name__ == "__main__":
