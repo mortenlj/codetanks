@@ -8,7 +8,6 @@ import pygame
 import zmq
 
 from ibidem.codetanks.viewer.entities import Tank, Bullet
-from ibidem.codetanks.viewer.events import Killed, Created
 from ibidem.codetanks.domain.util import serialize, deserialize
 from ibidem.codetanks.domain.ttypes import Registration, ClientType, Id
 
@@ -24,10 +23,6 @@ class ServerProxy(object):
 
         :param server_url: The URL of the actual server being proxied
         """
-        self.tanks = pygame.sprite.RenderUpdates()
-        self.bullets = pygame.sprite.RenderUpdates()
-        self._tanks = {}
-        self._bullets = {}
         zmq_context = zmq.Context.instance()
         registration_socket = zmq_context.socket(zmq.REQ)
         registration_socket.connect(server_url)
@@ -41,26 +36,17 @@ class ServerProxy(object):
         print "Subscribing to %s" % event_url
         self._update_socket.connect(event_url)
 
-    def _update_entities(self, updates, entities, sprite_group, entity_class):
-        to_kill = sprite_group.copy()
+    def _update_entities(self, updates, sprite_group, entity_class):
         for update in updates:
-            entity_id = update["id"]
-            if entities.has_key(entity_id):
-                entity = entities[entity_id]
-                entity.update_from_dict(update)
-                to_kill.remove(entity)
-            else:
-                entity = entity_class(update)
-                sprite_group.add(entity)
-                entities[entity.id] = entity
-                pygame.event.post(Created(entity))
-        for entity in to_kill:
-            entity.kill()
-            pygame.event.post(Killed(entity))
+            entity = entity_class(update)
+            entity.update_visuals()
+            sprite_group.add(entity)
 
     def _update_game_data(self, game_data):
-        self._update_entities(game_data.tanks, self._tanks, self.tanks, Tank)
-        self._update_entities(game_data.bullets, self._bullets, self.bullets, Bullet)
+        self.tanks = pygame.sprite.RenderUpdates()
+        self._update_entities(game_data.tanks, self.tanks, Tank)
+        self.bullets = pygame.sprite.RenderUpdates()
+        self._update_entities(game_data.bullets, self.bullets, Bullet)
 
     def _get_server_update(self):
         return deserialize(self._update_socket.recv())
