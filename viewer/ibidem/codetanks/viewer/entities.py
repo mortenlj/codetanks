@@ -7,35 +7,27 @@ import pygame
 from ibidem.codetanks.viewer.vec2d import vec2d
 
 
-
-class MovingEntity(pygame.sprite.Sprite):
-    """A moving entity.
+class Entity(pygame.sprite.Sprite):
+    """An entity.
     """
-    speed = 0.1
 
-    def __init__(self, init_dict):
-        super(MovingEntity, self).__init__()
-        self.id = init_dict["id"]
-        self.update_from_dict(init_dict)
-
-    def update_from_dict(self, data_dict):
-        self.position = vec2d(data_dict["position"]["x"], data_dict["position"]["y"])
-        self.direction = vec2d(data_dict["direction"]["x"], data_dict["direction"]["y"])
-        self.speed = data_dict["speed"]
-        self.update_visuals()
+    def __init__(self, e):
+        super(Entity, self).__init__()
+        self.id = e.id
+        self.position = vec2d(e.position.x, e.position.y)
+        self.direction = vec2d(e.direction.x, e.direction.y)
 
     def update_visuals(self):
         raise NotImplementedError()
 
 
-class Bullet(MovingEntity):
+class Bullet(Entity):
     """A bullet that moves forward until it hits something"""
     image_name = pkg_resources.resource_filename("ibidem.codetanks.viewer.resources", 'bullet_grey.png')
-    speed = 0.2
 
-    def __init__(self, init_dict):
+    def __init__(self, e):
+        super(Bullet, self).__init__(e)
         self.base_image = pygame.image.load(self.image_name).convert_alpha()
-        super(Bullet, self).__init__(init_dict)
 
     def update_visuals(self):
         self.image = pygame.transform.rotate(self.base_image, -self.direction.angle)
@@ -46,7 +38,7 @@ class Bullet(MovingEntity):
         )
 
 
-class Tank(MovingEntity):
+class Tank(Entity):
     body_image_name = pkg_resources.resource_filename("ibidem.codetanks.viewer.resources", "tank1_base_grey.png")
     turret_image_names = (
         pkg_resources.resource_filename("ibidem.codetanks.viewer.resources", "red_turret.png"),
@@ -54,18 +46,14 @@ class Tank(MovingEntity):
         pkg_resources.resource_filename("ibidem.codetanks.viewer.resources", "green_turret.png"),
         pkg_resources.resource_filename("ibidem.codetanks.viewer.resources", "yellow_turret.png")
     )
-    speed = 0.1
 
-    def __init__(self, init_dict):
-        self.player_number = init_dict["player_number"]
+    def __init__(self, e):
+        super(Tank, self).__init__(e)
+        self.bot_id = e.bot_id
+        self.aim = vec2d(e.aim.x, e.aim.y)
+        self.health = e.health
         self.base_body_image = pygame.image.load(self.body_image_name).convert_alpha()
-        self.base_turret_image = pygame.image.load(self.turret_image_names[self.player_number]).convert_alpha()
-        super(Tank, self).__init__(init_dict)
-
-    def update_from_dict(self, data_dict):
-        self.aim = vec2d(data_dict["aim"]["x"], data_dict["aim"]["y"])
-        self.health = data_dict["health"]
-        super(Tank, self).update_from_dict(data_dict)
+        self.base_turret_image = pygame.image.load(self.turret_image_names[self.id % len(self.turret_image_names)]).convert_alpha()
 
     def update_visuals(self):
         self.image = pygame.transform.rotate(self.base_body_image, -self.direction.angle)
