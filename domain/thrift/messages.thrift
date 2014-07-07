@@ -46,7 +46,7 @@ struct Bullet {
     1: required i32 id;
     2: required Point position;
     3: required Point direction;
-    4: required double speed;
+    4: required double speed = 0.2;
 }
 
 struct Tank {
@@ -55,9 +55,9 @@ struct Tank {
     3: required Point position;
     4: required Point direction;
     5: required Point aim;
-    6: required double speed;
-    7: required byte health;
-    8: required BotStatus status;
+    6: required double speed = 0.1;
+    7: required byte health = 100;
+    8: required BotStatus status = BotStatus.ALIVE;
 }
 
 struct GameData {

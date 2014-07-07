@@ -3,7 +3,7 @@
 
 from nose.tools import assert_is_instance, assert_equal, assert_not_equal, assert_greater, assert_less, assert_is
 
-from ibidem.codetanks.domain.ttypes import Arena, Id, Tank
+from ibidem.codetanks.domain.ttypes import Arena, Id, Tank, BotStatus
 from ibidem.codetanks.server.bot import Bot
 from ibidem.codetanks.server.world import World
 
@@ -47,6 +47,14 @@ class TestWorld(object):
         tank2 = world.tanks[1]
         assert_not_equal(tank1.position.x, tank2.position.x)
         assert_not_equal(tank1.position.y, tank2.position.y)
+
+    def test_tank_has_sensible_values(self):
+        world = World(self.width, self.height)
+        world.add_tank(Bot(self.bot_id, 0, None, None))
+        tank = world.tanks[0]
+        assert_equal(tank.health, 100)
+        assert_equal(tank.speed, 0.1)
+        assert_equal(tank.status, BotStatus.ALIVE)
 
 
 

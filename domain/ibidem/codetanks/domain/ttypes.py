@@ -607,10 +607,10 @@ class Bullet(object):
     (1, TType.I32, 'id', None, None, ), # 1
     (2, TType.STRUCT, 'position', (Point, Point.thrift_spec), None, ), # 2
     (3, TType.STRUCT, 'direction', (Point, Point.thrift_spec), None, ), # 3
-    (4, TType.DOUBLE, 'speed', None, None, ), # 4
+    (4, TType.DOUBLE, 'speed', None, 0.2, ), # 4
   )
 
-  def __init__(self, id=None, position=None, direction=None, speed=None,):
+  def __init__(self, id=None, position=None, direction=None, speed=thrift_spec[4][4],):
     self.id = id
     self.position = position
     self.direction = direction
@@ -738,12 +738,12 @@ class Tank(object):
     (3, TType.STRUCT, 'position', (Point, Point.thrift_spec), None, ), # 3
     (4, TType.STRUCT, 'direction', (Point, Point.thrift_spec), None, ), # 4
     (5, TType.STRUCT, 'aim', (Point, Point.thrift_spec), None, ), # 5
-    (6, TType.DOUBLE, 'speed', None, None, ), # 6
-    (7, TType.BYTE, 'health', None, None, ), # 7
-    (8, TType.I32, 'status', None, None, ), # 8
+    (6, TType.DOUBLE, 'speed', None, 0.1, ), # 6
+    (7, TType.BYTE, 'health', None, 100, ), # 7
+    (8, TType.I32, 'status', None,     0, ), # 8
   )
 
-  def __init__(self, id=None, bot_id=None, position=None, direction=None, aim=None, speed=None, health=None, status=None,):
+  def __init__(self, id=None, bot_id=None, position=None, direction=None, aim=None, speed=thrift_spec[6][4], health=thrift_spec[7][4], status=thrift_spec[8][4],):
     self.id = id
     self.bot_id = bot_id
     self.position = position
