@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 
-from nose.tools import assert_is_instance, assert_equal, assert_not_equal, assert_greater, assert_less, assert_is
+from nose.tools import assert_is_instance, assert_equal, assert_not_equal, assert_greater, assert_less
 
 from ibidem.codetanks.domain.ttypes import Arena, Id, Tank, BotStatus
 from ibidem.codetanks.server.bot import Bot
@@ -26,8 +26,8 @@ class TestWorld(object):
 
     def test_gamedata_is_reflected_in_attributes(self):
         world = World(self.width, self.height)
-        assert_is(world.bullets, world.gamedata.bullets)
-        assert_is(world.tanks, world.gamedata.tanks)
+        assert_equal(world.bullets, world.gamedata.bullets)
+        assert_equal(world.tanks, world.gamedata.tanks)
 
     def test_tank_is_placed_inside_arena(self):
         world = World(self.width, self.height)
