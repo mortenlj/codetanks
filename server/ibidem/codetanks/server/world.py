@@ -3,12 +3,16 @@
 
 from random import randint, uniform
 
+from euclid import Vector2, Ray2, Point2, Circle
+
+from ibidem.codetanks.domain.constants import TANK_SPEED
 from ibidem.codetanks.domain.ttypes import GameData, Arena, Tank, Point
 
 
 class _Meta(object):
     __slots__ = [
-        'target_position'
+        'target_ray',
+        'speed'
     ]
 
 
@@ -53,6 +57,35 @@ class World(object):
 
     def _select_random_direction(self):
         return Point(uniform(-1, 1), uniform(-1, 1))
+
+    def update(self, ticks):
+        for tank_wrapper in self._tanks:
+            self._update_position(ticks, tank_wrapper)
+
+    def _update_position(self, ticks, wrapper):
+        meta = wrapper.meta
+        entity = wrapper.entity
+        old_pos = Point2(entity.position.x, entity.position.y)
+        direction = Vector2(entity.direction.x, entity.direction.y)
+        distance = ticks * meta.speed
+        new_pos = old_pos + (direction * distance)
+        if meta.target_ray.intersect(Circle(new_pos, 15.0)):
+            new_pos = meta.target_ray.p
+            meta.speed = 0.0
+        entity.position = Point(new_pos.x, new_pos.y)
+
+    ##################################################
+    # Commands
+    ##################################################
+    def move(self, tank_id, distance):
+        wrapper = self._tanks[tank_id]
+        meta = wrapper.meta
+        tank = wrapper.entity
+        old_pos = Point2(tank.position.x, tank.position.y)
+        direction = Vector2(tank.direction.x, tank.direction.y)
+        new_pos = old_pos + (direction * distance)
+        meta.target_ray = Ray2(new_pos, direction)
+        meta.speed = TANK_SPEED
 
 
 if __name__ == "__main__":

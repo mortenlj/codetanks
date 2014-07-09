@@ -1,5 +1,9 @@
 namespace py ibidem.codetanks.domain
 
+const byte MAX_HEALTH = 100;
+const double TANK_SPEED = 0.1;
+const double BULLET_SPEED = 0.2;
+
 enum ClientType {
     VIEWER,
     BOT
@@ -46,7 +50,6 @@ struct Bullet {
     1: required i32 id;
     2: required Point position;
     3: required Point direction;
-    4: required double speed = 0.2;
 }
 
 struct Tank {
@@ -55,9 +58,8 @@ struct Tank {
     3: required Point position;
     4: required Point direction;
     5: required Point aim;
-    6: required double speed = 0.1;
-    7: required byte health = 100;
-    8: required BotStatus status = BotStatus.ALIVE;
+    6: required byte health = MAX_HEALTH;
+    7: required BotStatus status = BotStatus.ALIVE;
 }
 
 struct GameData {

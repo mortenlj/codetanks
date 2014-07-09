@@ -592,14 +592,12 @@ class Bullet(object):
    - id
    - position
    - direction
-   - speed
   """
 
   __slots__ = [ 
     'id',
     'position',
     'direction',
-    'speed',
    ]
 
   thrift_spec = (
@@ -607,14 +605,12 @@ class Bullet(object):
     (1, TType.I32, 'id', None, None, ), # 1
     (2, TType.STRUCT, 'position', (Point, Point.thrift_spec), None, ), # 2
     (3, TType.STRUCT, 'direction', (Point, Point.thrift_spec), None, ), # 3
-    (4, TType.DOUBLE, 'speed', None, 0.2, ), # 4
   )
 
-  def __init__(self, id=None, position=None, direction=None, speed=thrift_spec[4][4],):
+  def __init__(self, id=None, position=None, direction=None,):
     self.id = id
     self.position = position
     self.direction = direction
-    self.speed = speed
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -642,11 +638,6 @@ class Bullet(object):
           self.direction.read(iprot)
         else:
           iprot.skip(ftype)
-      elif fid == 4:
-        if ftype == TType.DOUBLE:
-          self.speed = iprot.readDouble();
-        else:
-          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -669,10 +660,6 @@ class Bullet(object):
       oprot.writeFieldBegin('direction', TType.STRUCT, 3)
       self.direction.write(oprot)
       oprot.writeFieldEnd()
-    if self.speed is not None:
-      oprot.writeFieldBegin('speed', TType.DOUBLE, 4)
-      oprot.writeDouble(self.speed)
-      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -683,8 +670,6 @@ class Bullet(object):
       raise TProtocol.TProtocolException(message='Required field position is unset!')
     if self.direction is None:
       raise TProtocol.TProtocolException(message='Required field direction is unset!')
-    if self.speed is None:
-      raise TProtocol.TProtocolException(message='Required field speed is unset!')
     return
 
 
@@ -715,7 +700,6 @@ class Tank(object):
    - position
    - direction
    - aim
-   - speed
    - health
    - status
   """
@@ -726,7 +710,6 @@ class Tank(object):
     'position',
     'direction',
     'aim',
-    'speed',
     'health',
     'status',
    ]
@@ -738,18 +721,16 @@ class Tank(object):
     (3, TType.STRUCT, 'position', (Point, Point.thrift_spec), None, ), # 3
     (4, TType.STRUCT, 'direction', (Point, Point.thrift_spec), None, ), # 4
     (5, TType.STRUCT, 'aim', (Point, Point.thrift_spec), None, ), # 5
-    (6, TType.DOUBLE, 'speed', None, 0.1, ), # 6
-    (7, TType.BYTE, 'health', None, 100, ), # 7
-    (8, TType.I32, 'status', None,     0, ), # 8
+    (6, TType.BYTE, 'health', None, 100, ), # 6
+    (7, TType.I32, 'status', None,     0, ), # 7
   )
 
-  def __init__(self, id=None, bot_id=None, position=None, direction=None, aim=None, speed=thrift_spec[6][4], health=thrift_spec[7][4], status=thrift_spec[8][4],):
+  def __init__(self, id=None, bot_id=None, position=None, direction=None, aim=None, health=thrift_spec[6][4], status=thrift_spec[7][4],):
     self.id = id
     self.bot_id = bot_id
     self.position = position
     self.direction = direction
     self.aim = aim
-    self.speed = speed
     self.health = health
     self.status = status
 
@@ -792,16 +773,11 @@ class Tank(object):
         else:
           iprot.skip(ftype)
       elif fid == 6:
-        if ftype == TType.DOUBLE:
-          self.speed = iprot.readDouble();
-        else:
-          iprot.skip(ftype)
-      elif fid == 7:
         if ftype == TType.BYTE:
           self.health = iprot.readByte();
         else:
           iprot.skip(ftype)
-      elif fid == 8:
+      elif fid == 7:
         if ftype == TType.I32:
           self.status = iprot.readI32();
         else:
@@ -836,16 +812,12 @@ class Tank(object):
       oprot.writeFieldBegin('aim', TType.STRUCT, 5)
       self.aim.write(oprot)
       oprot.writeFieldEnd()
-    if self.speed is not None:
-      oprot.writeFieldBegin('speed', TType.DOUBLE, 6)
-      oprot.writeDouble(self.speed)
-      oprot.writeFieldEnd()
     if self.health is not None:
-      oprot.writeFieldBegin('health', TType.BYTE, 7)
+      oprot.writeFieldBegin('health', TType.BYTE, 6)
       oprot.writeByte(self.health)
       oprot.writeFieldEnd()
     if self.status is not None:
-      oprot.writeFieldBegin('status', TType.I32, 8)
+      oprot.writeFieldBegin('status', TType.I32, 7)
       oprot.writeI32(self.status)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -862,8 +834,6 @@ class Tank(object):
       raise TProtocol.TProtocolException(message='Required field direction is unset!')
     if self.aim is None:
       raise TProtocol.TProtocolException(message='Required field aim is unset!')
-    if self.speed is None:
-      raise TProtocol.TProtocolException(message='Required field speed is unset!')
     if self.health is None:
       raise TProtocol.TProtocolException(message='Required field health is unset!')
     if self.status is None:
