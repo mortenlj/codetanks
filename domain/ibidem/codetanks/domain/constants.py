@@ -6,3 +6,6 @@
 #  options string: py:new_style,utf8strings,slots
 #
 
+MAX_HEALTH = 100
+TANK_SPEED = 0.1
+BULLET_SPEED = 0.2
