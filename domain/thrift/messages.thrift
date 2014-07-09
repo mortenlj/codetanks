@@ -3,6 +3,7 @@ namespace py ibidem.codetanks.domain
 const byte MAX_HEALTH = 100;
 const double TANK_SPEED = 0.1;
 const double BULLET_SPEED = 0.2;
+const double TANK_RADIUS = 15.0;
 
 enum ClientType {
     VIEWER,
