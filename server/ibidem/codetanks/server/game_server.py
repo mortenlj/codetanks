@@ -38,31 +38,31 @@ class GameServer(object):
         received_messages = 0
         for channel in self._handlers.keys():
             if channel.ready():
-                self._handlers[channel](channel.recv())
+                self._handlers[channel](channel, channel.recv())
                 received_messages += 1
         if received_messages > 0:
             print "GameServer processed %d messages" % received_messages
         self._viewer_channel.send(self._world.gamedata)
         self.clock.tick(60)
 
-    def _handle_registration(self, registration):
+    def _handle_registration(self, reply_channel, registration):
         print "GameServer received registration: %r" % registration
         if registration.client_type == ClientType.BOT:
-            self._handle_bot_registration(registration)
+            self._handle_bot_registration(reply_channel, registration)
         else:
-            self._registration_channel.send(RegistrationReply(self.build_game_info(), self._viewer_channel.url))
+            reply_channel.send(RegistrationReply(self.build_game_info(), self._viewer_channel.url))
 
-    def _handle_bot_registration(self, registration):
+    def _handle_bot_registration(self, reply_channel, registration):
         event_channel = self._channel_factory(ChannelType.PUBLISH)
         cmd_channel = self._channel_factory(ChannelType.REPLY)
         tank_id = len(self._bots)
         bot = Bot(registration.id, tank_id, event_channel, cmd_channel)
         self._bots.append(bot)
         self._world.add_tank(bot)
-        self._registration_channel.send(RegistrationReply(self.build_game_info(), event_channel.url, cmd_channel.url))
+        reply_channel.send(RegistrationReply(self.build_game_info(), event_channel.url, cmd_channel.url))
         self._handlers[bot.cmd_channel] = self._handle_bot_cmd
 
-    def _handle_bot_cmd(self, todo):
+    def _handle_bot_cmd(self, reply_channel, todo):
         pass
 
     def build_game_info(self):
