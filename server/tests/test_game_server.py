@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 
-from mock import create_autospec
+from mock import create_autospec, MagicMock
 from nose.tools import assert_is_not_none, assert_equal
 from hamcrest import match_equality, instance_of
+import pygame
 
 from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id, RegistrationReply
 from ibidem.codetanks.server.com import Channel
@@ -79,11 +80,21 @@ class TestBotRegistration(RegistrationSetup):
         self.server._world.add_tank.assert_called_once_with(bot)
 
 
-class TestGameData(Shared):
+class TestGame(Shared):
+    def setup(self):
+        super(TestGame, self).setup()
+        self.server.clock = create_autospec(pygame.time.Clock)
+        self.server.clock.tick = MagicMock()
+
     def test_game_data_sent_once_per_loop(self):
         self.server._world = World(10,10)
         self.server._run_once()
         self.viewer_channel.send.assert_called_with(match_equality(instance_of(GameData)))
+
+    def test_world_updated_once_per_loop(self):
+        self.server.clock.tick.return_value = 30
+        self.server._run_once()
+        self.server._world.update.assert_called_once_with(30)
 
 
 if __name__ == "__main__":

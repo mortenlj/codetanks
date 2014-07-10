@@ -25,9 +25,6 @@ class GameServer(object):
     def started(self):
         return self.clock is not None
 
-    def update(self):
-        pass
-
     def run(self):
         print "GameServer starting, registration available on %s" % self._registration_channel.url
         self.start()
@@ -43,7 +40,8 @@ class GameServer(object):
         if received_messages > 0:
             print "GameServer processed %d messages" % received_messages
         self._viewer_channel.send(self._world.gamedata)
-        self.clock.tick(60)
+        ticks = self.clock.tick(60)
+        self._world.update(ticks)
 
     def _handle_registration(self, reply_channel, registration):
         print "GameServer received registration: %r" % registration
