@@ -6,9 +6,6 @@ from euclid import Circle, Point2, Vector2
 from ibidem.codetanks.domain.constants import TANK_RADIUS
 from ibidem.codetanks.domain.ttypes import Point
 
-if __name__ == "__main__":
-    pass
-
 
 class Vehicle(object):
     class _Meta(object):
@@ -46,3 +43,6 @@ class Vehicle(object):
             new_pos = self.meta.target_ray.p
             self.meta.speed = 0.0
         self.position = new_pos
+
+if __name__ == "__main__":
+    pass
