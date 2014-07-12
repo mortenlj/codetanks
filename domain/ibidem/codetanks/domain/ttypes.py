@@ -50,6 +50,20 @@ class BotStatus(object):
     "INACTIVE": 3,
   }
 
+class CommandResult(object):
+  BUSY = 0
+  OK = 1
+
+  _VALUES_TO_NAMES = {
+    0: "BUSY",
+    1: "OK",
+  }
+
+  _NAMES_TO_VALUES = {
+    "BUSY": 0,
+    "OK": 1,
+  }
+
 
 class Id(object):
   """
@@ -945,6 +959,154 @@ class GameData(object):
       raise TProtocol.TProtocolException(message='Required field bullets is unset!')
     if self.tanks is None:
       raise TProtocol.TProtocolException(message='Required field tanks is unset!')
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, getattr(self, key))
+      for key in self.__slots__]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    if not isinstance(other, self.__class__):
+      return False
+    for attr in self.__slots__:
+      my_val = getattr(self, attr)
+      other_val = getattr(other, attr)
+      if my_val != other_val:
+        return False
+    return True
+
+  def __ne__(self, other):
+    return not (self == other)
+
+
+class CommandReply(object):
+  """
+  Attributes:
+   - result
+  """
+
+  __slots__ = [ 
+    'result',
+   ]
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I32, 'result', None, None, ), # 1
+  )
+
+  def __init__(self, result=None,):
+    self.result = result
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I32:
+          self.result = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('CommandReply')
+    if self.result is not None:
+      oprot.writeFieldBegin('result', TType.I32, 1)
+      oprot.writeI32(self.result)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    if self.result is None:
+      raise TProtocol.TProtocolException(message='Required field result is unset!')
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, getattr(self, key))
+      for key in self.__slots__]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    if not isinstance(other, self.__class__):
+      return False
+    for attr in self.__slots__:
+      my_val = getattr(self, attr)
+      other_val = getattr(other, attr)
+      if my_val != other_val:
+        return False
+    return True
+
+  def __ne__(self, other):
+    return not (self == other)
+
+
+class Move(object):
+  """
+  Attributes:
+   - distance
+  """
+
+  __slots__ = [ 
+    'distance',
+   ]
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I16, 'distance', None, None, ), # 1
+  )
+
+  def __init__(self, distance=None,):
+    self.distance = distance
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I16:
+          self.distance = iprot.readI16();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('Move')
+    if self.distance is not None:
+      oprot.writeFieldBegin('distance', TType.I16, 1)
+      oprot.writeI16(self.distance)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    if self.distance is None:
+      raise TProtocol.TProtocolException(message='Required field distance is unset!')
     return
 
 

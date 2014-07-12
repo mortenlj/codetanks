@@ -14,6 +14,10 @@ class Vehicle(object):
             'speed'
         ]
 
+        def __init__(self):
+            self.speed = 0.0
+            self.target_ray = None
+
         def reached_target(self, position):
             return self.target_ray.intersect(Circle(position, TANK_RADIUS))
 
@@ -37,12 +41,13 @@ class Vehicle(object):
         return self.position + (self.direction * distance)
 
     def update_position(self, ticks):
-        distance = ticks * self.meta.speed
-        new_pos = self.calculate_new_position(distance)
-        if self.meta.reached_target(new_pos):
-            new_pos = self.meta.target_ray.p
-            self.meta.speed = 0.0
-        self.position = new_pos
+        if self.meta.target_ray:
+            distance = ticks * self.meta.speed
+            new_pos = self.calculate_new_position(distance)
+            if self.meta.reached_target(new_pos):
+                new_pos = self.meta.target_ray.p
+                self.meta.speed = 0.0
+            self.position = new_pos
 
 if __name__ == "__main__":
     pass

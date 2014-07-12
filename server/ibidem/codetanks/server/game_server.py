@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
+from functools import partial
 
 import pygame
 from pinject import copy_args_to_internal_fields
 
-from ibidem.codetanks.domain.ttypes import GameInfo, RegistrationReply, ClientType
+from ibidem.codetanks.domain.ttypes import GameInfo, RegistrationReply, ClientType, Move, CommandResult, CommandReply
 from ibidem.codetanks.server.bot import Bot
 from ibidem.codetanks.server.com import ChannelType
 
@@ -58,10 +59,12 @@ class GameServer(object):
         self._bots.append(bot)
         self._world.add_tank(bot)
         reply_channel.send(RegistrationReply(self.build_game_info(), event_channel.url, cmd_channel.url))
-        self._handlers[bot.cmd_channel] = self._handle_bot_cmd
+        self._handlers[bot.cmd_channel] = partial(self._handle_bot_cmd, bot)
 
-    def _handle_bot_cmd(self, reply_channel, todo):
-        pass
+    def _handle_bot_cmd(self, bot, reply_channel, command):
+        if isinstance(command, Move):
+            self._world.move(bot.tank_id, command.distance)
+            reply_channel.send(CommandReply(CommandResult.OK))
 
     def build_game_info(self):
         return GameInfo(self._world.arena)

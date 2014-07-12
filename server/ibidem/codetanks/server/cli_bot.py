@@ -8,7 +8,7 @@ from cmd import Cmd
 
 import zmq
 
-from ibidem.codetanks.domain.ttypes import Registration, ClientType, Id
+from ibidem.codetanks.domain.ttypes import Registration, ClientType, Id, Move
 from ibidem.codetanks.domain.util import serialize, deserialize
 
 
@@ -58,11 +58,19 @@ class CliBot(Cmd):
         event_url = reply.event_url
         print "Subscribing to %s" % event_url
         self._update_socket.connect(event_url)
+        self._cmd_socket = zmq_context.socket(zmq.REQ)
+        self._cmd_socket.connect(reply.cmd_url)
+        print "Connecting to %s" % reply.cmd_url
 
     def do_exit(self, line):
         """Leave the bot-cli. Your bot will be left in whatever state it is in."""
         return True
     do_EOF = do_exit
+
+    @parse_args
+    def do_move(self, distance=10):
+        self._cmd_socket.send(serialize(Move(distance)))
+        self._cmd_socket.recv()
 
 
 def main():
