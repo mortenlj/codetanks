@@ -6,7 +6,7 @@ from nose.tools import assert_is_not_none, assert_equal
 from hamcrest import match_equality, instance_of
 import pygame
 
-from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id, RegistrationReply
+from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id, RegistrationReply, Move, CommandReply, CommandResult
 from ibidem.codetanks.server.com import Channel
 from ibidem.codetanks.server.game_server import GameServer
 from ibidem.codetanks.server.world import World
@@ -20,6 +20,13 @@ class Shared(object):
         self.server = GameServer(self.registration_channel, self.viewer_channel, lambda x: create_autospec(Channel(x)), create_autospec(World))
         self.server.start()
 
+    def send_on_mock_channel(self, channel, value):
+        channel.ready.return_value = True
+        channel.recv.return_value = value
+
+    def reset_mock_channel(self, channel):
+        channel.ready.return_value = None
+
 
 class RegistrationSetup(Shared):
     client_type = None
@@ -28,13 +35,6 @@ class RegistrationSetup(Shared):
     def setup(self):
         super(RegistrationSetup, self).setup()
         self.send_on_mock_channel(self.registration_channel, Registration(self.client_type, self.client_id))
-
-    def send_on_mock_channel(self, channel, value):
-        channel.ready.return_value = True
-        channel.recv.return_value = value
-
-    def reset_mock_channel(self, channel):
-        channel.ready.return_value = None
 
 
 class TestViewerRegistration(RegistrationSetup):
@@ -85,6 +85,8 @@ class TestGame(Shared):
         super(TestGame, self).setup()
         self.server.clock = create_autospec(pygame.time.Clock)
         self.server.clock.tick = MagicMock()
+        self.server._handle_bot_registration(self.registration_channel, Registration(ClientType.BOT, Id("bot", 1)))
+        self.bot = self.server._bots[0]
 
     def test_game_data_sent_once_per_loop(self):
         self.server._world = World(10,10)
@@ -95,6 +97,16 @@ class TestGame(Shared):
         self.server.clock.tick.return_value = 30
         self.server._run_once()
         self.server._world.update.assert_called_once_with(30)
+
+    def test_bot_command_receives_reply(self):
+        self.send_on_mock_channel(self.bot.cmd_channel, Move(10))
+        self.server._run_once()
+        self.bot.cmd_channel.send.assert_called_once_with(CommandReply(CommandResult.OK))
+
+    def test_move_command_forwarded_to_world(self):
+        self.send_on_mock_channel(self.bot.cmd_channel, Move(10))
+        self.server._run_once()
+        self.server._world.move.assert_called_once_with(self.bot.tank_id, 10)
 
 
 if __name__ == "__main__":

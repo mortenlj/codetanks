@@ -67,3 +67,20 @@ struct GameData {
     1: required list<Bullet> bullets;
     2: required list<Tank> tanks;
 }
+
+// ********
+// Commands
+// ********
+
+enum CommandResult {
+    BUSY,
+    OK
+}
+
+struct CommandReply {
+    1: required CommandResult result;
+}
+
+struct Move {
+    1: required i16 distance;
+}
