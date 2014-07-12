@@ -35,6 +35,8 @@ class ServerProxy(object):
         event_url = reply.event_url
         print "Subscribing to %s" % event_url
         self._update_socket.connect(event_url)
+        self.tanks = pygame.sprite.RenderUpdates()
+        self.bullets = pygame.sprite.RenderUpdates()
 
     def _update_entities(self, updates, sprite_group, entity_class):
         for update in updates:
@@ -43,9 +45,9 @@ class ServerProxy(object):
             sprite_group.add(entity)
 
     def _update_game_data(self, game_data):
-        self.tanks = pygame.sprite.RenderUpdates()
+        self.tanks.empty()
         self._update_entities(game_data.tanks, self.tanks, Tank)
-        self.bullets = pygame.sprite.RenderUpdates()
+        self.bullets.empty()
         self._update_entities(game_data.bullets, self.bullets, Bullet)
 
     def _get_server_update(self):
