@@ -3,7 +3,6 @@
 
 from euclid import Circle, Point2, Vector2
 
-from ibidem.codetanks.domain.constants import TANK_RADIUS
 from ibidem.codetanks.domain.ttypes import Point
 
 
@@ -19,7 +18,7 @@ class Vehicle(object):
             self.target_ray = None
 
         def reached_target(self, position):
-            return self.target_ray.intersect(Circle(position, TANK_RADIUS))
+            return self.target_ray.intersect(Circle(position, 1.0))
 
     def __init__(self, entity):
         self.entity = entity
