@@ -1,3 +1,4 @@
+setuptools
 -e hg+http://bitbucket.org/pygame/pygame#egg=pygame
 pyzmq
 nose
@@ -5,4 +6,4 @@ mock
 pinject
 Codetanks-Domain
 PyHamcrest
-euclid
+-e hg+https://bitbucket.org/mortenlj/euclid#egg=euclid-ng
