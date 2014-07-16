@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 
-from euclid import Circle, Point2, Vector2
+from euclid import Circle, Point2, Vector2, Ray2
+from ibidem.codetanks.domain.constants import TANK_SPEED
 
 from ibidem.codetanks.domain.ttypes import Point
 
@@ -22,7 +23,7 @@ class Vehicle(object):
 
     def __init__(self, entity):
         self.entity = entity
-        self.meta = Vehicle._Meta()
+        self._meta = Vehicle._Meta()
 
     @property
     def position(self):
@@ -36,16 +37,23 @@ class Vehicle(object):
     def direction(self):
         return Vector2(self.entity.direction.x, self.entity.direction.y)
 
-    def calculate_new_position(self, distance):
+    def move(self, distance):
+        if distance < 0.0:
+            return
+        new_pos = self._calculate_new_position(distance)
+        self._meta.target_ray = Ray2(new_pos, self.direction)
+        self._meta.speed = TANK_SPEED
+
+    def _calculate_new_position(self, distance):
         return self.position + (self.direction * distance)
 
     def update_position(self, ticks):
-        if self.meta.target_ray:
-            distance = ticks * self.meta.speed
-            new_pos = self.calculate_new_position(distance)
-            if self.meta.reached_target(new_pos):
-                new_pos = self.meta.target_ray.p
-                self.meta.speed = 0.0
+        if self._meta.target_ray:
+            distance = ticks * self._meta.speed
+            new_pos = self._calculate_new_position(distance)
+            if self._meta.reached_target(new_pos):
+                new_pos = self._meta.target_ray.p
+                self._meta.speed = 0.0
             self.position = new_pos
 
 if __name__ == "__main__":
