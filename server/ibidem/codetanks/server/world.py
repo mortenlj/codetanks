@@ -3,9 +3,6 @@
 
 from random import randint, uniform
 
-from euclid import Ray2
-
-from ibidem.codetanks.domain.constants import TANK_SPEED
 from ibidem.codetanks.domain.ttypes import GameData, Arena, Tank, Point
 from ibidem.codetanks.server.vehicle import Vehicle
 
@@ -55,10 +52,7 @@ class World(object):
     ##################################################
     def move(self, tank_id, distance):
         wrapper = self._tanks[tank_id]
-        meta = wrapper.meta
-        new_pos = wrapper.calculate_new_position(distance)
-        meta.target_ray = Ray2(new_pos, wrapper.direction)
-        meta.speed = TANK_SPEED
+        wrapper.move(distance)
 
 
 if __name__ == "__main__":

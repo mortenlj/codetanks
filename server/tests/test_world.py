@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
-from random import uniform
-
+from mock import create_autospec
 from nose.tools import assert_is_instance, assert_equal, assert_not_equal, assert_greater, assert_less
 
-from ibidem.codetanks.domain.constants import TANK_SPEED
 from ibidem.codetanks.domain.ttypes import Arena, Id, Tank, BotStatus, Point
 from ibidem.codetanks.server.bot import Bot
+from ibidem.codetanks.server.vehicle import Vehicle
 from ibidem.codetanks.server.world import World
 
 
@@ -71,19 +70,11 @@ class TestTankMovement(Shared):
         self.tank.direction = Point(1.0, 0.0)
         self.tank.aim = Point(0.0, -1.0)
 
-    def test_move_actions_moves_tank_and_then_stops(self):
+    def test_move_actions_forwarded_to_vehicle(self):
+        vehicle = create_autospec(Vehicle)
+        self.world._tanks[self.tank.id] = vehicle
         self.world.move(self.tank.id, 10)
-        assert_equal(self.world._tanks[0].meta.speed, TANK_SPEED)
-        assert_equal(self.tank.position.x, 50)
-        assert_equal(self.tank.position.y, 50)
-        while self.tank.position.x < 60:
-            assert_equal(self.world._tanks[0].meta.speed, TANK_SPEED)
-            assert_less(self.tank.position.x, 60)
-            self.world.update(uniform(5.0, 15.0))
-            assert_greater(self.tank.position.x, 50)
-        assert_equal(self.world._tanks[0].meta.speed, 0.0)
-        assert_equal(self.tank.position.x, 60)
-        assert_equal(self.tank.position.y, 50)
+        vehicle.move.assert_called_with(10)
 
 
 if __name__ == "__main__":
