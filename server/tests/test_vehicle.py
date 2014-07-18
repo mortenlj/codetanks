@@ -3,14 +3,14 @@
 from random import uniform
 
 from hamcrest import assert_that, equal_to, less_than, greater_than
-
 from euclid import Point2, Ray2
+
 from ibidem.codetanks.domain.constants import TANK_SPEED
 from ibidem.codetanks.domain.ttypes import Tank, Id, Point
 from ibidem.codetanks.server.vehicle import Vehicle
 
 
-class TestVehicle(object):
+class Shared(object):
     bot_id = Id("bot", 1)
     initial_x = 3
     initial_y = 5
@@ -19,6 +19,8 @@ class TestVehicle(object):
         self.tank = Tank(0, self.bot_id, Point(self.initial_x, self.initial_y), Point(1, 0), Point(0, 1))
         self.vehicle = Vehicle(self.tank)
 
+
+class TestVehicle(Shared):
     def test_properties_reflect_entity(self):
         assert_that(self.vehicle.position.x, equal_to(self.tank.position.x))
         assert_that(self.vehicle.position.y, equal_to(self.tank.position.y))
@@ -39,6 +41,8 @@ class TestVehicle(object):
         assert_that(self.tank.position.x, equal_to(self.initial_x + (TANK_SPEED * distance)))
         assert_that(self.tank.position.y, equal_to(self.initial_y))
 
+
+class TestMove(Shared):
     def test_move_forwards(self):
         distance = 10
         target_x = self.initial_x + distance
