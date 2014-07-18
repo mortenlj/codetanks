@@ -6,6 +6,8 @@ import math
 from hamcrest import assert_that, equal_to, less_than, greater_than
 from euclid import Point2, Vector2
 
+from ibidem.codetanks.domain.constants import TANK_ROTATION_TOLERANCE
+
 from ibidem.codetanks.domain.ttypes import Tank, Id, Point
 from ibidem.codetanks.server.vehicle import Vehicle
 
@@ -75,6 +77,12 @@ class TestRotate(Shared):
     def test_rotation(self):
         yield ("_rotation_test", "clockwise", math.pi / 2, Vector2(0, 1))
         yield ("_rotation_test", "anti-clockwise", -math.pi / 2, Vector2(0, -1))
+
+    def test_rotation_less_than_tolerance_is_illegal(self):
+        self.vehicle.rotate(TANK_ROTATION_TOLERANCE-.001)
+        self.vehicle.update_direction(random_ticks())
+        assert_that(self.vehicle._meta.rotation, equal_to(0.0))
+        assert_that(self.vehicle.direction, equal_to(self.initial_direction))
 
 
 def assert_that_vector_matches(actual, expected, matcher):

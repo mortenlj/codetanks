@@ -97,6 +97,8 @@ class Vehicle(object):
         self._meta.speed = TANK_SPEED
 
     def rotate(self, theta):
+        if abs(theta) < TANK_ROTATION_TOLERANCE:
+            return
         new_direction = self.direction.rotate(theta)
         new_direction.normalize()
         self._meta.target_direction = new_direction
