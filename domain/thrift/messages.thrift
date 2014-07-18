@@ -2,6 +2,8 @@ namespace py ibidem.codetanks.domain
 
 const byte MAX_HEALTH = 100;
 const double TANK_SPEED = 0.1;
+const double TANK_ROTATION = 0.005;
+const double TANK_ROTATION_TOLERANCE = 0.05;
 const double BULLET_SPEED = 0.2;
 const double TANK_RADIUS = 15.0;
 
