@@ -62,28 +62,32 @@ class Vehicle(object):
     def _calculate_new_position(self, distance):
         return self.position + (self.direction * distance)
 
+    def update(self, ticks):
+        self.update_position(ticks)
+        self.update_direction(ticks)
+
     def update_position(self, ticks):
         if self._meta.target_ray:
             distance = ticks * self._meta.speed
             new_pos = self._calculate_new_position(distance)
             if self._meta.reached_target_position(new_pos):
                 new_pos = self._meta.target_ray.p
-                self._meta.speed = 0.0
+                self._meta.target_ray = None
             self.position = new_pos
 
     def update_direction(self, ticks):
         if self._meta.target_direction:
-            logging.debug("Updating direction by %r ticks", ticks)
+            LOG.debug("Updating direction by %r ticks", ticks)
             theta = ticks * self._meta.rotation
-            logging.debug("Rotating from direction %r by %r radians", self.direction, theta)
+            LOG.debug("Rotating from direction %r by %r radians", self.direction, theta)
             new_direction = self.direction.rotate(theta)
-            logging.debug("New direction is %r", new_direction)
+            LOG.debug("New direction is %r", new_direction)
             if self._meta.reached_target_direction(new_direction):
-                logging.debug("New direction considered reaching target")
+                LOG.debug("New direction considered reaching target")
                 new_direction = self._meta.target_direction
-                self._meta.rotation = 0
+                self._meta.target_direction = None
             self.direction = new_direction
-            logging.debug("Set direction to %r", self.direction)
+            LOG.debug("Set direction to %r", self.direction)
 
     def move(self, distance):
         if distance < 0.0:
