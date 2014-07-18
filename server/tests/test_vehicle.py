@@ -53,15 +53,12 @@ class TestMove(Shared):
         distance = 10
         target_x = self.initial_x + distance
         self.vehicle.move(distance)
-        assert_that(self.vehicle._meta.speed, equal_to(TANK_SPEED))
         assert_that(self.vehicle.position.x, equal_to(self.initial_x))
         assert_that(self.vehicle.position.y, equal_to(self.initial_y))
         while self.vehicle.position.x < target_x:
-            assert_that(self.vehicle._meta.speed, equal_to(TANK_SPEED))
             assert_that(self.vehicle.position.x, less_than(target_x))
             self.vehicle.update_position(random_ticks())
             assert_that(self.vehicle.position.x, greater_than(self.initial_x))
-        assert_that(self.vehicle._meta.speed, equal_to(0.0))
         assert_that(self.vehicle.position.x, equal_to(target_x))
         assert_that(self.vehicle.position.y, equal_to(self.initial_y))
 
@@ -74,21 +71,7 @@ class TestMove(Shared):
 
 
 class TestRotate(Shared):
-    def test_rotate_anti_clockwise(self):
-        angle = math.pi / 2
-        target_vector = Vector2(0, 1)
-        self.vehicle.rotate(angle)
-        assert_that_vector_matches(self.vehicle._meta.target_direction, target_vector, equal_to(0.0))
-        assert_that_vector_matches(self.vehicle.direction, self.initial_direction, equal_to(0.0))
-        while self.vehicle.direction.angle(target_vector) != 0.0:
-            assert_that_vector_matches(self.vehicle.direction, target_vector, greater_than(0.0))
-            self.vehicle.update_direction(random_ticks())
-            assert_that_vector_matches(self.vehicle.direction, target_vector, less_than(angle))
-        assert_that_vector_matches(self.vehicle.direction, target_vector, equal_to(0.0))
-
-    def test_rotate_clockwise(self):
-        angle = -math.pi / 2
-        target_vector = Vector2(0, -1)
+    def _rotation_test(self, desc, angle, target_vector):
         self.vehicle.rotate(angle)
         assert_that_vector_matches(self.vehicle._meta.target_direction, target_vector, equal_to(0.0))
         assert_that_vector_matches(self.vehicle.direction, self.initial_direction, equal_to(0.0))
@@ -97,6 +80,10 @@ class TestRotate(Shared):
             self.vehicle.update_direction(random_ticks())
             assert_that_vector_matches(self.vehicle.direction, target_vector, less_than(abs(angle)))
         assert_that_vector_matches(self.vehicle.direction, target_vector, equal_to(0.0))
+
+    def test_rotation(self):
+        yield ("_rotation_test", "clockwise", math.pi / 2, Vector2(0, 1))
+        yield ("_rotation_test", "anti-clockwise", -math.pi / 2, Vector2(0, -1))
 
 
 def assert_that_vector_matches(actual, expected, matcher):
