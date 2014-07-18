@@ -45,7 +45,7 @@ class World(object):
 
     def update(self, ticks):
         for tank_wrapper in self._tanks:
-            tank_wrapper.update_position(ticks)
+            tank_wrapper.update(ticks)
 
     ##################################################
     # Commands

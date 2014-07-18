@@ -16,21 +16,21 @@ class Shared(object):
 
 
 class TestWorld(Shared):
+    def setUp(self):
+        self.world = World(self.width, self.height)
+
     def test_game_data_is_initialized_with_lists(self):
-        world = World(self.width, self.height)
-        assert_is_instance(world.bullets, list)
-        assert_is_instance(world.tanks, list)
+        assert_is_instance(self.world.bullets, list)
+        assert_is_instance(self.world.tanks, list)
 
     def test_arena_is_given_size(self):
-        world = World(self.width, self.height)
-        assert_is_instance(world.arena, Arena)
-        assert_equal(world.arena.width, self.width)
-        assert_equal(world.arena.height, self.height)
+        assert_is_instance(self.world.arena, Arena)
+        assert_equal(self.world.arena.width, self.width)
+        assert_equal(self.world.arena.height, self.height)
 
     def test_gamedata_is_reflected_in_attributes(self):
-        world = World(self.width, self.height)
-        assert_equal(world.bullets, world.gamedata.bullets)
-        assert_equal(world.tanks, world.gamedata.tanks)
+        assert_equal(self.world.bullets, self.world.gamedata.bullets)
+        assert_equal(self.world.tanks, self.world.gamedata.tanks)
 
 
 class TestTankCreation(Shared):
@@ -69,6 +69,11 @@ class TestTankMovement(Shared):
         self.world.add_tank(Bot(self.bot_id, 0, None, None))
         self.vehicle = create_autospec(Vehicle)
         self.world._tanks[self.tank_id] = self.vehicle
+
+    def test_update_calls_vehicle_update(self):
+        ticks = 10
+        self.world.update(ticks)
+        self.vehicle.update.assert_called_with(ticks)
 
     def test_move_actions_forwarded_to_vehicle(self):
         distance = 10

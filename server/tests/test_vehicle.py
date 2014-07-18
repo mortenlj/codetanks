@@ -4,9 +4,8 @@ from random import uniform
 import math
 
 from hamcrest import assert_that, equal_to, less_than, greater_than
-from euclid import Point2, Ray2, Vector2
+from euclid import Point2, Vector2
 
-from ibidem.codetanks.domain.constants import TANK_SPEED
 from ibidem.codetanks.domain.ttypes import Tank, Id, Point
 from ibidem.codetanks.server.vehicle import Vehicle
 
@@ -38,14 +37,6 @@ class TestVehicle(Shared):
         self.vehicle.position = new_position
         assert_that(self.tank.position.x, equal_to(new_position.x))
         assert_that(self.tank.position.y, equal_to(new_position.y))
-
-    def test_update_position(self):
-        distance = 10
-        self.vehicle._meta.target_ray = Ray2(self.vehicle._calculate_new_position(distance), self.vehicle.direction)
-        self.vehicle._meta.speed = TANK_SPEED
-        self.vehicle.update_position(distance)
-        assert_that(self.tank.position.x, equal_to(self.initial_x + (TANK_SPEED * distance)))
-        assert_that(self.tank.position.y, equal_to(self.initial_y))
 
 
 class TestMove(Shared):
