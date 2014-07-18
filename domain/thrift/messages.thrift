@@ -86,3 +86,7 @@ struct CommandReply {
 struct Move {
     1: required i16 distance;
 }
+
+struct Rotate {
+    1: required double angle;
+}

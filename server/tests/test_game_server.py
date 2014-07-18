@@ -6,7 +6,8 @@ from nose.tools import assert_is_not_none, assert_equal
 from hamcrest import match_equality, instance_of
 import pygame
 
-from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id, RegistrationReply, Move, CommandReply, CommandResult
+from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id, RegistrationReply, Move, CommandReply, CommandResult, \
+    Rotate
 from ibidem.codetanks.server.com import Channel
 from ibidem.codetanks.server.game_server import GameServer
 from ibidem.codetanks.server.world import World
@@ -107,6 +108,11 @@ class TestGame(Shared):
         self.send_on_mock_channel(self.bot.cmd_channel, Move(10))
         self.server._run_once()
         self.server._world.move.assert_called_once_with(self.bot.tank_id, 10)
+
+    def test_rotate_command_forwarded_to_world(self):
+        self.send_on_mock_channel(self.bot.cmd_channel, Rotate(1.5))
+        self.server._run_once()
+        self.server._world.rotate.assert_called_once_with(self.bot.tank_id, 1.5)
 
 
 if __name__ == "__main__":
