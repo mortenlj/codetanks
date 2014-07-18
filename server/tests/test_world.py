@@ -3,7 +3,7 @@
 from mock import create_autospec
 from nose.tools import assert_is_instance, assert_equal, assert_not_equal, assert_greater, assert_less
 
-from ibidem.codetanks.domain.ttypes import Arena, Id, Tank, BotStatus, Point
+from ibidem.codetanks.domain.ttypes import Arena, Id, Tank, BotStatus
 from ibidem.codetanks.server.bot import Bot
 from ibidem.codetanks.server.vehicle import Vehicle
 from ibidem.codetanks.server.world import World
@@ -62,19 +62,23 @@ class TestTankCreation(Shared):
 
 
 class TestTankMovement(Shared):
+    tank_id = 0
+
     def setup(self):
         self.world = World(self.height, self.width)
         self.world.add_tank(Bot(self.bot_id, 0, None, None))
-        self.tank = self.world.tanks[0]
-        self.tank.position = Point(50, 50)
-        self.tank.direction = Point(1.0, 0.0)
-        self.tank.aim = Point(0.0, -1.0)
+        self.vehicle = create_autospec(Vehicle)
+        self.world._tanks[self.tank_id] = self.vehicle
 
     def test_move_actions_forwarded_to_vehicle(self):
-        vehicle = create_autospec(Vehicle)
-        self.world._tanks[self.tank.id] = vehicle
-        self.world.move(self.tank.id, 10)
-        vehicle.move.assert_called_with(10)
+        distance = 10
+        self.world.move(self.tank_id, distance)
+        self.vehicle.move.assert_called_with(distance)
+
+    def test_rotate_actions_forwarded_to_vehicle(self):
+        angle = 1.0
+        self.world.rotate(self.tank_id, angle)
+        self.vehicle.rotate.assert_called_with(angle)
 
 
 if __name__ == "__main__":
