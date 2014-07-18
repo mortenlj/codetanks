@@ -2,6 +2,7 @@
 # -*- coding: utf-8
 
 import argparse
+import logging
 
 import pinject
 
@@ -33,6 +34,7 @@ class ObjectGraph(pinject.BindingSpec):
 
 
 def main():
+    logging.basicConfig(level=logging.DEBUG)
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--port", type=int, default=13337)
     args = parser.parse_args()
