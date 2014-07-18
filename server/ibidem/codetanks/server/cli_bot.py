@@ -8,7 +8,7 @@ from cmd import Cmd
 
 import zmq
 
-from ibidem.codetanks.domain.ttypes import Registration, ClientType, Id, Move
+from ibidem.codetanks.domain.ttypes import Registration, ClientType, Id, Move, Rotate
 from ibidem.codetanks.domain.util import serialize, deserialize
 
 
@@ -70,6 +70,11 @@ class CliBot(Cmd):
     @parse_args
     def do_move(self, distance=10):
         self._cmd_socket.send(serialize(Move(distance)))
+        self._cmd_socket.recv()
+
+    @parse_args
+    def do_rotate(self, angle=1.0):
+        self._cmd_socket.send(serialize(Rotate(angle)))
         self._cmd_socket.recv()
 
 
