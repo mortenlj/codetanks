@@ -16,7 +16,7 @@ class Shared(object):
 
 
 class TestWorld(Shared):
-    def setUp(self):
+    def setup(self):
         self.world = World(self.width, self.height)
 
     def test_game_data_is_initialized_with_lists(self):
@@ -34,10 +34,12 @@ class TestWorld(Shared):
 
 
 class TestTankCreation(Shared):
+    def setup(self):
+        self.world = World(self.width, self.height)
+        self.world.add_tank(Bot(self.bot_id, 0, None, None))
+
     def test_tank_is_placed_inside_arena(self):
-        world = World(self.width, self.height)
-        world.add_tank(Bot(self.bot_id, 0, None, None))
-        tank = world.tanks[0]
+        tank = self.world.tanks[0]
         assert_is_instance(tank, Tank)
         assert_greater(tank.position.x, 0)
         assert_greater(tank.position.y, 0)
@@ -45,20 +47,22 @@ class TestTankCreation(Shared):
         assert_less(tank.position.y, self.height)
 
     def test_second_tank_does_not_collide(self):
-        world = World(self.width, self.height)
-        world.add_tank(Bot(self.bot_id, 0, None, None))
-        world.add_tank(Bot(self.bot_id, 1, None, None))
-        tank1 = world.tanks[0]
-        tank2 = world.tanks[1]
+        self.world.add_tank(Bot(self.bot_id, 1, None, None))
+        tank1 = self.world.tanks[0]
+        tank2 = self.world.tanks[1]
         assert_not_equal(tank1.position.x, tank2.position.x)
         assert_not_equal(tank1.position.y, tank2.position.y)
 
     def test_tank_has_sensible_values(self):
-        world = World(self.width, self.height)
-        world.add_tank(Bot(self.bot_id, 0, None, None))
-        tank = world.tanks[0]
+        tank = self.world.tanks[0]
         assert_equal(tank.health, 100)
         assert_equal(tank.status, BotStatus.IDLE)
+
+    def test_tank_status(self):
+        tank = self.world.tanks[0]
+        for status in BotStatus._NAMES_TO_VALUES.values():
+            tank.status = status
+            assert_equal(self.world.tank_status(tank.id), status)
 
 
 class TestTankMovement(Shared):

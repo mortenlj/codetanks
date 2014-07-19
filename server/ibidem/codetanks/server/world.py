@@ -47,6 +47,9 @@ class World(object):
         for tank_wrapper in self._tanks:
             tank_wrapper.update(ticks)
 
+    def tank_status(self, tank_id):
+        return self._tanks[tank_id].status
+
     ##################################################
     # Commands
     ##################################################

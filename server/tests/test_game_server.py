@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 
-from mock import create_autospec, MagicMock
+from mock import create_autospec, MagicMock, PropertyMock
 from nose.tools import assert_is_not_none, assert_equal
-from hamcrest import match_equality, instance_of
 import pygame
 
 from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id, RegistrationReply, Move, CommandReply, CommandResult, \
-    Rotate
+    Rotate, BotStatus
 from ibidem.codetanks.server.com import Channel
 from ibidem.codetanks.server.game_server import GameServer
 from ibidem.codetanks.server.world import World
@@ -88,11 +87,13 @@ class TestGame(Shared):
         self.server.clock.tick = MagicMock()
         self.server._handle_bot_registration(self.registration_channel, Registration(ClientType.BOT, Id("bot", 1)))
         self.bot = self.server._bots[0]
+        self.server._world.tank_status.return_value = BotStatus.IDLE
 
     def test_game_data_sent_once_per_loop(self):
-        self.server._world = World(10,10)
+        game_data = GameData([], [])
+        type(self.server._world).gamedata = PropertyMock(return_value=game_data)
         self.server._run_once()
-        self.viewer_channel.send.assert_called_with(match_equality(instance_of(GameData)))
+        self.viewer_channel.send.assert_called_with(game_data)
 
     def test_world_updated_once_per_loop(self):
         self.server.clock.tick.return_value = 30
@@ -113,6 +114,21 @@ class TestGame(Shared):
         self.send_on_mock_channel(self.bot.cmd_channel, Rotate(1.5))
         self.server._run_once()
         self.server._world.rotate.assert_called_once_with(self.bot.tank_id, 1.5)
+
+    def _command_abort_if_busy_test(self, status, command):
+        self.server._world.tank_status.return_value = status
+        self.send_on_mock_channel(self.bot.cmd_channel, command)
+        self.server._run_once()
+        assert_equal(self.server._world.move.called, False)
+        assert_equal(self.server._world.rotate.called, False)
+        self.bot.cmd_channel.send.assert_called_once_with(CommandReply(CommandResult.BUSY))
+
+    def test_command_aborted_if_busy(self):
+        states = list(BotStatus._NAMES_TO_VALUES.values())
+        states.remove(BotStatus.IDLE)
+        for status in states:
+            for command in (Move(10), Rotate(1.5)):
+                yield self._command_abort_if_busy_test, status, command
 
 
 if __name__ == "__main__":
