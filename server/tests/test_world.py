@@ -89,6 +89,11 @@ class TestTankMovement(Shared):
         self.world.rotate(self.tank_id, angle)
         self.vehicle.rotate.assert_called_with(angle)
 
+    def test_aim_actions_forwarded_to_vehicle(self):
+        angle = 1.0
+        self.world.aim(self.tank_id, angle)
+        self.vehicle.aim.assert_called_with(angle)
+
 
 if __name__ == "__main__":
     import nose

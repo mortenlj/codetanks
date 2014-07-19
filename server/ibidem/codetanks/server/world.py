@@ -61,6 +61,10 @@ class World(object):
         wrapper = self._tanks[tank_id]
         wrapper.rotate(angle)
 
+    def aim(self, tank_id, angle):
+        wrapper = self._tanks[tank_id]
+        wrapper.aim(angle)
+
 
 if __name__ == "__main__":
     pass
