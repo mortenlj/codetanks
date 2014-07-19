@@ -31,23 +31,20 @@ class ClientType(object):
   }
 
 class BotStatus(object):
-  ALIVE = 0
-  DYING = 1
-  DEAD = 2
-  INACTIVE = 3
+  IDLE = 0
+  MOVING = 1
+  ROTATING = 2
 
   _VALUES_TO_NAMES = {
-    0: "ALIVE",
-    1: "DYING",
-    2: "DEAD",
-    3: "INACTIVE",
+    0: "IDLE",
+    1: "MOVING",
+    2: "ROTATING",
   }
 
   _NAMES_TO_VALUES = {
-    "ALIVE": 0,
-    "DYING": 1,
-    "DEAD": 2,
-    "INACTIVE": 3,
+    "IDLE": 0,
+    "MOVING": 1,
+    "ROTATING": 2,
   }
 
 class CommandResult(object):

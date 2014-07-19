@@ -13,10 +13,9 @@ enum ClientType {
 }
 
 enum BotStatus {
-    ALIVE,
-    DYING,
-    DEAD,
-    INACTIVE
+    IDLE,
+    MOVING,
+    ROTATING
 }
 
 struct Id {
@@ -62,7 +61,7 @@ struct Tank {
     4: required Point direction;
     5: required Point aim;
     6: required byte health = MAX_HEALTH;
-    7: required BotStatus status = BotStatus.ALIVE;
+    7: required BotStatus status = BotStatus.IDLE;
 }
 
 struct GameData {

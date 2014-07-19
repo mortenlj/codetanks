@@ -58,7 +58,7 @@ class TestTankCreation(Shared):
         world.add_tank(Bot(self.bot_id, 0, None, None))
         tank = world.tanks[0]
         assert_equal(tank.health, 100)
-        assert_equal(tank.status, BotStatus.ALIVE)
+        assert_equal(tank.status, BotStatus.IDLE)
 
 
 class TestTankMovement(Shared):
