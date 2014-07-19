@@ -34,17 +34,20 @@ class BotStatus(object):
   IDLE = 0
   MOVING = 1
   ROTATING = 2
+  AIMING = 3
 
   _VALUES_TO_NAMES = {
     0: "IDLE",
     1: "MOVING",
     2: "ROTATING",
+    3: "AIMING",
   }
 
   _NAMES_TO_VALUES = {
     "IDLE": 0,
     "MOVING": 1,
     "ROTATING": 2,
+    "AIMING": 3,
   }
 
 class CommandResult(object):
@@ -710,7 +713,7 @@ class Tank(object):
    - bot_id
    - position
    - direction
-   - aim
+   - turret
    - health
    - status
   """
@@ -720,7 +723,7 @@ class Tank(object):
     'bot_id',
     'position',
     'direction',
-    'aim',
+    'turret',
     'health',
     'status',
    ]
@@ -731,17 +734,17 @@ class Tank(object):
     (2, TType.STRUCT, 'bot_id', (Id, Id.thrift_spec), None, ), # 2
     (3, TType.STRUCT, 'position', (Point, Point.thrift_spec), None, ), # 3
     (4, TType.STRUCT, 'direction', (Point, Point.thrift_spec), None, ), # 4
-    (5, TType.STRUCT, 'aim', (Point, Point.thrift_spec), None, ), # 5
+    (5, TType.STRUCT, 'turret', (Point, Point.thrift_spec), None, ), # 5
     (6, TType.BYTE, 'health', None, 100, ), # 6
     (7, TType.I32, 'status', None,     0, ), # 7
   )
 
-  def __init__(self, id=None, bot_id=None, position=None, direction=None, aim=None, health=thrift_spec[6][4], status=thrift_spec[7][4],):
+  def __init__(self, id=None, bot_id=None, position=None, direction=None, turret=None, health=thrift_spec[6][4], status=thrift_spec[7][4],):
     self.id = id
     self.bot_id = bot_id
     self.position = position
     self.direction = direction
-    self.aim = aim
+    self.turret = turret
     self.health = health
     self.status = status
 
@@ -779,8 +782,8 @@ class Tank(object):
           iprot.skip(ftype)
       elif fid == 5:
         if ftype == TType.STRUCT:
-          self.aim = Point()
-          self.aim.read(iprot)
+          self.turret = Point()
+          self.turret.read(iprot)
         else:
           iprot.skip(ftype)
       elif fid == 6:
@@ -819,9 +822,9 @@ class Tank(object):
       oprot.writeFieldBegin('direction', TType.STRUCT, 4)
       self.direction.write(oprot)
       oprot.writeFieldEnd()
-    if self.aim is not None:
-      oprot.writeFieldBegin('aim', TType.STRUCT, 5)
-      self.aim.write(oprot)
+    if self.turret is not None:
+      oprot.writeFieldBegin('turret', TType.STRUCT, 5)
+      self.turret.write(oprot)
       oprot.writeFieldEnd()
     if self.health is not None:
       oprot.writeFieldBegin('health', TType.BYTE, 6)
@@ -843,8 +846,8 @@ class Tank(object):
       raise TProtocol.TProtocolException(message='Required field position is unset!')
     if self.direction is None:
       raise TProtocol.TProtocolException(message='Required field direction is unset!')
-    if self.aim is None:
-      raise TProtocol.TProtocolException(message='Required field aim is unset!')
+    if self.turret is None:
+      raise TProtocol.TProtocolException(message='Required field turret is unset!')
     if self.health is None:
       raise TProtocol.TProtocolException(message='Required field health is unset!')
     if self.status is None:
@@ -1168,6 +1171,80 @@ class Rotate(object):
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('Rotate')
+    if self.angle is not None:
+      oprot.writeFieldBegin('angle', TType.DOUBLE, 1)
+      oprot.writeDouble(self.angle)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    if self.angle is None:
+      raise TProtocol.TProtocolException(message='Required field angle is unset!')
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, getattr(self, key))
+      for key in self.__slots__]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    if not isinstance(other, self.__class__):
+      return False
+    for attr in self.__slots__:
+      my_val = getattr(self, attr)
+      other_val = getattr(other, attr)
+      if my_val != other_val:
+        return False
+    return True
+
+  def __ne__(self, other):
+    return not (self == other)
+
+
+class Aim(object):
+  """
+  Attributes:
+   - angle
+  """
+
+  __slots__ = [ 
+    'angle',
+   ]
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.DOUBLE, 'angle', None, None, ), # 1
+  )
+
+  def __init__(self, angle=None,):
+    self.angle = angle
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.DOUBLE:
+          self.angle = iprot.readDouble();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('Aim')
     if self.angle is not None:
       oprot.writeFieldBegin('angle', TType.DOUBLE, 1)
       oprot.writeDouble(self.angle)

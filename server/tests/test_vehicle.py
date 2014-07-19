@@ -20,9 +20,14 @@ class Shared(object):
     initial_x = 3
     initial_y = 5
     initial_direction = Point2(1, 0)
+    initial_turret = Point2(-1, 0)
 
     def setup(self):
-        self.tank = Tank(0, self.bot_id, Point(self.initial_x, self.initial_y), to_point(self.initial_direction), Point(0, 1))
+        self.tank = Tank(0,
+                         self.bot_id,
+                         Point(self.initial_x, self.initial_y),
+                         to_point(self.initial_direction),
+                         to_point(self.initial_turret))
         self.vehicle = Vehicle(self.tank)
 
 
@@ -64,28 +69,77 @@ class TestMove(Shared):
         assert_that(self.vehicle.position.y, equal_to(self.initial_y))
 
 
-class TestRotate(Shared):
-    def _rotation_test(self, desc, angle, target_vector):
-        self.vehicle.rotate(angle)
-        assert_that(self.vehicle.status, equal_to(BotStatus.ROTATING))
-        assert_that_vector_matches(self.vehicle._meta.target_direction, target_vector, equal_to(0.0))
-        assert_that_vector_matches(self.vehicle.direction, self.initial_direction, equal_to(0.0))
-        while self.vehicle.direction.angle(target_vector) != 0.0:
-            assert_that_vector_matches(self.vehicle.direction, target_vector, greater_than(0.0))
+class RotateAndAim(Shared):
+    def _test(self, desc, angle, target_vector):
+        self._act(angle)
+        self._assert_starting_state()
+        while self._continue(target_vector):
+            self._assert_pre_update(target_vector)
             self.vehicle.update(random_ticks())
-            assert_that_vector_matches(self.vehicle.direction, target_vector, less_than(abs(angle)))
+            self._assert_post_update(angle, target_vector)
+        self._assert_ending_state(target_vector)
+
+
+class TestRotate(RotateAndAim):
+    def _assert_starting_state(self):
+        assert_that(self.vehicle.status, equal_to(BotStatus.ROTATING))
+        assert_that_vector_matches(self.vehicle.direction, self.initial_direction, equal_to(0.0))
+
+    def _assert_ending_state(self, target_vector):
         assert_that(self.vehicle.status, equal_to(BotStatus.IDLE))
         assert_that_vector_matches(self.vehicle.direction, target_vector, equal_to(0.0))
 
+    def _continue(self, target_vector):
+        return self.vehicle.direction.angle(target_vector) != 0.0
+
+    def _assert_pre_update(self, target_vector):
+        assert_that_vector_matches(self.vehicle.direction, target_vector, greater_than(0.0))
+
+    def _assert_post_update(self, angle, target_vector):
+        assert_that_vector_matches(self.vehicle.direction, target_vector, less_than(abs(angle)))
+
     def test_rotation(self):
-        yield ("_rotation_test", "clockwise", math.pi / 2, Vector2(0, 1))
-        yield ("_rotation_test", "anti-clockwise", -math.pi / 2, Vector2(0, -1))
+        yield ("_test", "anti-clockwise", math.pi / 2, Vector2(0, 1))
+        yield ("_test", "clockwise", -math.pi / 2, Vector2(0, -1))
 
     def test_rotation_less_than_tolerance_is_illegal(self):
         self.vehicle.rotate(ROTATION_TOLERANCE-.001)
         self.vehicle.update(random_ticks())
-        assert_that(self.vehicle._meta.rotation, equal_to(0.0))
         assert_that(self.vehicle.direction, equal_to(self.initial_direction))
+
+    def _act(self, angle):
+        self.vehicle.rotate(angle)
+
+
+class TestAim(RotateAndAim):
+    def _assert_starting_state(self):
+        assert_that(self.vehicle.status, equal_to(BotStatus.AIMING))
+        assert_that_vector_matches(self.vehicle.turret, self.initial_turret, equal_to(0.0))
+
+    def _assert_ending_state(self, target_vector):
+        assert_that(self.vehicle.status, equal_to(BotStatus.IDLE))
+        assert_that_vector_matches(self.vehicle.turret, target_vector, equal_to(0.0))
+
+    def _continue(self, target_vector):
+        return self.vehicle.turret.angle(target_vector) != 0.0
+
+    def _assert_pre_update(self, target_vector):
+        assert_that_vector_matches(self.vehicle.turret, target_vector, greater_than(0.0))
+
+    def _assert_post_update(self, angle, target_vector):
+        assert_that_vector_matches(self.vehicle.turret, target_vector, less_than(abs(angle)))
+
+    def test_aim(self):
+        yield ("_test", "anti-clockwise", math.pi / 2, Vector2(0, -1))
+        yield ("_test", "clockwise", -math.pi / 2, Vector2(0, 1))
+
+    def test_aim_less_than_tolerance_is_illegal(self):
+        self.vehicle.aim(ROTATION_TOLERANCE-.001)
+        self.vehicle.update(random_ticks())
+        assert_that(self.vehicle.turret, equal_to(self.initial_turret))
+
+    def _act(self, angle):
+        self.vehicle.aim(angle)
 
 
 def assert_that_vector_matches(actual, expected, matcher):

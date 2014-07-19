@@ -15,7 +15,8 @@ enum ClientType {
 enum BotStatus {
     IDLE,
     MOVING,
-    ROTATING
+    ROTATING,
+    AIMING
 }
 
 struct Id {
@@ -59,7 +60,7 @@ struct Tank {
     2: required Id bot_id;
     3: required Point position;
     4: required Point direction;
-    5: required Point aim;
+    5: required Point turret;
     6: required byte health = MAX_HEALTH;
     7: required BotStatus status = BotStatus.IDLE;
 }
@@ -87,5 +88,9 @@ struct Move {
 }
 
 struct Rotate {
+    1: required double angle;
+}
+
+struct Aim {
     1: required double angle;
 }
