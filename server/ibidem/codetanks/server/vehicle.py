@@ -5,7 +5,7 @@ import logging
 
 from euclid import Circle, Point2, Vector2, Ray2
 
-from ibidem.codetanks.domain.constants import TANK_SPEED, TANK_ROTATION, TANK_ROTATION_TOLERANCE
+from ibidem.codetanks.domain.constants import TANK_SPEED, ROTATION, ROTATION_TOLERANCE
 from ibidem.codetanks.domain.ttypes import Point, BotStatus
 
 
@@ -36,7 +36,7 @@ class Vehicle(object):
         def reached_target_direction(self, direction):
             angle = self.target_direction.angle(direction)
             LOG.debug("Angle between %r and %r is %r", self.target_direction, direction, angle)
-            return angle < TANK_ROTATION_TOLERANCE
+            return angle < ROTATION_TOLERANCE
 
     def __init__(self, entity):
         self.entity = entity
@@ -111,12 +111,12 @@ class Vehicle(object):
         self.entity.status = BotStatus.MOVING
 
     def rotate(self, theta):
-        if abs(theta) < TANK_ROTATION_TOLERANCE:
+        if abs(theta) < ROTATION_TOLERANCE:
             return
         new_direction = self.direction.rotate(theta)
         new_direction.normalize()
         self._meta.target_direction = new_direction
-        self._meta.rotation = TANK_ROTATION if theta > 0.0 else -TANK_ROTATION
+        self._meta.rotation = ROTATION if theta > 0.0 else -ROTATION
         self.entity.status = BotStatus.ROTATING
 
 
