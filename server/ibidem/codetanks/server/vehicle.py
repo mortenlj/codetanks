@@ -6,7 +6,7 @@ import logging
 from euclid import Circle, Point2, Vector2, Ray2
 
 from ibidem.codetanks.domain.constants import TANK_SPEED, TANK_ROTATION, TANK_ROTATION_TOLERANCE
-from ibidem.codetanks.domain.ttypes import Point
+from ibidem.codetanks.domain.ttypes import Point, BotStatus
 
 
 LOG = logging.getLogger(__name__)
@@ -59,35 +59,48 @@ class Vehicle(object):
         value.normalize()
         self.entity.direction = Point(value.x, value.y)
 
+    @property
+    def status(self):
+        return self.entity.status
+
     def _calculate_new_position(self, distance):
         return self.position + (self.direction * distance)
 
+    ################################
+    # Update funcs
+    ################################
+
     def update(self, ticks):
-        self.update_position(ticks)
-        self.update_direction(ticks)
+        {
+            BotStatus.IDLE:     lambda ticks: ticks,
+            BotStatus.MOVING:   self._update_position,
+            BotStatus.ROTATING: self._update_direction
+        }[self.status](ticks)
 
-    def update_position(self, ticks):
-        if self._meta.target_ray:
-            distance = ticks * self._meta.speed
-            new_pos = self._calculate_new_position(distance)
-            if self._meta.reached_target_position(new_pos):
-                new_pos = self._meta.target_ray.p
-                self._meta.target_ray = None
-            self.position = new_pos
+    def _update_position(self, ticks):
+        distance = ticks * self._meta.speed
+        new_pos = self._calculate_new_position(distance)
+        if self._meta.reached_target_position(new_pos):
+            new_pos = self._meta.target_ray.p
+            self.entity.status = BotStatus.IDLE
+        self.position = new_pos
 
-    def update_direction(self, ticks):
-        if self._meta.target_direction:
-            LOG.debug("Updating direction by %r ticks", ticks)
-            theta = ticks * self._meta.rotation
-            LOG.debug("Rotating from direction %r by %r radians", self.direction, theta)
-            new_direction = self.direction.rotate(theta)
-            LOG.debug("New direction is %r", new_direction)
-            if self._meta.reached_target_direction(new_direction):
-                LOG.debug("New direction considered reaching target")
-                new_direction = self._meta.target_direction
-                self._meta.target_direction = None
-            self.direction = new_direction
-            LOG.debug("Set direction to %r", self.direction)
+    def _update_direction(self, ticks):
+        LOG.debug("Updating direction by %r ticks", ticks)
+        theta = ticks * self._meta.rotation
+        LOG.debug("Rotating from direction %r by %r radians", self.direction, theta)
+        new_direction = self.direction.rotate(theta)
+        LOG.debug("New direction is %r", new_direction)
+        if self._meta.reached_target_direction(new_direction):
+            LOG.debug("New direction considered reaching target")
+            new_direction = self._meta.target_direction
+            self.entity.status = BotStatus.IDLE
+        self.direction = new_direction
+        LOG.debug("Set direction to %r", self.direction)
+
+    ###################################
+    # Commands
+    ###################################
 
     def move(self, distance):
         if distance < 0.0:
@@ -95,6 +108,7 @@ class Vehicle(object):
         new_pos = self._calculate_new_position(distance)
         self._meta.target_ray = Ray2(new_pos, self.direction)
         self._meta.speed = TANK_SPEED
+        self.entity.status = BotStatus.MOVING
 
     def rotate(self, theta):
         if abs(theta) < TANK_ROTATION_TOLERANCE:
@@ -103,6 +117,7 @@ class Vehicle(object):
         new_direction.normalize()
         self._meta.target_direction = new_direction
         self._meta.rotation = TANK_ROTATION if theta > 0.0 else -TANK_ROTATION
+        self.entity.status = BotStatus.ROTATING
 
 
 if __name__ == "__main__":
