@@ -6,7 +6,7 @@ from nose.tools import assert_is_not_none, assert_equal
 import pygame
 
 from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id, RegistrationReply, Move, CommandReply, CommandResult, \
-    Rotate, BotStatus
+    Rotate, BotStatus, Aim
 from ibidem.codetanks.server.com import Channel
 from ibidem.codetanks.server.game_server import GameServer
 from ibidem.codetanks.server.world import World
@@ -115,6 +115,11 @@ class TestGame(Shared):
         self.server._run_once()
         self.server._world.rotate.assert_called_once_with(self.bot.tank_id, 1.5)
 
+    def test_aim_command_forwarded_to_world(self):
+        self.send_on_mock_channel(self.bot.cmd_channel, Aim(-1.5))
+        self.server._run_once()
+        self.server._world.aim.assert_called_once_with(self.bot.tank_id, -1.5)
+
     def _command_abort_if_busy_test(self, status, command):
         self.server._world.tank_status.return_value = status
         self.send_on_mock_channel(self.bot.cmd_channel, command)
@@ -127,7 +132,7 @@ class TestGame(Shared):
         states = list(BotStatus._NAMES_TO_VALUES.values())
         states.remove(BotStatus.IDLE)
         for status in states:
-            for command in (Move(10), Rotate(1.5)):
+            for command in (Move(10), Rotate(1.5), Aim(-1.5)):
                 yield self._command_abort_if_busy_test, status, command
 
 

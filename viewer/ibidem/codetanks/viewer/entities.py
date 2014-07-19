@@ -50,7 +50,7 @@ class Tank(Entity):
     def __init__(self, e):
         super(Tank, self).__init__(e)
         self.bot_id = e.bot_id
-        self.aim = vec2d(e.aim.x, e.aim.y)
+        self.turret = vec2d(e.turret.x, e.turret.y)
         self.health = e.health
         self.base_body_image = pygame.image.load(self.body_image_name).convert_alpha()
         self.base_turret_image = pygame.image.load(self.turret_image_names[self.id % len(self.turret_image_names)]).convert_alpha()
@@ -58,7 +58,7 @@ class Tank(Entity):
     def update_visuals(self):
         self.image = pygame.transform.rotate(self.base_body_image, -self.direction.angle)
         self.image_w, self.image_h = self.image.get_size()
-        new_turret_image = pygame.transform.rotate(self.base_turret_image, -self.aim.angle)
+        new_turret_image = pygame.transform.rotate(self.base_turret_image, -self.turret.angle)
         w, h = new_turret_image.get_size()
         rect = new_turret_image.get_rect().move((self.image_w / 2) - (w / 2), (self.image_h / 2) - (h / 2))
         self.image.blit(new_turret_image, rect)

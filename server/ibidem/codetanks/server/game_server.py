@@ -5,7 +5,8 @@ from functools import partial
 import pygame
 from pinject import copy_args_to_internal_fields
 
-from ibidem.codetanks.domain.ttypes import GameInfo, RegistrationReply, ClientType, Move, CommandResult, CommandReply, Rotate, BotStatus
+from ibidem.codetanks.domain.ttypes import GameInfo, RegistrationReply, ClientType, Move, CommandResult, CommandReply, Rotate, BotStatus, \
+    Aim
 from ibidem.codetanks.server.bot import Bot
 from ibidem.codetanks.server.com import ChannelType
 
@@ -69,6 +70,9 @@ class GameServer(object):
             reply_channel.send(CommandReply(CommandResult.OK))
         elif isinstance(command, Rotate):
             self._world.rotate(bot.tank_id, command.angle)
+            reply_channel.send(CommandReply(CommandResult.OK))
+        elif isinstance(command, Aim):
+            self._world.aim(bot.tank_id, command.angle)
             reply_channel.send(CommandReply(CommandResult.OK))
 
     def build_game_info(self):
