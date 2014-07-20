@@ -12,44 +12,95 @@ from ibidem.codetanks.domain.ttypes import Point, BotStatus
 LOG = logging.getLogger(__name__)
 
 
+class Idle(object):
+    status = BotStatus.IDLE
+
+    def __init__(self, vehicle):
+        self.vehicle = vehicle
+        self.vehicle.status = self.status
+
+    def update(self, ticks):
+        pass
+
+
+class Move(Idle):
+    status = BotStatus.MOVING
+
+    def __init__(self, vehicle, speed, distance):
+        super(Move, self).__init__(vehicle)
+        self.speed = speed
+        self.target_ray = Ray2(vehicle.calculate_new_position(distance), vehicle.direction)
+
+    def _reached_target_position(self, position):
+        return self.target_ray.intersect(Circle(position, 1.0))
+
+    def update(self, ticks):
+        distance = ticks * self.speed
+        new_pos = self.vehicle.calculate_new_position(distance)
+        if self._reached_target_position(new_pos):
+            new_pos = self.target_ray.p
+            self.vehicle.status = BotStatus.IDLE
+        self.vehicle.position = new_pos
+
+
+class Rotate(Idle):
+    status = BotStatus.ROTATING
+
+    def __init__(self, vehicle, theta):
+        super(Rotate, self).__init__(vehicle)
+        self.target_direction = vehicle.calculate_new_direction(theta)
+        self.rotation = ROTATION if theta > 0.0 else -ROTATION
+
+    def _reached_target_direction(self, direction):
+        angle = self.target_direction.angle(direction)
+        LOG.debug("Angle between %r and %r is %r", self.target_direction, direction, angle)
+        return angle < ROTATION_TOLERANCE
+
+    def update(self, ticks):
+        LOG.debug("Updating direction by %r ticks", ticks)
+        theta = ticks * self.rotation
+        LOG.debug("Rotating from direction %r by %r radians", self.vehicle.direction, theta)
+        new_direction = self.vehicle.calculate_new_direction(theta)
+        LOG.debug("New direction is %r", new_direction)
+        if self._reached_target_direction(new_direction):
+            LOG.debug("New direction considered reaching target")
+            new_direction = self.target_direction
+            self.vehicle.status = BotStatus.IDLE
+        self.vehicle.direction = new_direction
+        LOG.debug("Set direction to %r", self.vehicle.direction)
+
+
+class Aim(Idle):
+    status = BotStatus.AIMING
+
+    def __init__(self, vehicle, theta):
+        super(Aim, self).__init__(vehicle)
+        self.target_turret = vehicle.calculate_new_turret(theta)
+        self.aiming = ROTATION if theta > 0.0 else -ROTATION
+
+    def _reached_target_turret(self, turret):
+        angle = self.target_turret.angle(turret)
+        LOG.debug("Angle between %r and %r is %r", self.target_turret, turret, angle)
+        return angle < ROTATION_TOLERANCE
+
+    def update(self, ticks):
+        LOG.debug("Updating turret by %r ticks", ticks)
+        theta = ticks * self.aiming
+        LOG.debug("Aiming from turret %r by %r radians", self.vehicle.turret, theta)
+        new_turret = self.vehicle.turret.rotate(theta)
+        LOG.debug("New turret is %r", new_turret)
+        if self._reached_target_turret(new_turret):
+            LOG.debug("New turret considered reaching target")
+            new_turret = self.target_turret
+            self.vehicle.status = BotStatus.IDLE
+        self.vehicle.turret = new_turret
+        LOG.debug("Set turret to %r", self.vehicle.turret)
+
+
 class Vehicle(object):
-    class _Meta(object):
-        __slots__ = [
-            # Targets
-            'target_ray',
-            'target_direction',
-            'target_turret',
-
-            # Motion properties
-            'speed',
-            'rotation',
-            'aiming'
-        ]
-
-        def __init__(self):
-            self.target_ray = None
-            self.target_direction = None
-            self.target_turret = None
-            self.speed = 0.0
-            self.rotation = 0.0
-            self.aiming = 0.0
-
-        def reached_target_position(self, position):
-            return self.target_ray.intersect(Circle(position, 1.0))
-
-        def reached_target_direction(self, direction):
-            angle = self.target_direction.angle(direction)
-            LOG.debug("Angle between %r and %r is %r", self.target_direction, direction, angle)
-            return angle < ROTATION_TOLERANCE
-
-        def reached_target_turret(self, turret):
-            angle = self.target_turret.angle(turret)
-            LOG.debug("Angle between %r and %r is %r", self.target_turret, turret, angle)
-            return angle < ROTATION_TOLERANCE
-
     def __init__(self, entity):
         self.entity = entity
-        self._meta = Vehicle._Meta()
+        self._command = Idle(self)
 
     @property
     def position(self):
@@ -81,55 +132,25 @@ class Vehicle(object):
     def status(self):
         return self.entity.status
 
-    def _calculate_new_position(self, distance):
+    @status.setter
+    def status(self, value):
+        self.entity.status = value
+
+    def calculate_new_position(self, distance):
         return self.position + (self.direction * distance)
 
-    ################################
-    # Update funcs
-    ################################
+    def calculate_new_direction(self, theta):
+        new = self.direction.rotate(theta)
+        new.normalize()
+        return new
+
+    def calculate_new_turret(self, theta):
+        new = self.turret.rotate(theta)
+        new.normalize()
+        return new
 
     def update(self, ticks):
-        {
-            BotStatus.IDLE:     lambda ticks: ticks,
-            BotStatus.MOVING:   self._update_position,
-            BotStatus.ROTATING: self._update_direction,
-            BotStatus.AIMING:   self._update_turret
-        }[self.status](ticks)
-
-    def _update_position(self, ticks):
-        distance = ticks * self._meta.speed
-        new_pos = self._calculate_new_position(distance)
-        if self._meta.reached_target_position(new_pos):
-            new_pos = self._meta.target_ray.p
-            self.entity.status = BotStatus.IDLE
-        self.position = new_pos
-
-    def _update_direction(self, ticks):
-        LOG.debug("Updating direction by %r ticks", ticks)
-        theta = ticks * self._meta.rotation
-        LOG.debug("Rotating from direction %r by %r radians", self.direction, theta)
-        new_direction = self.direction.rotate(theta)
-        LOG.debug("New direction is %r", new_direction)
-        if self._meta.reached_target_direction(new_direction):
-            LOG.debug("New direction considered reaching target")
-            new_direction = self._meta.target_direction
-            self.entity.status = BotStatus.IDLE
-        self.direction = new_direction
-        LOG.debug("Set direction to %r", self.direction)
-
-    def _update_turret(self, ticks):
-        LOG.debug("Updating turret by %r ticks", ticks)
-        theta = ticks * self._meta.aiming
-        LOG.debug("Aiming from turret %r by %r radians", self.turret, theta)
-        new_turret = self.turret.rotate(theta)
-        LOG.debug("New turret is %r", new_turret)
-        if self._meta.reached_target_turret(new_turret):
-            LOG.debug("New turret considered reaching target")
-            new_turret = self._meta.target_turret
-            self.entity.status = BotStatus.IDLE
-        self.turret = new_turret
-        LOG.debug("Set turret to %r", self.turret)
-
+        self._command.update(ticks)
 
     ###################################
     # Commands
@@ -138,28 +159,17 @@ class Vehicle(object):
     def move(self, distance):
         if distance < 0.0:
             return
-        new_pos = self._calculate_new_position(distance)
-        self._meta.target_ray = Ray2(new_pos, self.direction)
-        self._meta.speed = TANK_SPEED
-        self.entity.status = BotStatus.MOVING
+        self._command = Move(self, TANK_SPEED, distance)
 
     def rotate(self, theta):
         if abs(theta) < ROTATION_TOLERANCE:
             return
-        new_direction = self.direction.rotate(theta)
-        new_direction.normalize()
-        self._meta.target_direction = new_direction
-        self._meta.rotation = ROTATION if theta > 0.0 else -ROTATION
-        self.entity.status = BotStatus.ROTATING
+        self._command = Rotate(self, theta)
 
-    def aim(self, angle):
-        if abs(angle) < ROTATION_TOLERANCE:
+    def aim(self, theta):
+        if abs(theta) < ROTATION_TOLERANCE:
             return
-        new_turret = self.turret.rotate(angle)
-        new_turret.normalize()
-        self._meta.target_turret = new_turret
-        self._meta.aiming = ROTATION if angle > 0.0 else -ROTATION
-        self.entity.status = BotStatus.AIMING
+        self._command = Aim(self, theta)
 
 
 if __name__ == "__main__":
