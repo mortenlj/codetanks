@@ -3,12 +3,12 @@
 from random import uniform
 import math
 
-from hamcrest import assert_that, equal_to, less_than, greater_than
+from hamcrest import assert_that, equal_to, less_than, greater_than, instance_of
 from euclid import Point2, Vector2
 
 from ibidem.codetanks.domain.constants import ROTATION_TOLERANCE
 from ibidem.codetanks.domain.ttypes import Tank, Id, Point, BotStatus
-from ibidem.codetanks.server.vehicle import Vehicle
+from ibidem.codetanks.server.vehicle import Vehicle, Idle
 
 
 def to_point(p):
@@ -37,12 +37,32 @@ class TestVehicle(Shared):
         assert_that(self.vehicle.position.y, equal_to(self.tank.position.y))
         assert_that(self.vehicle.direction.x, equal_to(self.tank.direction.x))
         assert_that(self.vehicle.direction.y, equal_to(self.tank.direction.y))
+        assert_that(self.vehicle.turret.x, equal_to(self.tank.turret.x))
+        assert_that(self.vehicle.turret.y, equal_to(self.tank.turret.y))
+        assert_that(self.vehicle.status, equal_to(self.tank.status))
 
     def test_setting_position_is_applied_to_entity(self):
         new_position = Point2(13, 21)
         self.vehicle.position = new_position
         assert_that(self.tank.position.x, equal_to(new_position.x))
         assert_that(self.tank.position.y, equal_to(new_position.y))
+
+    def test_setting_direction_is_applied_to_entity(self):
+        new_direction = Point2(1, -1)
+        self.vehicle.direction = new_direction
+        assert_that(self.tank.direction.x, equal_to(new_direction.x))
+        assert_that(self.tank.direction.y, equal_to(new_direction.y))
+
+    def test_setting_turret_is_applied_to_entity(self):
+        new_turret = Point2(1, -1)
+        self.vehicle.turret = new_turret
+        assert_that(self.tank.turret.x, equal_to(new_turret.x))
+        assert_that(self.tank.turret.y, equal_to(new_turret.y))
+
+    def test_setting_status_is_applied_to_entity(self):
+        status = BotStatus.MOVING
+        self.vehicle.status = status
+        assert_that(self.tank.status, equal_to(status))
 
 
 class TestMove(Shared):
@@ -54,17 +74,18 @@ class TestMove(Shared):
         assert_that(self.vehicle.position.x, equal_to(self.initial_x))
         assert_that(self.vehicle.position.y, equal_to(self.initial_y))
         while self.vehicle.position.x < target_x:
+            assert_that(self.vehicle.status, equal_to(BotStatus.MOVING))
             assert_that(self.vehicle.position.x, less_than(target_x))
             self.vehicle.update(random_ticks())
             assert_that(self.vehicle.position.x, greater_than(self.initial_x))
-        assert_that(self.vehicle.status, equal_to(BotStatus.IDLE))
+        assert_that(self.vehicle._command, instance_of(Idle))
         assert_that(self.vehicle.position.x, equal_to(target_x))
         assert_that(self.vehicle.position.y, equal_to(self.initial_y))
 
     def test_move_backwards_is_illegal(self):
         self.vehicle.move(-10)
         self.vehicle.update(random_ticks())
-        assert_that(self.vehicle.status, equal_to(BotStatus.IDLE))
+        assert_that(self.vehicle._command, instance_of(Idle))
         assert_that(self.vehicle.position.x, equal_to(self.initial_x))
         assert_that(self.vehicle.position.y, equal_to(self.initial_y))
 
@@ -86,13 +107,14 @@ class TestRotate(RotateAndAim):
         assert_that_vector_matches(self.vehicle.direction, self.initial_direction, equal_to(0.0))
 
     def _assert_ending_state(self, target_vector):
-        assert_that(self.vehicle.status, equal_to(BotStatus.IDLE))
+        assert_that(self.vehicle._command, instance_of(Idle))
         assert_that_vector_matches(self.vehicle.direction, target_vector, equal_to(0.0))
 
     def _continue(self, target_vector):
         return self.vehicle.direction.angle(target_vector) != 0.0
 
     def _assert_pre_update(self, target_vector):
+        assert_that(self.vehicle.status, equal_to(BotStatus.ROTATING))
         assert_that_vector_matches(self.vehicle.direction, target_vector, greater_than(0.0))
 
     def _assert_post_update(self, angle, target_vector):
@@ -106,6 +128,7 @@ class TestRotate(RotateAndAim):
         self.vehicle.rotate(ROTATION_TOLERANCE-.001)
         self.vehicle.update(random_ticks())
         assert_that(self.vehicle.direction, equal_to(self.initial_direction))
+        assert_that(self.vehicle._command, instance_of(Idle))
 
     def _act(self, angle):
         self.vehicle.rotate(angle)
@@ -117,13 +140,14 @@ class TestAim(RotateAndAim):
         assert_that_vector_matches(self.vehicle.turret, self.initial_turret, equal_to(0.0))
 
     def _assert_ending_state(self, target_vector):
-        assert_that(self.vehicle.status, equal_to(BotStatus.IDLE))
+        assert_that(self.vehicle._command, instance_of(Idle))
         assert_that_vector_matches(self.vehicle.turret, target_vector, equal_to(0.0))
 
     def _continue(self, target_vector):
         return self.vehicle.turret.angle(target_vector) != 0.0
 
     def _assert_pre_update(self, target_vector):
+        assert_that(self.vehicle.status, equal_to(BotStatus.AIMING))
         assert_that_vector_matches(self.vehicle.turret, target_vector, greater_than(0.0))
 
     def _assert_post_update(self, angle, target_vector):
@@ -137,6 +161,7 @@ class TestAim(RotateAndAim):
         self.vehicle.aim(ROTATION_TOLERANCE-.001)
         self.vehicle.update(random_ticks())
         assert_that(self.vehicle.turret, equal_to(self.initial_turret))
+        assert_that(self.vehicle._command, instance_of(Idle))
 
     def _act(self, angle):
         self.vehicle.aim(angle)
