@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 from functools import partial
+import logging
 
 import pygame
 from pinject import copy_args_to_internal_fields
@@ -9,6 +10,9 @@ from ibidem.codetanks.domain.ttypes import GameInfo, RegistrationReply, ClientTy
     Aim
 from ibidem.codetanks.server.bot import Bot
 from ibidem.codetanks.server.com import ChannelType
+
+
+LOG = logging.getLogger(__name__)
 
 
 class GameServer(object):
@@ -28,7 +32,7 @@ class GameServer(object):
         return self.clock is not None
 
     def run(self):
-        print "GameServer starting, registration available on %s" % self._registration_channel.url
+        LOG.info("GameServer starting, registration available on %s", self._registration_channel.url)
         self.start()
         while self.started():
             self._run_once()
@@ -40,13 +44,13 @@ class GameServer(object):
                 self._handlers[channel](channel, channel.recv())
                 received_messages += 1
         if received_messages > 0:
-            print "GameServer processed %d messages" % received_messages
+            LOG.debug("GameServer processed %d messages", received_messages)
         self._viewer_channel.send(self._world.gamedata)
         ticks = self.clock.tick(60)
         self._world.update(ticks)
 
     def _handle_registration(self, reply_channel, registration):
-        print "GameServer received registration: %r" % registration
+        LOG.debug("GameServer received registration: %r", registration)
         if registration.client_type == ClientType.BOT:
             self._handle_bot_registration(reply_channel, registration)
         else:
@@ -63,6 +67,8 @@ class GameServer(object):
         self._handlers[bot.cmd_channel] = partial(self._handle_bot_cmd, bot)
 
     def _handle_bot_cmd(self, bot, reply_channel, command):
+        LOG.debug("Handling command %r for bot %r", command, bot)
+        LOG.debug("Current status for %r is %r", bot, self._world.tank_status(bot.tank_id))
         if self._world.tank_status(bot.tank_id) != BotStatus.IDLE:
             reply_channel.send(CommandReply(CommandResult.BUSY))
         elif isinstance(command, Move):
@@ -74,6 +80,7 @@ class GameServer(object):
         elif isinstance(command, Aim):
             self._world.aim(bot.tank_id, command.angle)
             reply_channel.send(CommandReply(CommandResult.OK))
+        LOG.debug("Status for %r after command is %r", bot, self._world.tank_status(bot.tank_id))
 
     def build_game_info(self):
         return GameInfo(self._world.arena)
