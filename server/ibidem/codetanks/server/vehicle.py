@@ -2,6 +2,7 @@
 # -*- coding: utf-8
 
 import logging
+import math
 
 from euclid import Circle, Point2, Vector2, Ray2
 
@@ -165,12 +166,14 @@ class Vehicle(object):
             return
         self._command = Move(self, TANK_SPEED, distance)
 
-    def rotate(self, theta):
+    def rotate(self, angle):
+        theta = math.radians(angle)
         if abs(theta) < ROTATION_TOLERANCE:
             return
         self._command = Rotate(self, theta)
 
-    def aim(self, theta):
+    def aim(self, angle):
+        theta = math.radians(angle)
         if abs(theta) < ROTATION_TOLERANCE:
             return
         self._command = Aim(self, theta)
