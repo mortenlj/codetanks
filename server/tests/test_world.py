@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
+from euclid import Point2
+from hamcrest import assert_that, equal_to
 from mock import create_autospec
 from nose.tools import assert_is_instance, assert_equal, assert_not_equal, assert_greater, assert_less
 
+from ibidem.codetanks.domain.constants import TANK_RADIUS
 from ibidem.codetanks.domain.ttypes import Arena, Id, Tank, BotStatus
 from ibidem.codetanks.server.bot import Bot
 from ibidem.codetanks.server.vehicle import Vehicle
@@ -14,11 +17,11 @@ class Shared(object):
     height = 500
     bot_id = Id("bot", 1)
 
-
-class TestWorld(Shared):
     def setup(self):
         self.world = World(self.width, self.height)
 
+
+class TestWorld(Shared):
     def test_game_data_is_initialized_with_lists(self):
         assert_is_instance(self.world.bullets, list)
         assert_is_instance(self.world.tanks, list)
@@ -33,9 +36,26 @@ class TestWorld(Shared):
         assert_equal(self.world.tanks, self.world.gamedata.tanks)
 
 
+class TestValidPosition(Shared):
+    def _bounds_test(self, position, is_valid):
+        assert_that(self.world.is_valid_position(position), equal_to(is_valid))
+
+    def test_bounds(self):
+        for x in (TANK_RADIUS, self.width/2, self.width-TANK_RADIUS):
+            for y in (TANK_RADIUS, self.height/2, self.height-TANK_RADIUS):
+                yield ("_bounds_test", Point2(x, y), True)
+            for y in (-TANK_RADIUS, -1, 0, 1, self.height-1, self.height, self.height+1, self.height+TANK_RADIUS):
+                yield ("_bounds_test", Point2(x, y), False)
+        for x in (-TANK_RADIUS, -1, 0, 1, self.width-1, self.width, self.width+1, self.width+TANK_RADIUS):
+            for y in (-TANK_RADIUS, -1, 0, 1, self.height-1, self.height, self.height+1, self.height+TANK_RADIUS):
+                yield ("_bounds_test", Point2(x, y), False)
+            for y in (TANK_RADIUS, self.height/2, self.height-TANK_RADIUS):
+                yield ("_bounds_test", Point2(x, y), False)
+
+
 class TestTankCreation(Shared):
     def setup(self):
-        self.world = World(self.width, self.height)
+        super(TestTankCreation, self).setup()
         self.world.add_tank(Bot(self.bot_id, 0, None, None))
 
     def test_tank_is_placed_inside_arena(self):
@@ -69,7 +89,7 @@ class TestTankMovement(Shared):
     tank_id = 0
 
     def setup(self):
-        self.world = World(self.height, self.width)
+        super(TestTankMovement, self).setup()
         self.world.add_tank(Bot(self.bot_id, 0, None, None))
         self.vehicle = create_autospec(Vehicle)
         self.world._tanks[self.tank_id] = self.vehicle

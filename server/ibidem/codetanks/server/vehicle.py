@@ -38,7 +38,9 @@ class Move(Idle):
         should_end = False
         distance = ticks * self.speed
         new_pos = self.vehicle.calculate_new_position(distance)
-        if self._reached_target_position(new_pos):
+        if not self.vehicle.is_valid_position(new_pos):
+            should_end = True
+        elif self._reached_target_position(new_pos):
             new_pos = self.target_ray.p
             should_end = True
         self.vehicle.position = new_pos
@@ -94,8 +96,9 @@ class Aim(RotateAndAim):
 
 
 class Vehicle(object):
-    def __init__(self, entity):
+    def __init__(self, entity, world):
         self.entity = entity
+        self._world = world
         self._command = Idle(self)
 
     @property
@@ -131,6 +134,9 @@ class Vehicle(object):
     @status.setter
     def status(self, value):
         self.entity.status = value
+
+    def is_valid_position(self, position):
+        return self._world.is_valid_position(position)
 
     def calculate_new_position(self, distance):
         return self.position + (self.direction * distance)

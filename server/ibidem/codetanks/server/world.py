@@ -3,6 +3,7 @@
 
 from random import randint, uniform
 
+from ibidem.codetanks.domain.constants import TANK_RADIUS
 from ibidem.codetanks.domain.ttypes import GameData, Arena, Tank, Point
 from ibidem.codetanks.server.vehicle import Vehicle
 
@@ -22,7 +23,7 @@ class World(object):
             self._select_valid_position(),
             self._select_random_direction(),
             self._select_random_direction()
-        ))
+        ), self)
         self._tanks.append(tank)
 
     @property
@@ -36,6 +37,12 @@ class World(object):
     @property
     def bullets(self):
         return [w.entity for w in self._bullets]
+
+    def is_valid_position(self, position):
+        for attr, upper_bound in ((position.x, self.arena.width), (position.y, self.arena.height)):
+            if not TANK_RADIUS <= attr <= (upper_bound-TANK_RADIUS):
+                return False
+        return True
 
     def _select_valid_position(self):
         return Point(randint(0, self.arena.width), randint(0, self.arena.height))
