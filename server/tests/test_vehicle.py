@@ -3,12 +3,14 @@
 from random import uniform
 import math
 
+from mock import create_autospec
 from hamcrest import assert_that, equal_to, less_than, greater_than, instance_of
 from euclid import Point2, Vector2
 
 from ibidem.codetanks.domain.constants import ROTATION_TOLERANCE
-from ibidem.codetanks.domain.ttypes import Tank, Id, Point, BotStatus
+from ibidem.codetanks.domain.ttypes import Tank, Id, Point, BotStatus, Arena
 from ibidem.codetanks.server.vehicle import Vehicle, Idle
+from ibidem.codetanks.server.world import World
 
 
 def to_point(p):
@@ -17,10 +19,11 @@ def to_point(p):
 
 class Shared(object):
     bot_id = Id("bot", 1)
-    initial_x = 3
-    initial_y = 5
+    initial_x = 30
+    initial_y = 50
     initial_direction = Point2(1, 0)
     initial_turret = Point2(-1, 0)
+    bounds = (0, 0, 100, 100)
 
     def setup(self):
         self.tank = Tank(0,
@@ -28,7 +31,10 @@ class Shared(object):
                          Point(self.initial_x, self.initial_y),
                          to_point(self.initial_direction),
                          to_point(self.initial_turret))
-        self.vehicle = Vehicle(self.tank)
+        self.world = create_autospec(World)
+        self.world.arena = Arena(self.bounds[2], self.bounds[3])
+        self.world.is_valid_position.return_value = True
+        self.vehicle = Vehicle(self.tank, self.world)
 
 
 class TestVehicle(Shared):
@@ -42,7 +48,7 @@ class TestVehicle(Shared):
         assert_that(self.vehicle.status, equal_to(self.tank.status))
 
     def test_setting_position_is_applied_to_entity(self):
-        new_position = Point2(13, 21)
+        new_position = Point2(20, 40)
         self.vehicle.position = new_position
         assert_that(self.tank.position.x, equal_to(new_position.x))
         assert_that(self.tank.position.y, equal_to(new_position.y))
@@ -88,6 +94,11 @@ class TestMove(Shared):
         assert_that(self.vehicle._command, instance_of(Idle))
         assert_that(self.vehicle.position.x, equal_to(self.initial_x))
         assert_that(self.vehicle.position.y, equal_to(self.initial_y))
+
+    def test_world_is_checked_for_valid_position(self):
+        self.vehicle.move(1)
+        self.vehicle.update(10)
+        self.world.is_valid_position.assert_called_once_with(self.vehicle.position)
 
 
 class RotateAndAim(Shared):
