@@ -5,7 +5,7 @@ const double TANK_SPEED = 0.1;
 const double ROTATION = 0.005;
 const double ROTATION_TOLERANCE = 0.05;
 const double BULLET_SPEED = 0.2;
-const double TANK_RADIUS = 15.0;
+const double TANK_RADIUS = 16.0;
 
 enum ClientType {
     VIEWER,
@@ -88,9 +88,9 @@ struct Move {
 }
 
 struct Rotate {
-    1: required double angle;
+    1: required i16 angle;
 }
 
 struct Aim {
-    1: required double angle;
+    1: required i16 angle;
 }

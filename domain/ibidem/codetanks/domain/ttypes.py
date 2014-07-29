@@ -1141,7 +1141,7 @@ class Rotate(object):
 
   thrift_spec = (
     None, # 0
-    (1, TType.DOUBLE, 'angle', None, None, ), # 1
+    (1, TType.I16, 'angle', None, None, ), # 1
   )
 
   def __init__(self, angle=None,):
@@ -1157,8 +1157,8 @@ class Rotate(object):
       if ftype == TType.STOP:
         break
       if fid == 1:
-        if ftype == TType.DOUBLE:
-          self.angle = iprot.readDouble();
+        if ftype == TType.I16:
+          self.angle = iprot.readI16();
         else:
           iprot.skip(ftype)
       else:
@@ -1172,8 +1172,8 @@ class Rotate(object):
       return
     oprot.writeStructBegin('Rotate')
     if self.angle is not None:
-      oprot.writeFieldBegin('angle', TType.DOUBLE, 1)
-      oprot.writeDouble(self.angle)
+      oprot.writeFieldBegin('angle', TType.I16, 1)
+      oprot.writeI16(self.angle)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -1215,7 +1215,7 @@ class Aim(object):
 
   thrift_spec = (
     None, # 0
-    (1, TType.DOUBLE, 'angle', None, None, ), # 1
+    (1, TType.I16, 'angle', None, None, ), # 1
   )
 
   def __init__(self, angle=None,):
@@ -1231,8 +1231,8 @@ class Aim(object):
       if ftype == TType.STOP:
         break
       if fid == 1:
-        if ftype == TType.DOUBLE:
-          self.angle = iprot.readDouble();
+        if ftype == TType.I16:
+          self.angle = iprot.readI16();
         else:
           iprot.skip(ftype)
       else:
@@ -1246,8 +1246,8 @@ class Aim(object):
       return
     oprot.writeStructBegin('Aim')
     if self.angle is not None:
-      oprot.writeFieldBegin('angle', TType.DOUBLE, 1)
-      oprot.writeDouble(self.angle)
+      oprot.writeFieldBegin('angle', TType.I16, 1)
+      oprot.writeI16(self.angle)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

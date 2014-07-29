@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 from random import uniform
-import math
 
 from mock import create_autospec
 from hamcrest import assert_that, equal_to, less_than, greater_than, instance_of
@@ -132,11 +131,11 @@ class TestRotate(RotateAndAim):
         assert_that_vector_matches(self.vehicle.direction, target_vector, less_than(abs(angle)))
 
     def test_rotation(self):
-        yield ("_test", "anti-clockwise", math.pi / 2, Vector2(0, 1))
-        yield ("_test", "clockwise", -math.pi / 2, Vector2(0, -1))
+        yield ("_test", "anti-clockwise", 90, Vector2(0, 1))
+        yield ("_test", "clockwise", -90, Vector2(0, -1))
 
     def test_rotation_less_than_tolerance_is_illegal(self):
-        self.vehicle.rotate(ROTATION_TOLERANCE-.001)
+        self.vehicle.rotate(1)
         self.vehicle.update(random_ticks())
         assert_that(self.vehicle.direction, equal_to(self.initial_direction))
         assert_that(self.vehicle._command, instance_of(Idle))
@@ -165,8 +164,8 @@ class TestAim(RotateAndAim):
         assert_that_vector_matches(self.vehicle.turret, target_vector, less_than(abs(angle)))
 
     def test_aim(self):
-        yield ("_test", "anti-clockwise", math.pi / 2, Vector2(0, -1))
-        yield ("_test", "clockwise", -math.pi / 2, Vector2(0, 1))
+        yield ("_test", "anti-clockwise", 90, Vector2(0, -1))
+        yield ("_test", "clockwise", -90, Vector2(0, 1))
 
     def test_aim_less_than_tolerance_is_illegal(self):
         self.vehicle.aim(ROTATION_TOLERANCE-.001)

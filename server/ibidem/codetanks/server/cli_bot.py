@@ -77,12 +77,12 @@ class CliBot(Cmd):
         self._print_result()
 
     @parse_args
-    def do_rotate(self, angle=1.0):
+    def do_rotate(self, angle=10):
         self._cmd_socket.send(serialize(Rotate(angle)))
         self._print_result()
 
     @parse_args
-    def do_aim(self, angle=1.0):
+    def do_aim(self, angle=10):
         self._cmd_socket.send(serialize(Aim(angle)))
         self._print_result()
 

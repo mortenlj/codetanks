@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 
-from random import randint, uniform
+from random import randint
 
 from ibidem.codetanks.domain.constants import TANK_RADIUS
 from ibidem.codetanks.domain.ttypes import GameData, Arena, Tank, Point
@@ -48,7 +48,7 @@ class World(object):
         return Point(randint(0, self.arena.width), randint(0, self.arena.height))
 
     def _select_random_direction(self):
-        return Point(uniform(-1, 1), uniform(-1, 1))
+        return Point(randint(-1, 1), randint(-1, 1))
 
     def update(self, ticks):
         for tank_wrapper in self._tanks:
