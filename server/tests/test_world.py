@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
+
+from random import randint
+
 from euclid import Point2
 from hamcrest import assert_that, equal_to
-from mock import create_autospec
-from nose.tools import assert_is_instance, assert_equal, assert_not_equal, assert_greater, assert_less
+from mock import create_autospec, patch
+from nose.tools import assert_is_instance, assert_equal, assert_true
 
 from ibidem.codetanks.domain.constants import TANK_RADIUS
 from ibidem.codetanks.domain.ttypes import Arena, Id, Tank, BotStatus
@@ -54,31 +57,31 @@ class TestValidPosition(Shared):
 
 
 class TestTankCreation(Shared):
-    def setup(self):
-        super(TestTankCreation, self).setup()
-        self.world.add_tank(Bot(self.bot_id, 0, None, None))
-
     def test_tank_is_placed_inside_arena(self):
-        tank = self.world.tanks[0]
-        assert_is_instance(tank, Tank)
-        assert_greater(tank.position.x, 0)
-        assert_greater(tank.position.y, 0)
-        assert_less(tank.position.x, self.width)
-        assert_less(tank.position.y, self.height)
-
-    def test_second_tank_does_not_collide(self):
-        self.world.add_tank(Bot(self.bot_id, 1, None, None))
-        tank1 = self.world.tanks[0]
-        tank2 = self.world.tanks[1]
-        assert_not_equal(tank1.position.x, tank2.position.x)
-        assert_not_equal(tank1.position.y, tank2.position.y)
+        return_values = []
+        for x in -TANK_RADIUS, -1, 0, 1, self.width-1, self.width, self.width+1, self.width+TANK_RADIUS:
+            for y in -TANK_RADIUS, -1, 0, 1, self.height-1, self.height, self.height+1, self.height+TANK_RADIUS:
+                return_values.append(x)
+                return_values.append(y)
+        return_values.append(self.width/2)
+        return_values.append(self.height/2)
+        return_values.extend([None]*4)
+        with patch("ibidem.codetanks.server.world.randint", side_effect=_MyRandint(return_values)):
+            self.world.add_tank(Bot(self.bot_id, 0, None, None))
+            tank = self.world.tanks[0]
+            assert_is_instance(tank, Tank)
+            assert_true(self.world.is_valid_position(tank.position), "Position is invalid")
+            assert_that(tank.position.x, equal_to(self.width/2))
+            assert_that(tank.position.y, equal_to(self.height/2))
 
     def test_tank_has_sensible_values(self):
+        self.world.add_tank(Bot(self.bot_id, 0, None, None))
         tank = self.world.tanks[0]
         assert_equal(tank.health, 100)
         assert_equal(tank.status, BotStatus.IDLE)
 
     def test_tank_status(self):
+        self.world.add_tank(Bot(self.bot_id, 0, None, None))
         tank = self.world.tanks[0]
         for status in BotStatus._NAMES_TO_VALUES.values():
             tank.status = status
@@ -114,6 +117,16 @@ class TestTankMovement(Shared):
         self.world.aim(self.tank_id, angle)
         self.vehicle.aim.assert_called_with(angle)
 
+
+class _MyRandint(object):
+    def __init__(self, return_values):
+        self.return_values = list(return_values)
+
+    def __call__(self, *args, **kwargs):
+        if self.return_values:
+            value = self.return_values.pop(0)
+            return randint(*args, **kwargs) if value is None else value
+        assert False, "Not enough return values"
 
 if __name__ == "__main__":
     import nose

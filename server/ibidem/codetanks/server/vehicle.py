@@ -40,7 +40,7 @@ class Move(Idle):
         distance = ticks * self.speed
         new_pos = self.vehicle.calculate_new_position(distance)
         if not self.vehicle.is_valid_position(new_pos):
-            should_end = True
+            return True
         elif self._reached_target_position(new_pos):
             new_pos = self.target_ray.p
             should_end = True

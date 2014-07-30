@@ -7,7 +7,7 @@ from hamcrest import assert_that, equal_to, less_than, greater_than, instance_of
 from euclid import Point2, Vector2
 
 from ibidem.codetanks.domain.constants import ROTATION_TOLERANCE
-from ibidem.codetanks.domain.ttypes import Tank, Id, Point, BotStatus, Arena
+from ibidem.codetanks.domain.ttypes import Tank, Id, Point, BotStatus
 from ibidem.codetanks.server.vehicle import Vehicle, Idle
 from ibidem.codetanks.server.world import World
 
@@ -22,7 +22,6 @@ class Shared(object):
     initial_y = 50
     initial_direction = Point2(1, 0)
     initial_turret = Point2(-1, 0)
-    bounds = (0, 0, 100, 100)
 
     def setup(self):
         self.tank = Tank(0,
@@ -31,7 +30,6 @@ class Shared(object):
                          to_point(self.initial_direction),
                          to_point(self.initial_turret))
         self.world = create_autospec(World)
-        self.world.arena = Arena(self.bounds[2], self.bounds[3])
         self.world.is_valid_position.return_value = True
         self.vehicle = Vehicle(self.tank, self.world)
 
@@ -98,6 +96,13 @@ class TestMove(Shared):
         self.vehicle.move(1)
         self.vehicle.update(10)
         self.world.is_valid_position.assert_called_once_with(self.vehicle.position)
+
+    def test_vehicle_is_not_moved_if_new_position_invalid(self):
+        self.world.is_valid_position.return_value = False
+        self.vehicle.move(100)
+        self.vehicle.update(random_ticks())
+        assert_that(self.vehicle.position.x, equal_to(self.initial_x))
+        assert_that(self.vehicle.position.y, equal_to(self.initial_y))
 
 
 class RotateAndAim(Shared):

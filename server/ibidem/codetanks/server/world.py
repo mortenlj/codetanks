@@ -45,7 +45,10 @@ class World(object):
         return True
 
     def _select_valid_position(self):
-        return Point(randint(0, self.arena.width), randint(0, self.arena.height))
+        position = Point(randint(0, self.arena.width), randint(0, self.arena.height))
+        while not self.is_valid_position(position):
+            position = Point(randint(0, self.arena.width), randint(0, self.arena.height))
+        return position
 
     def _select_random_direction(self):
         return Point(randint(-1, 1), randint(-1, 1))
