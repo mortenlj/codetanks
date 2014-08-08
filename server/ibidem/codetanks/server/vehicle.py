@@ -6,7 +6,7 @@ import math
 
 from euclid import Circle, Point2, Vector2, Ray2
 
-from ibidem.codetanks.domain.constants import TANK_SPEED, ROTATION, ROTATION_TOLERANCE
+from ibidem.codetanks.domain.constants import TANK_SPEED, ROTATION, ROTATION_TOLERANCE, TANK_RADIUS
 from ibidem.codetanks.domain.ttypes import Point, BotStatus
 
 
@@ -137,7 +137,7 @@ class Vehicle(object):
         self.entity.status = value
 
     def is_valid_position(self, position):
-        return self._world.is_valid_position(position)
+        return self._world.is_valid_position(position, self)
 
     def calculate_new_position(self, distance):
         return self.position + (self.direction * distance)
@@ -151,6 +151,13 @@ class Vehicle(object):
         new = self.turret.rotate(theta)
         new.normalize()
         return new
+
+    def collide(self, other_pos):
+        pos = self.position
+        xdistance = pos.x - other_pos.x
+        ydistance = pos.y - other_pos.y
+        squared = xdistance ** 2 + ydistance ** 2
+        return squared <= (TANK_RADIUS*2) ** 2
 
     def update(self, ticks):
         should_end = self._command.update(ticks)

@@ -38,15 +38,19 @@ class World(object):
     def bullets(self):
         return [w.entity for w in self._bullets]
 
-    def is_valid_position(self, position):
+    def is_valid_position(self, position, current_tank):
         for attr, upper_bound in ((position.x, self.arena.width), (position.y, self.arena.height)):
             if not TANK_RADIUS <= attr <= (upper_bound-TANK_RADIUS):
+                return False
+        for tank in self._tanks:
+            if tank == current_tank: continue
+            if tank.collide(position):
                 return False
         return True
 
     def _select_valid_position(self):
         position = Point(randint(0, self.arena.width), randint(0, self.arena.height))
-        while not self.is_valid_position(position):
+        while not self.is_valid_position(position, None):
             position = Point(randint(0, self.arena.width), randint(0, self.arena.height))
         return position
 

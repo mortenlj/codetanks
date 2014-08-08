@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
+from itertools import chain
 from random import uniform
 
 from mock import create_autospec
 from hamcrest import assert_that, equal_to, less_than, greater_than, instance_of
 from euclid import Point2, Vector2
 
-from ibidem.codetanks.domain.constants import ROTATION_TOLERANCE
+from ibidem.codetanks.domain.constants import ROTATION_TOLERANCE, TANK_RADIUS
 from ibidem.codetanks.domain.ttypes import Tank, Id, Point, BotStatus
 from ibidem.codetanks.server.vehicle import Vehicle, Idle
 from ibidem.codetanks.server.world import World
@@ -67,6 +68,26 @@ class TestVehicle(Shared):
         self.vehicle.status = status
         assert_that(self.tank.status, equal_to(status))
 
+    def _collide_test(self, other_pos, result):
+        assert_that(self.vehicle.collide(other_pos), equal_to(result))
+
+    def test_overlap_is_detected(self):
+        modifiers = (2*TANK_RADIUS, (2*TANK_RADIUS-1), TANK_RADIUS, 1)
+        for modifier in modifiers:
+            yield ("_collide_test", Point2(self.initial_x - modifier, self.initial_y), True)
+            yield ("_collide_test", Point2(self.initial_x + modifier, self.initial_y), True)
+            yield ("_collide_test", Point2(self.initial_x, self.initial_y - modifier), True)
+            yield ("_collide_test", Point2(self.initial_x, self.initial_y + modifier), True)
+        yield ("_collide_test", Point2(self.initial_x, self.initial_y), True)
+
+    def test_non_overlap_is_accepted(self):
+        abs_modifiers = (2*TANK_RADIUS+1, 3*TANK_RADIUS)
+        modifiers = list(chain(abs_modifiers, (-1*m for m in abs_modifiers)))
+        for x in (self.initial_x + modifier for modifier in modifiers):
+            for y in (self.initial_y + modifier for modifier in modifiers):
+                other_pos = Point2(x, y)
+                yield ("_collide_test", other_pos, False)
+
 
 class TestMove(Shared):
     def test_move_forwards(self):
@@ -95,7 +116,7 @@ class TestMove(Shared):
     def test_world_is_checked_for_valid_position(self):
         self.vehicle.move(1)
         self.vehicle.update(10)
-        self.world.is_valid_position.assert_called_once_with(self.vehicle.position)
+        self.world.is_valid_position.assert_called_once_with(self.vehicle.position, self.vehicle)
 
     def test_vehicle_is_not_moved_if_new_position_invalid(self):
         self.world.is_valid_position.return_value = False

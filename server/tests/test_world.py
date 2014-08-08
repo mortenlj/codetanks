@@ -41,7 +41,7 @@ class TestWorld(Shared):
 
 class TestValidPosition(Shared):
     def _bounds_test(self, position, is_valid):
-        assert_that(self.world.is_valid_position(position), equal_to(is_valid))
+        assert_that(self.world.is_valid_position(position, None), equal_to(is_valid))
 
     def test_bounds(self):
         for x in (TANK_RADIUS, self.width/2, self.width-TANK_RADIUS):
@@ -54,6 +54,12 @@ class TestValidPosition(Shared):
                 yield ("_bounds_test", Point2(x, y), False)
             for y in (TANK_RADIUS, self.height/2, self.height-TANK_RADIUS):
                 yield ("_bounds_test", Point2(x, y), False)
+
+    def test_simple_tank_collision(self):
+        self.world.add_tank(Bot(self.bot_id, 0, None, None))
+        tank = self.world._tanks[0]
+        tank.position = Point2(50, 50)
+        assert_that(self.world.is_valid_position(Point2(50, 50), None), equal_to(False))
 
 
 class TestTankCreation(Shared):
@@ -68,9 +74,10 @@ class TestTankCreation(Shared):
         return_values.extend([None]*4)
         with patch("ibidem.codetanks.server.world.randint", side_effect=_MyRandint(return_values)):
             self.world.add_tank(Bot(self.bot_id, 0, None, None))
-            tank = self.world.tanks[0]
+            vehicle = self.world._tanks[0]
+            tank = vehicle.entity
             assert_is_instance(tank, Tank)
-            assert_true(self.world.is_valid_position(tank.position), "Position is invalid")
+            assert_true(self.world.is_valid_position(tank.position, vehicle), "Position is invalid")
             assert_that(tank.position.x, equal_to(self.width/2))
             assert_that(tank.position.y, equal_to(self.height/2))
 
