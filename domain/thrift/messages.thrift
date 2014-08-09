@@ -16,7 +16,8 @@ enum BotStatus {
     IDLE,
     MOVING,
     ROTATING,
-    AIMING
+    AIMING,
+    FIRING
 }
 
 struct Id {

@@ -26,6 +26,9 @@ class World(object):
         ), self)
         self._tanks.append(tank)
 
+    def add_bullet(self, position, direction):
+        pass
+
     @property
     def gamedata(self):
         return GameData(self.bullets, self.tanks)

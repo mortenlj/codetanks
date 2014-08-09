@@ -35,12 +35,14 @@ class BotStatus(object):
   MOVING = 1
   ROTATING = 2
   AIMING = 3
+  FIRING = 4
 
   _VALUES_TO_NAMES = {
     0: "IDLE",
     1: "MOVING",
     2: "ROTATING",
     3: "AIMING",
+    4: "FIRING",
   }
 
   _NAMES_TO_VALUES = {
@@ -48,6 +50,7 @@ class BotStatus(object):
     "MOVING": 1,
     "ROTATING": 2,
     "AIMING": 3,
+    "FIRING": 4,
   }
 
 class CommandResult(object):
