@@ -203,6 +203,12 @@ class TestAim(RotateAndAim):
         self.vehicle.aim(angle)
 
 
+class TestFire(Shared):
+    def test_fire(self):
+        self.vehicle.fire()
+        # TODO
+
+
 def assert_that_vector_matches(actual, expected, matcher):
     assert_that(actual.angle(expected), matcher)
 

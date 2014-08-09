@@ -185,6 +185,9 @@ class Vehicle(object):
             return
         self._command = Aim(self, theta)
 
+    def fire(self):
+        pass # TODO
+
 
 if __name__ == "__main__":
     pass

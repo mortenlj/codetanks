@@ -79,6 +79,10 @@ class World(object):
         wrapper = self._tanks[tank_id]
         wrapper.aim(angle)
 
+    def fire(self, tank_id):
+        wrapper = self._tanks[tank_id]
+        wrapper.fire()
+
 
 if __name__ == "__main__":
     pass
