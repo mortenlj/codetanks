@@ -6,8 +6,7 @@ import logging
 import pygame
 from pinject import copy_args_to_internal_fields
 
-from ibidem.codetanks.domain.ttypes import GameInfo, RegistrationReply, ClientType, Move, CommandResult, CommandReply, Rotate, BotStatus, \
-    Aim
+from ibidem.codetanks.domain.ttypes import GameInfo, RegistrationReply, ClientType, CommandResult, CommandReply, BotStatus
 from ibidem.codetanks.server.bot import Bot
 from ibidem.codetanks.server.com import ChannelType
 
@@ -71,14 +70,12 @@ class GameServer(object):
         LOG.debug("Current status for %r is %r", bot, self._world.tank_status(bot.tank_id))
         if self._world.tank_status(bot.tank_id) != BotStatus.IDLE:
             reply_channel.send(CommandReply(CommandResult.BUSY))
-        elif isinstance(command, Move):
-            self._world.move(bot.tank_id, command.distance)
-            reply_channel.send(CommandReply(CommandResult.OK))
-        elif isinstance(command, Rotate):
-            self._world.rotate(bot.tank_id, command.angle)
-            reply_channel.send(CommandReply(CommandResult.OK))
-        elif isinstance(command, Aim):
-            self._world.aim(bot.tank_id, command.angle)
+        else:
+            name = type(command).__name__.lower()
+            params = [getattr(command, attr) for _, _, attr, _, _ in command.thrift_spec[1:]]
+            func = getattr(self._world, name)
+            LOG.debug("Calling self._world.%s(%s) for bot %r", name, ", ".join(repr(x) for x in params), bot)
+            func(bot.tank_id, *params)
             reply_channel.send(CommandReply(CommandResult.OK))
         LOG.debug("Status for %r after command is %r", bot, self._world.tank_status(bot.tank_id))
 
