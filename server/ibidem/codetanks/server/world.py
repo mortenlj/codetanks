@@ -64,24 +64,10 @@ class World(object):
     def tank_status(self, tank_id):
         return self._tanks[tank_id].status
 
-    ##################################################
-    # Commands
-    ##################################################
-    def move(self, tank_id, distance):
+    def command(self, tank_id, name, *params):
         wrapper = self._tanks[tank_id]
-        wrapper.move(distance)
-
-    def rotate(self, tank_id, angle):
-        wrapper = self._tanks[tank_id]
-        wrapper.rotate(angle)
-
-    def aim(self, tank_id, angle):
-        wrapper = self._tanks[tank_id]
-        wrapper.aim(angle)
-
-    def fire(self, tank_id):
-        wrapper = self._tanks[tank_id]
-        wrapper.fire()
+        func = getattr(wrapper, name)
+        func(*params)
 
 
 if __name__ == "__main__":

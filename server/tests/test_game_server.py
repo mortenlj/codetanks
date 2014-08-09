@@ -6,7 +6,7 @@ from nose.tools import assert_is_not_none, assert_equal
 import pygame
 
 from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id, RegistrationReply, Move, CommandReply, CommandResult, \
-    Rotate, BotStatus, Aim
+    Rotate, BotStatus, Aim, Fire
 from ibidem.codetanks.server.com import Channel
 from ibidem.codetanks.server.game_server import GameServer
 from ibidem.codetanks.server.world import World
@@ -109,27 +109,22 @@ class TestGame(Shared):
         self.server._run_once()
         self.bot.cmd_channel.send.assert_called_once_with(CommandReply(CommandResult.OK))
 
-    def test_move_command_forwarded_to_world(self):
-        self.send_on_mock_channel(self.bot.cmd_channel, Move(10))
+    def _command_test(self, command, name, *params):
+        self.send_on_mock_channel(self.bot.cmd_channel, command)
         self.server._run_once()
-        self.server._world.move.assert_called_once_with(self.bot.tank_id, 10)
+        self.server._world.command.assert_called_once_with(self.bot.tank_id, name, *params)
 
-    def test_rotate_command_forwarded_to_world(self):
-        self.send_on_mock_channel(self.bot.cmd_channel, Rotate(1.5))
-        self.server._run_once()
-        self.server._world.rotate.assert_called_once_with(self.bot.tank_id, 1.5)
-
-    def test_aim_command_forwarded_to_world(self):
-        self.send_on_mock_channel(self.bot.cmd_channel, Aim(-1.5))
-        self.server._run_once()
-        self.server._world.aim.assert_called_once_with(self.bot.tank_id, -1.5)
+    def test_commands_forwarded_to_world(self):
+        yield ("_command_test", Move(10), "move", 10)
+        yield ("_command_test", Rotate(10), "rotate", 10)
+        yield ("_command_test", Aim(10), "aim", 10)
+        yield ("_command_test", Fire(), "fire")
 
     def _command_abort_if_busy_test(self, status, command):
         self.server._world.tank_status.return_value = status
         self.send_on_mock_channel(self.bot.cmd_channel, command)
         self.server._run_once()
-        assert_equal(self.server._world.move.called, False)
-        assert_equal(self.server._world.rotate.called, False)
+        assert_equal(self.server._world.command.called, False)
         self.bot.cmd_channel.send.assert_called_once_with(CommandReply(CommandResult.BUSY))
 
     def test_command_aborted_if_busy(self):
