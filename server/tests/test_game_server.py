@@ -17,7 +17,11 @@ class Shared(object):
         self.registration_channel = create_autospec(Channel)
         self.registration_channel.ready.return_value = False
         self.viewer_channel = create_autospec(Channel)
-        self.server = GameServer(self.registration_channel, self.viewer_channel, lambda x: create_autospec(Channel(x)), create_autospec(World))
+        def channel_factory(x):
+            mock = create_autospec(Channel(x))
+            mock.ready.return_value = False
+            return mock
+        self.server = GameServer(self.registration_channel, self.viewer_channel, channel_factory, create_autospec(World))
         self.server.start()
 
     def send_on_mock_channel(self, channel, value):
