@@ -124,6 +124,10 @@ class TestTankMovement(Shared):
         self.world.aim(self.tank_id, angle)
         self.vehicle.aim.assert_called_with(angle)
 
+    def test_fire_actions_forwarded_to_vehicle(self):
+        self.world.fire(self.tank_id)
+        self.vehicle.fire.assert_called_with()
+
 
 class _MyRandint(object):
     def __init__(self, return_values):

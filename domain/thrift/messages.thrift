@@ -94,3 +94,6 @@ struct Rotate {
 struct Aim {
     1: required i16 angle;
 }
+
+struct Fire {
+}
