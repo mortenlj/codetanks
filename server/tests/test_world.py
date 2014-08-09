@@ -109,24 +109,16 @@ class TestTankMovement(Shared):
         self.world.update(ticks)
         self.vehicle.update.assert_called_with(ticks)
 
-    def test_move_actions_forwarded_to_vehicle(self):
-        distance = 10
-        self.world.move(self.tank_id, distance)
-        self.vehicle.move.assert_called_with(distance)
+    def _command_test(self, name, *params):
+        self.world.command(self.tank_id, name, *params)
+        func = getattr(self.vehicle, name)
+        func.assert_called_with(*params)
 
-    def test_rotate_actions_forwarded_to_vehicle(self):
-        angle = 1.0
-        self.world.rotate(self.tank_id, angle)
-        self.vehicle.rotate.assert_called_with(angle)
-
-    def test_aim_actions_forwarded_to_vehicle(self):
-        angle = 1.0
-        self.world.aim(self.tank_id, angle)
-        self.vehicle.aim.assert_called_with(angle)
-
-    def test_fire_actions_forwarded_to_vehicle(self):
-        self.world.fire(self.tank_id)
-        self.vehicle.fire.assert_called_with()
+    def test_commands_forwarded_to_vehicle(self):
+        yield ("_command_test", "move", 10)
+        yield ("_command_test", "rotate", 10)
+        yield ("_command_test", "aim", 10)
+        yield ("_command_test", "fire")
 
 
 class _MyRandint(object):
