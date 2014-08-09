@@ -51,7 +51,10 @@ class ServerProxy(object):
         self._update_entities(game_data.bullets, self.bullets, Bullet)
 
     def _get_server_update(self):
-        return deserialize(self._update_socket.recv())
+        events = self._update_socket.poll(100)
+        if events == zmq.POLLIN:
+            return deserialize(self._update_socket.recv())
+        raise Empty()
 
     def update(self):
         try:
