@@ -96,6 +96,18 @@ class Aim(RotateAndAim):
         self.vehicle.turret = new
 
 
+class Fire(Idle):
+    status = BotStatus.FIRING
+
+    def __init__(self, vehicle, world):
+        super(Fire, self).__init__(vehicle)
+        self._world = world
+
+    def update(self, ticks):
+        self._world.add_bullet(self.vehicle.position, self.vehicle.turret)
+        return True
+
+
 class Vehicle(object):
     def __init__(self, entity, world):
         self.entity = entity
@@ -186,7 +198,7 @@ class Vehicle(object):
         self._command = Aim(self, theta)
 
     def fire(self):
-        pass # TODO
+        self._command = Fire(self, self._world)
 
 
 if __name__ == "__main__":

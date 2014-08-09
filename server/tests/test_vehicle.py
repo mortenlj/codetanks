@@ -206,7 +206,8 @@ class TestAim(RotateAndAim):
 class TestFire(Shared):
     def test_fire(self):
         self.vehicle.fire()
-        # TODO
+        self.vehicle.update(random_ticks())
+        self.world.add_bullet.assert_called_with(self.vehicle.position, self.vehicle.turret)
 
 
 def assert_that_vector_matches(actual, expected, matcher):
