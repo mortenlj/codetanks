@@ -6,6 +6,7 @@ const double ROTATION = 0.005;
 const double ROTATION_TOLERANCE = 0.05;
 const double BULLET_SPEED = 0.2;
 const double TANK_RADIUS = 16.0;
+const double BULLET_RADIUS = 2.0
 
 enum ClientType {
     VIEWER,

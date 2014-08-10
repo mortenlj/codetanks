@@ -3,7 +3,7 @@
 
 from random import randint
 
-from euclid import Point2
+from euclid import Point2, Vector2
 from hamcrest import assert_that, equal_to
 from mock import create_autospec, patch
 from nose.tools import assert_is_instance, assert_equal, assert_true
@@ -11,7 +11,7 @@ from nose.tools import assert_is_instance, assert_equal, assert_true
 from ibidem.codetanks.domain.constants import TANK_RADIUS
 from ibidem.codetanks.domain.ttypes import Arena, Id, Tank, BotStatus
 from ibidem.codetanks.server.bot import Bot
-from ibidem.codetanks.server.vehicle import Vehicle
+from ibidem.codetanks.server.vehicle import Armour
 from ibidem.codetanks.server.world import World
 
 
@@ -95,13 +95,24 @@ class TestTankCreation(Shared):
             assert_equal(self.world.tank_status(tank.id), status)
 
 
+class TestBulletCreation(Shared):
+    position = Point2(250, 250)
+    direction = Vector2(1, 0)
+
+    def test_bullet_is_placed_at_location(self):
+        self.world.add_bullet(self.position, self.direction)
+        bullet = self.world._bullets[0]
+        assert_that(bullet.position, equal_to(self.position))
+        assert_that(bullet.direction, equal_to(self.direction))
+
+
 class TestTankMovement(Shared):
     tank_id = 0
 
     def setup(self):
         super(TestTankMovement, self).setup()
         self.world.add_tank(Bot(self.bot_id, 0, None, None))
-        self.vehicle = create_autospec(Vehicle)
+        self.vehicle = create_autospec(Armour)
         self.world._tanks[self.tank_id] = self.vehicle
 
     def test_update_calls_vehicle_update(self):

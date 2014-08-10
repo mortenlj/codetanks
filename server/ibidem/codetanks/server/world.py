@@ -4,8 +4,8 @@
 from random import randint
 
 from ibidem.codetanks.domain.constants import TANK_RADIUS
-from ibidem.codetanks.domain.ttypes import GameData, Arena, Tank, Point
-from ibidem.codetanks.server.vehicle import Vehicle
+from ibidem.codetanks.domain.ttypes import GameData, Arena, Tank, Point, Bullet
+from ibidem.codetanks.server.vehicle import Armour, Missile
 
 
 class World(object):
@@ -17,7 +17,7 @@ class World(object):
         self._tanks = []
 
     def add_tank(self, bot):
-        tank = Vehicle(Tank(
+        tank = Armour(Tank(
             bot.tank_id,
             bot.bot_id,
             self._select_valid_position(),
@@ -27,7 +27,8 @@ class World(object):
         self._tanks.append(tank)
 
     def add_bullet(self, position, direction):
-        pass
+        bullet = Missile(Bullet(_bullet_generator.next(), Point(position.x, position.y), Point(direction.x, direction.y)), self)
+        self._bullets.append(bullet)
 
     @property
     def gamedata(self):
@@ -72,6 +73,14 @@ class World(object):
         func = getattr(wrapper, name)
         func(*params)
 
+
+def _id_generator():
+    i = 0
+    while True:
+        yield i
+        i += 1
+
+_bullet_generator = _id_generator()
 
 if __name__ == "__main__":
     pass
