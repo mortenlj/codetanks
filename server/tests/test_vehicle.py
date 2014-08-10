@@ -10,7 +10,7 @@ from euclid import Point2, Vector2
 from ibidem.codetanks.domain.constants import ROTATION_TOLERANCE, TANK_RADIUS
 from ibidem.codetanks.domain.ttypes import Tank, Id, Point, BotStatus
 from ibidem.codetanks.server.commands import Idle
-from ibidem.codetanks.server.vehicle import Vehicle
+from ibidem.codetanks.server.vehicle import Armour
 from ibidem.codetanks.server.world import World
 
 
@@ -33,7 +33,7 @@ class Shared(object):
                          to_point(self.initial_turret))
         self.world = create_autospec(World)
         self.world.is_valid_position.return_value = True
-        self.vehicle = Vehicle(self.tank, self.world)
+        self.vehicle = Armour(self.tank, self.world)
 
 
 class TestVehicle(Shared):

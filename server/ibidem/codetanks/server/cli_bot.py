@@ -8,7 +8,7 @@ from cmd import Cmd
 
 import zmq
 
-from ibidem.codetanks.domain.ttypes import Registration, ClientType, Id, Move, Rotate, CommandResult, Aim
+from ibidem.codetanks.domain.ttypes import Registration, ClientType, Id, Move, Rotate, CommandResult, Aim, Fire
 from ibidem.codetanks.domain.util import serialize, deserialize
 
 
@@ -26,11 +26,13 @@ def parse_args(func):
     name = func.__name__[3:]
     args, varargs, kwargs, defaults = inspect.getargspec(func)
     args.remove("self")
-    assert len(args) == len(defaults), "You must supply example value for all args of %s" % name
-    assert None not in defaults, "You can't use None as an example value in %s" % name
     parser = NoExitArgumentParser(prog=name, add_help=False)
-    for name, value in zip(args, defaults):
-        parser.add_argument(name, type=type(value))
+    if args:
+        assert defaults is not None, "You must supplie example values for all args of %s" % name
+        assert len(args) == len(defaults), "You must supply example value for all args of %s" % name
+        assert None not in defaults, "You can't use None as an example value in %s" % name
+        for name, value in zip(args, defaults):
+            parser.add_argument(name, type=type(value))
     @wraps(func)
     def wrapper(self, line):
         try:
@@ -84,6 +86,11 @@ class CliBot(Cmd):
     @parse_args
     def do_aim(self, angle=10):
         self._cmd_socket.send(serialize(Aim(angle)))
+        self._print_result()
+
+    @parse_args
+    def do_fire(self):
+        self._cmd_socket.send(serialize(Fire()))
         self._print_result()
 
 
