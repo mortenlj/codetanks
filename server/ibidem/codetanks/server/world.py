@@ -26,8 +26,10 @@ class World(object):
         ), self)
         self._tanks.append(tank)
 
-    def add_bullet(self, position, direction):
-        bullet = Missile(Bullet(_bullet_generator.next(), Point(position.x, position.y), Point(direction.x, direction.y)), self)
+    def add_bullet(self, parent):
+        position = Point(parent.position.x, parent.position.y)
+        direction = Point(parent.direction.x, parent.direction.y)
+        bullet = Missile(Bullet(_bullet_generator.next(), position, direction), self, parent)
         self._bullets.append(bullet)
 
     @property
@@ -62,8 +64,10 @@ class World(object):
         return Point(randint(-1, 1), randint(-1, 1))
 
     def update(self, ticks):
-        for tank_wrapper in self._tanks:
-            tank_wrapper.update(ticks)
+        for tank in self._tanks:
+            tank.update(ticks)
+        for bullet in self._bullets:
+            bullet.update(ticks)
 
     def tank_status(self, tank_id):
         return self._tanks[tank_id].status

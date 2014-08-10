@@ -30,6 +30,7 @@ class Move(Idle):
         super(Move, self).__init__(vehicle)
         self.speed = speed
         self.target_ray = Ray2(vehicle.calculate_new_position(distance), vehicle.direction)
+        LOG.debug("Moving to %r", self.target_ray)
 
     def _reached_target_position(self, position):
         return self.target_ray.intersect(Circle(position, 1.0))
@@ -37,10 +38,14 @@ class Move(Idle):
     def update(self, ticks):
         should_end = False
         distance = ticks * self.speed
+        LOG.debug("Attempting to move %r", distance)
         new_pos = self.vehicle.calculate_new_position(distance)
+        LOG.debug("New position: %r", new_pos)
         if not self.vehicle.is_valid_position(new_pos):
+            LOG.debug("Aborting move, new position is invalid")
             return True
         elif self._reached_target_position(new_pos):
+            LOG.debug("Reached target %r", self.target_ray)
             new_pos = self.target_ray.p
             should_end = True
         self.vehicle.position = new_pos
@@ -103,5 +108,5 @@ class Fire(Idle):
         self._world = world
 
     def update(self, ticks):
-        self._world.add_bullet(self.vehicle.position, self.vehicle.turret)
+        self._world.add_bullet(self.vehicle)
         return True

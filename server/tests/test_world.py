@@ -4,14 +4,15 @@
 from random import randint
 
 from euclid import Point2, Vector2
-from hamcrest import assert_that, equal_to
+from hamcrest import assert_that, equal_to, instance_of
 from mock import create_autospec, patch
 from nose.tools import assert_is_instance, assert_equal, assert_true
 
 from ibidem.codetanks.domain.constants import TANK_RADIUS
 from ibidem.codetanks.domain.ttypes import Arena, Id, Tank, BotStatus
 from ibidem.codetanks.server.bot import Bot
-from ibidem.codetanks.server.vehicle import Armour
+from ibidem.codetanks.server.commands import Move
+from ibidem.codetanks.server.vehicle import Armour, Missile
 from ibidem.codetanks.server.world import World
 
 
@@ -95,34 +96,23 @@ class TestTankCreation(Shared):
             assert_equal(self.world.tank_status(tank.id), status)
 
 
-class TestBulletCreation(Shared):
-    position = Point2(250, 250)
-    direction = Vector2(1, 0)
-
-    def test_bullet_is_placed_at_location(self):
-        self.world.add_bullet(self.position, self.direction)
-        bullet = self.world._bullets[0]
-        assert_that(bullet.position, equal_to(self.position))
-        assert_that(bullet.direction, equal_to(self.direction))
-
-
 class TestTankMovement(Shared):
     tank_id = 0
 
     def setup(self):
         super(TestTankMovement, self).setup()
         self.world.add_tank(Bot(self.bot_id, 0, None, None))
-        self.vehicle = create_autospec(Armour)
-        self.world._tanks[self.tank_id] = self.vehicle
+        self.armour = create_autospec(Armour)
+        self.world._tanks[self.tank_id] = self.armour
 
-    def test_update_calls_vehicle_update(self):
+    def test_update_calls_armour_update(self):
         ticks = 10
         self.world.update(ticks)
-        self.vehicle.update.assert_called_with(ticks)
+        self.armour.update.assert_called_with(ticks)
 
     def _command_test(self, name, *params):
         self.world.command(self.tank_id, name, *params)
-        func = getattr(self.vehicle, name)
+        func = getattr(self.armour, name)
         func.assert_called_with(*params)
 
     def test_commands_forwarded_to_vehicle(self):
@@ -130,6 +120,39 @@ class TestTankMovement(Shared):
         yield ("_command_test", "rotate", 10)
         yield ("_command_test", "aim", 10)
         yield ("_command_test", "fire")
+
+
+class BulletShared(Shared):
+    def setup(self):
+        super(BulletShared, self).setup()
+        self.parent = create_autospec(Armour)
+        self.parent.position = Point2(230, 50)
+        self.parent.direction = Vector2(-1, 0)
+
+
+class TestBulletCreation(BulletShared):
+    def test_bullet_is_placed_at_location(self):
+        self.world.add_bullet(self.parent)
+        bullet = self.world._bullets[0]
+        assert_that(bullet.position, equal_to(self.parent.position))
+        assert_that(bullet.direction, equal_to(self.parent.direction))
+        assert_that(bullet._command, instance_of(Move))
+
+
+class TestBulletMovement(BulletShared):
+    position = Point2(250, 250)
+    direction = Vector2(1, 0)
+
+    def setup(self):
+        super(TestBulletMovement, self).setup()
+        self.world.add_bullet(self.parent)
+        self.bullet = create_autospec(Missile)
+        self.world._bullets[0] = self.bullet
+
+    def test_update_calls_bullet_update(self):
+        ticks = 10
+        self.world.update(ticks)
+        self.bullet.update.assert_called_with(ticks)
 
 
 class _MyRandint(object):

@@ -20,9 +20,6 @@ class Vehicle(object):
         self._world = world
         self._command = Idle(self)
 
-    def is_valid_position(self, position):
-        return self._world.is_valid_position(position, self)
-
     def calculate_new_position(self, distance):
         return self.position + (self.direction * distance)
 
@@ -74,6 +71,9 @@ class Armour(Vehicle):
     def status(self, value):
         self.entity.status = value
 
+    def is_valid_position(self, position):
+        return self._world.is_valid_position(position, self)
+
     def calculate_new_direction(self, theta):
         new = self.direction.rotate(theta)
         new.normalize()
@@ -108,12 +108,25 @@ class Armour(Vehicle):
     def fire(self):
         self._command = Fire(self, self._world)
 
+    def __repr__(self):
+        keys = ("entity", "position", "direction", "turret", "status")
+        return "Armour(%s)" % ", ".join("%s=%r" % (key, getattr(self, key)) for key in keys)
+
 
 class Missile(Vehicle):
-    def __init__(self, entity, world):
+    def __init__(self, entity, world, parent):
         super(Missile, self).__init__(entity, world)
+        self._parent = parent
         arena = world.arena
+        LOG.debug("Missile %r created" % self)
         self._command = Move(self, BULLET_SPEED, arena.width + arena.height)
+
+    def is_valid_position(self, position):
+        return self._world.is_valid_position(position, self._parent)
+
+    def __repr__(self):
+        keys = ("entity", "position", "direction")
+        return "Missile(%s)" % ", ".join("%s=%r" % (key, getattr(self, key)) for key in keys)
 
 
 if __name__ == "__main__":
