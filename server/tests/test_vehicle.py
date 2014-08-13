@@ -7,10 +7,10 @@ from mock import create_autospec
 from hamcrest import assert_that, equal_to, less_than, greater_than, instance_of
 from euclid import Point2, Vector2
 
-from ibidem.codetanks.domain.constants import ROTATION_TOLERANCE, TANK_RADIUS
-from ibidem.codetanks.domain.ttypes import Tank, Id, Point, BotStatus
+from ibidem.codetanks.domain.constants import ROTATION_TOLERANCE, TANK_RADIUS, BULLET_RADIUS
+from ibidem.codetanks.domain.ttypes import Tank, Id, Point, BotStatus, Bullet, Arena
 from ibidem.codetanks.server.commands import Idle
-from ibidem.codetanks.server.vehicle import Armour
+from ibidem.codetanks.server.vehicle import Armour, Missile
 from ibidem.codetanks.server.world import World
 
 
@@ -25,15 +25,29 @@ class Shared(object):
     initial_direction = Point2(1, 0)
     initial_turret = Point2(-1, 0)
 
-    def setup(self):
-        self.tank = Tank(0,
-                         self.bot_id,
-                         Point(self.initial_x, self.initial_y),
-                         to_point(self.initial_direction),
-                         to_point(self.initial_turret))
+    def setup_world(self):
         self.world = create_autospec(World)
+        self.world.arena = Arena(500, 500)
         self.world.is_valid_position.return_value = True
+
+    def setup(self):
+        self.setup_world()
+        self.tank = self._create_tank()
         self.vehicle = Armour(self.tank, self.world)
+
+    def _create_tank(self, tank_id=0, position=None):
+        if position is None:
+            position = Point(self.initial_x, self.initial_y)
+        return Tank(tank_id,
+                    self.bot_id,
+                    position,
+                    to_point(self.initial_direction),
+                    to_point(self.initial_turret))
+
+    def _create_bullet(self, bullet_id=0, position=None):
+        if position is None:
+            position = Point(self.initial_x, self.initial_y)
+        return Bullet(bullet_id, position, to_point(self.initial_direction))
 
 
 class TestVehicle(Shared):
@@ -69,26 +83,6 @@ class TestVehicle(Shared):
         self.vehicle.status = status
         assert_that(self.tank.status, equal_to(status))
 
-    def _collide_test(self, other_pos, result):
-        assert_that(self.vehicle.collide(other_pos), equal_to(result))
-
-    def test_overlap_is_detected(self):
-        modifiers = (2*TANK_RADIUS, (2*TANK_RADIUS-1), TANK_RADIUS, 1)
-        for modifier in modifiers:
-            yield ("_collide_test", Point2(self.initial_x - modifier, self.initial_y), True)
-            yield ("_collide_test", Point2(self.initial_x + modifier, self.initial_y), True)
-            yield ("_collide_test", Point2(self.initial_x, self.initial_y - modifier), True)
-            yield ("_collide_test", Point2(self.initial_x, self.initial_y + modifier), True)
-        yield ("_collide_test", Point2(self.initial_x, self.initial_y), True)
-
-    def test_non_overlap_is_accepted(self):
-        abs_modifiers = (2*TANK_RADIUS+1, 3*TANK_RADIUS)
-        modifiers = list(chain(abs_modifiers, (-1*m for m in abs_modifiers)))
-        for x in (self.initial_x + modifier for modifier in modifiers):
-            for y in (self.initial_y + modifier for modifier in modifiers):
-                other_pos = Point2(x, y)
-                yield ("_collide_test", other_pos, False)
-
 
 class TestMove(Shared):
     def test_move_forwards(self):
@@ -117,10 +111,19 @@ class TestMove(Shared):
     def test_world_is_checked_for_valid_position(self):
         self.vehicle.move(1)
         self.vehicle.update(10)
-        self.world.is_valid_position.assert_called_once_with(self.vehicle.position, self.vehicle)
+        self.world.is_valid_position.assert_called_once_with(self.vehicle)
+
+    def test_world_is_checked_for_valid_position_for_missile(self):
+        missile = Missile(self._create_bullet(0), self.world, self.vehicle)
+        missile.update(random_ticks())
+        self.world.is_valid_position.assert_called_once_with(missile)
 
     def test_vehicle_is_not_moved_if_new_position_invalid(self):
         self.world.is_valid_position.return_value = False
+        missile = Missile(self._create_bullet(0), self.world, self.vehicle)
+        missile.update(random_ticks())
+        assert_that(missile.position.x, equal_to(self.initial_x))
+        assert_that(missile.position.y, equal_to(self.initial_y))
         self.vehicle.move(100)
         self.vehicle.update(random_ticks())
         assert_that(self.vehicle.position.x, equal_to(self.initial_x))
@@ -209,6 +212,58 @@ class TestFire(Shared):
         self.vehicle.fire()
         self.vehicle.update(random_ticks())
         self.world.add_bullet.assert_called_with(self.vehicle)
+
+
+class TestCollide(Shared):
+    def _collide_test(self, other, result):
+        assert_that(self.vehicle.collide(other), equal_to(result))
+
+    def _point_generator(self, modifier):
+        yield Point(self.initial_x - modifier, self.initial_y)
+        yield Point(self.initial_x + modifier, self.initial_y)
+        yield Point(self.initial_x, self.initial_y - modifier)
+        yield Point(self.initial_x, self.initial_y + modifier)
+
+    def test_armour_overlap_with_armour_is_detected(self):
+        self.setup_world()
+        modifiers = (2*TANK_RADIUS, (2*TANK_RADIUS-1), TANK_RADIUS, 1)
+        for modifier in modifiers:
+            for pos in self._point_generator(modifier):
+                yield ("_collide_test", Armour(self._create_tank(1, pos), self.world), True)
+        yield ("_collide_test", Armour(self._create_tank(1, Point(self.initial_x, self.initial_y)), self.world), True)
+
+    def test_armour_overlap_with_missile_is_detected(self):
+        self.setup_world()
+        modifiers = (2*BULLET_RADIUS, (2*BULLET_RADIUS-1), BULLET_RADIUS, 1)
+        for modifier in modifiers:
+            for pos in self._point_generator(modifier):
+                yield ("_collide_test", Missile(self._create_bullet(0, pos), self.world, None), True)
+            yield ("_collide_test", Missile(self._create_bullet(0, Point(self.initial_x, self.initial_y)), self.world, None), True)
+
+    def test_armour_non_overlap_is_accepted(self):
+        self.setup_world()
+        abs_modifiers = (2*TANK_RADIUS+1, 3*TANK_RADIUS)
+        modifiers = list(chain(abs_modifiers, (-1*m for m in abs_modifiers)))
+        for x in (self.initial_x + modifier for modifier in modifiers):
+            for y in (self.initial_y + modifier for modifier in modifiers):
+                yield ("_collide_test", Armour(self._create_tank(1, Point(x, y)), self.world), False)
+
+    def test_missile_non_overlap_is_accepted(self):
+        self.setup_world()
+        abs_modifiers = (TANK_RADIUS+BULLET_RADIUS+1, TANK_RADIUS+2*BULLET_RADIUS)
+        modifiers = list(chain(abs_modifiers, (-1*m for m in abs_modifiers)))
+        for x in (self.initial_x + modifier for modifier in modifiers):
+            for y in (self.initial_y + modifier for modifier in modifiers):
+                yield ("_collide_test", Missile(self._create_bullet(0, Point(x, y)), self.world, None), False)
+
+    def test_vehicle_does_not_collide_with_self(self):
+        assert_that(self.vehicle.collide(self.vehicle), equal_to(False))
+        missile = Missile(self._create_bullet(), self.world, self.vehicle)
+        assert_that(missile.collide(missile), equal_to(False))
+
+    def test_missile_does_not_collide_with_parent(self):
+        missile = Missile(self._create_bullet(), self.world, self.vehicle)
+        assert_that(missile.collide(self.vehicle), equal_to(False))
 
 
 def assert_that_vector_matches(actual, expected, matcher):

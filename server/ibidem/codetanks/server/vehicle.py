@@ -6,7 +6,7 @@ import math
 
 from euclid import Point2, Vector2
 
-from ibidem.codetanks.domain.constants import TANK_SPEED, ROTATION_TOLERANCE, TANK_RADIUS, BULLET_SPEED
+from ibidem.codetanks.domain.constants import TANK_SPEED, ROTATION_TOLERANCE, TANK_RADIUS, BULLET_SPEED, BULLET_RADIUS
 from ibidem.codetanks.domain.ttypes import Point
 from ibidem.codetanks.server.commands import Idle, Move, Rotate, Aim, Fire
 
@@ -15,6 +15,8 @@ LOG = logging.getLogger(__name__)
 
 
 class Vehicle(object):
+    radius = None
+
     def __init__(self, entity, world):
         self.entity = entity
         self._world = world
@@ -23,12 +25,15 @@ class Vehicle(object):
     def calculate_new_position(self, distance):
         return self.position + (self.direction * distance)
 
-    def collide(self, other_pos):
+    def collide(self, other):
+        if other is self:
+            return False
         pos = self.position
+        other_pos = other.position
         xdistance = pos.x - other_pos.x
         ydistance = pos.y - other_pos.y
         squared = xdistance ** 2 + ydistance ** 2
-        return squared <= (TANK_RADIUS*2) ** 2
+        return squared <= (other.radius+self.radius) ** 2
 
     def update(self, ticks):
         should_end = self._command.update(ticks)
@@ -54,6 +59,8 @@ class Vehicle(object):
 
 
 class Armour(Vehicle):
+    radius = TANK_RADIUS
+
     @property
     def turret(self):
         return Vector2(self.entity.turret.x, self.entity.turret.y)
@@ -71,8 +78,8 @@ class Armour(Vehicle):
     def status(self, value):
         self.entity.status = value
 
-    def is_valid_position(self, position):
-        return self._world.is_valid_position(position, self)
+    def is_valid_position(self):
+        return self._world.is_valid_position(self)
 
     def calculate_new_direction(self, theta):
         new = self.direction.rotate(theta)
@@ -114,6 +121,8 @@ class Armour(Vehicle):
 
 
 class Missile(Vehicle):
+    radius = BULLET_RADIUS
+
     def __init__(self, entity, world, parent):
         super(Missile, self).__init__(entity, world)
         self._parent = parent
@@ -121,8 +130,13 @@ class Missile(Vehicle):
         LOG.debug("Missile %r created" % self)
         self._command = Move(self, BULLET_SPEED, arena.width + arena.height)
 
-    def is_valid_position(self, position):
-        return self._world.is_valid_position(position, self._parent)
+    def is_valid_position(self):
+        return self._world.is_valid_position(self)
+
+    def collide(self, other):
+        if other is self._parent:
+            return False
+        return super(Missile, self).collide(other)
 
     def __repr__(self):
         keys = ("entity", "position", "direction")

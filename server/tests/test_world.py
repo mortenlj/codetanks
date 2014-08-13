@@ -9,7 +9,7 @@ from mock import create_autospec, patch
 from nose.tools import assert_is_instance, assert_equal, assert_true
 
 from ibidem.codetanks.domain.constants import TANK_RADIUS
-from ibidem.codetanks.domain.ttypes import Arena, Id, Tank, BotStatus
+from ibidem.codetanks.domain.ttypes import Arena, Id, Tank, BotStatus, Bullet
 from ibidem.codetanks.server.bot import Bot
 from ibidem.codetanks.server.commands import Move
 from ibidem.codetanks.server.vehicle import Armour, Missile
@@ -41,26 +41,35 @@ class TestWorld(Shared):
 
 
 class TestValidPosition(Shared):
-    def _bounds_test(self, position, is_valid):
-        assert_that(self.world.is_valid_position(position, None), equal_to(is_valid))
+    def _bounds_test(self, vehicle_class, entity, parent, position, is_valid):
+        if parent:
+            vehicle = vehicle_class(entity, self.world, parent)
+        else:
+            vehicle = vehicle_class(entity, self.world)
+        vehicle.position = position
+        assert_that(self.world.is_valid_position(vehicle), equal_to(is_valid))
 
     def test_bounds(self):
-        for x in (TANK_RADIUS, self.width/2, self.width-TANK_RADIUS):
-            for y in (TANK_RADIUS, self.height/2, self.height-TANK_RADIUS):
-                yield ("_bounds_test", Point2(x, y), True)
-            for y in (-TANK_RADIUS, -1, 0, 1, self.height-1, self.height, self.height+1, self.height+TANK_RADIUS):
-                yield ("_bounds_test", Point2(x, y), False)
-        for x in (-TANK_RADIUS, -1, 0, 1, self.width-1, self.width, self.width+1, self.width+TANK_RADIUS):
-            for y in (-TANK_RADIUS, -1, 0, 1, self.height-1, self.height, self.height+1, self.height+TANK_RADIUS):
-                yield ("_bounds_test", Point2(x, y), False)
-            for y in (TANK_RADIUS, self.height/2, self.height-TANK_RADIUS):
-                yield ("_bounds_test", Point2(x, y), False)
+        for cls, entity, parent in (Armour, create_autospec(Tank), None), (Missile, create_autospec(Bullet), create_autospec(Armour)):
+            for x in (cls.radius, self.width/2, self.width-cls.radius):
+                for y in (cls.radius, self.height/2, self.height-cls.radius):
+                    yield ("_bounds_test", cls, entity, parent, Point2(x, y), True)
+                for y in (-cls.radius, -1, 0, 1, self.height-1, self.height, self.height+1, self.height+cls.radius):
+                    yield ("_bounds_test", cls, entity, parent, Point2(x, y), False)
+            for x in (-cls.radius, -1, 0, 1, self.width-1, self.width, self.width+1, self.width+cls.radius):
+                for y in (-cls.radius, -1, 0, 1, self.height-1, self.height, self.height+1, self.height+cls.radius):
+                    yield ("_bounds_test", cls, entity, parent, Point2(x, y), False)
+                for y in (cls.radius, self.height/2, self.height-cls.radius):
+                    yield ("_bounds_test", cls, entity, parent, Point2(x, y), False)
 
     def test_simple_tank_collision(self):
         self.world.add_tank(Bot(self.bot_id, 0, None, None))
-        tank = self.world._tanks[0]
-        tank.position = Point2(50, 50)
-        assert_that(self.world.is_valid_position(Point2(50, 50), None), equal_to(False))
+        self.world.add_tank(Bot(self.bot_id, 1, None, None))
+        tank0 = self.world._tanks[0]
+        tank0.position = Point2(50, 50)
+        tank1 = self.world._tanks[1]
+        tank1.position = Point2(50, 50)
+        assert_that(self.world.is_valid_position(tank0), equal_to(False))
 
 
 class TestTankCreation(Shared):
@@ -78,7 +87,7 @@ class TestTankCreation(Shared):
             vehicle = self.world._tanks[0]
             tank = vehicle.entity
             assert_is_instance(tank, Tank)
-            assert_true(self.world.is_valid_position(tank.position, vehicle), "Position is invalid")
+            assert_true(self.world.is_valid_position(vehicle), "Position is invalid")
             assert_that(tank.position.x, equal_to(self.width/2))
             assert_that(tank.position.y, equal_to(self.height/2))
 
