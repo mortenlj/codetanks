@@ -3,7 +3,6 @@
 
 from random import randint
 
-from ibidem.codetanks.domain.constants import TANK_RADIUS
 from ibidem.codetanks.domain.ttypes import GameData, Arena, Tank, Point, Bullet
 from ibidem.codetanks.server.vehicle import Armour, Missile
 
@@ -17,14 +16,15 @@ class World(object):
         self._tanks = []
 
     def add_tank(self, bot):
-        tank = Armour(Tank(
+        armour = Armour(Tank(
             bot.tank_id,
             bot.bot_id,
-            self._select_valid_position(),
+            None,
             self._select_random_direction(),
             self._select_random_direction()
         ), self)
-        self._tanks.append(tank)
+        self._set_valid_position(armour)
+        self._tanks.append(armour)
 
     def add_bullet(self, parent):
         position = Point(parent.position.x, parent.position.y)
@@ -44,21 +44,20 @@ class World(object):
     def bullets(self):
         return [w.entity for w in self._bullets]
 
-    def is_valid_position(self, position, current_tank):
+    def is_valid_position(self, vehicle):
+        position = vehicle.position
         for attr, upper_bound in ((position.x, self.arena.width), (position.y, self.arena.height)):
-            if not TANK_RADIUS <= attr <= (upper_bound-TANK_RADIUS):
+            if not vehicle.radius <= attr <= (upper_bound-vehicle.radius):
                 return False
         for tank in self._tanks:
-            if tank == current_tank: continue
-            if tank.collide(position):
+            if tank.collide(vehicle):
                 return False
         return True
 
-    def _select_valid_position(self):
-        position = Point(randint(0, self.arena.width), randint(0, self.arena.height))
-        while not self.is_valid_position(position, None):
-            position = Point(randint(0, self.arena.width), randint(0, self.arena.height))
-        return position
+    def _set_valid_position(self, armour):
+        armour.position = Point(randint(0, self.arena.width), randint(0, self.arena.height))
+        while not self.is_valid_position(armour):
+            armour.position = Point(randint(0, self.arena.width), randint(0, self.arena.height))
 
     def _select_random_direction(self):
         return Point(randint(-1, 1), randint(-1, 1))

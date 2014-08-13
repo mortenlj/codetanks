@@ -29,7 +29,10 @@ class Move(Idle):
     def __init__(self, vehicle, speed, distance):
         super(Move, self).__init__(vehicle)
         self.speed = speed
-        self.target_ray = Ray2(vehicle.calculate_new_position(distance), vehicle.direction)
+        LOG.debug("Starting move of %r", vehicle)
+        target_position = vehicle.calculate_new_position(distance)
+        LOG.debug("Calculated target_position: %r", target_position)
+        self.target_ray = Ray2(target_position, vehicle.direction)
         LOG.debug("Moving to %r", self.target_ray)
 
     def _reached_target_position(self, position):
@@ -39,16 +42,18 @@ class Move(Idle):
         should_end = False
         distance = ticks * self.speed
         LOG.debug("Attempting to move %r", distance)
+        old_pos = self.vehicle.position
         new_pos = self.vehicle.calculate_new_position(distance)
         LOG.debug("New position: %r", new_pos)
-        if not self.vehicle.is_valid_position(new_pos):
+        self.vehicle.position = new_pos
+        if not self.vehicle.is_valid_position():
             LOG.debug("Aborting move, new position is invalid")
+            self.vehicle.position = old_pos
             return True
         elif self._reached_target_position(new_pos):
             LOG.debug("Reached target %r", self.target_ray)
-            new_pos = self.target_ray.p
+            self.vehicle.position = self.target_ray.p
             should_end = True
-        self.vehicle.position = new_pos
         return should_end
 
 
