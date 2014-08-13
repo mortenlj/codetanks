@@ -53,14 +53,14 @@ class TestValidPosition(Shared):
         for cls, entity, parent in (Armour, create_autospec(Tank), None), (Missile, create_autospec(Bullet), create_autospec(Armour)):
             for x in (cls.radius, self.width/2, self.width-cls.radius):
                 for y in (cls.radius, self.height/2, self.height-cls.radius):
-                    yield ("_bounds_test", cls, entity, parent, Point2(x, y), True)
+                    yield self._bounds_test, cls, entity, parent, Point2(x, y), True
                 for y in (-cls.radius, -1, 0, 1, self.height-1, self.height, self.height+1, self.height+cls.radius):
-                    yield ("_bounds_test", cls, entity, parent, Point2(x, y), False)
+                    yield self._bounds_test, cls, entity, parent, Point2(x, y), False
             for x in (-cls.radius, -1, 0, 1, self.width-1, self.width, self.width+1, self.width+cls.radius):
                 for y in (-cls.radius, -1, 0, 1, self.height-1, self.height, self.height+1, self.height+cls.radius):
-                    yield ("_bounds_test", cls, entity, parent, Point2(x, y), False)
+                    yield self._bounds_test, cls, entity, parent, Point2(x, y), False
                 for y in (cls.radius, self.height/2, self.height-cls.radius):
-                    yield ("_bounds_test", cls, entity, parent, Point2(x, y), False)
+                    yield self._bounds_test, cls, entity, parent, Point2(x, y), False
 
     def test_simple_tank_collision(self):
         self.world.add_tank(Bot(self.bot_id, 0, None, None))
@@ -125,10 +125,10 @@ class TestTankMovement(Shared):
         func.assert_called_with(*params)
 
     def test_commands_forwarded_to_vehicle(self):
-        yield ("_command_test", "move", 10)
-        yield ("_command_test", "rotate", 10)
-        yield ("_command_test", "aim", 10)
-        yield ("_command_test", "fire")
+        yield self._command_test, "move", 10
+        yield self._command_test, "rotate", 10
+        yield self._command_test, "aim", 10
+        yield self._command_test, "fire"
 
 
 class BulletShared(Shared):

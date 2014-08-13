@@ -115,10 +115,10 @@ class TestGame(Shared):
         self.server._world.command.assert_called_once_with(self.bot.tank_id, name, *params)
 
     def test_commands_forwarded_to_world(self):
-        yield ("_command_test", Move(10), "move", 10)
-        yield ("_command_test", Rotate(10), "rotate", 10)
-        yield ("_command_test", Aim(10), "aim", 10)
-        yield ("_command_test", Fire(), "fire")
+        yield self._command_test, Move(10), "move", 10
+        yield self._command_test, Rotate(10), "rotate", 10
+        yield self._command_test, Aim(10), "aim", 10
+        yield self._command_test, Fire(), "fire"
 
     def _command_abort_if_busy_test(self, status, command):
         self.server._world.tank_status.return_value = status

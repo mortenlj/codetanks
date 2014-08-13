@@ -169,8 +169,8 @@ class TestRotate(RotateAndAim):
         assert_that_vector_matches(self.armour.direction, target_vector, less_than(abs(angle)))
 
     def test_rotation(self):
-        yield ("_test", "anti-clockwise", 90, Vector2(0, 1))
-        yield ("_test", "clockwise", -90, Vector2(0, -1))
+        yield self._test, "anti-clockwise", 90, Vector2(0, 1)
+        yield self._test, "clockwise", -90, Vector2(0, -1)
 
     def test_rotation_less_than_tolerance_is_illegal(self):
         self.armour.rotate(1)
@@ -202,8 +202,8 @@ class TestAim(RotateAndAim):
         assert_that_vector_matches(self.armour.turret, target_vector, less_than(abs(angle)))
 
     def test_aim(self):
-        yield ("_test", "anti-clockwise", 90, Vector2(0, -1))
-        yield ("_test", "clockwise", -90, Vector2(0, 1))
+        yield self._test, "anti-clockwise", 90, Vector2(0, -1)
+        yield self._test, "clockwise", -90, Vector2(0, 1)
 
     def test_aim_less_than_tolerance_is_illegal(self):
         self.armour.aim(ROTATION_TOLERANCE-.001)
@@ -237,16 +237,16 @@ class TestCollide(Shared):
         modifiers = (2*TANK_RADIUS, (2*TANK_RADIUS-1), TANK_RADIUS, 1)
         for modifier in modifiers:
             for pos in self._point_generator(modifier):
-                yield ("_collide_test", Armour(self._create_tank(1, pos), self.world), True)
-        yield ("_collide_test", Armour(self._create_tank(1, Point(self.initial_x, self.initial_y)), self.world), True)
+                yield self._collide_test, Armour(self._create_tank(1, pos), self.world), True
+        yield self._collide_test, Armour(self._create_tank(1, Point(self.initial_x, self.initial_y)), self.world), True
 
     def test_armour_overlap_with_missile_is_detected(self):
         self.setup_world()
         modifiers = (2*BULLET_RADIUS, (2*BULLET_RADIUS-1), BULLET_RADIUS, 1)
         for modifier in modifiers:
             for pos in self._point_generator(modifier):
-                yield ("_collide_test", Missile(self._create_bullet(0, pos), self.world, None), True)
-            yield ("_collide_test", Missile(self._create_bullet(0, Point(self.initial_x, self.initial_y)), self.world, None), True)
+                yield self._collide_test, Missile(self._create_bullet(0, pos), self.world, None), True
+            yield self._collide_test, Missile(self._create_bullet(0, Point(self.initial_x, self.initial_y)), self.world, None), True
 
     def test_armour_non_overlap_is_accepted(self):
         self.setup_world()
@@ -254,7 +254,7 @@ class TestCollide(Shared):
         modifiers = list(chain(abs_modifiers, (-1*m for m in abs_modifiers)))
         for x in (self.initial_x + modifier for modifier in modifiers):
             for y in (self.initial_y + modifier for modifier in modifiers):
-                yield ("_collide_test", Armour(self._create_tank(1, Point(x, y)), self.world), False)
+                yield self._collide_test, Armour(self._create_tank(1, Point(x, y)), self.world), False
 
     def test_missile_non_overlap_is_accepted(self):
         self.setup_world()
@@ -262,7 +262,7 @@ class TestCollide(Shared):
         modifiers = list(chain(abs_modifiers, (-1*m for m in abs_modifiers)))
         for x in (self.initial_x + modifier for modifier in modifiers):
             for y in (self.initial_y + modifier for modifier in modifiers):
-                yield ("_collide_test", Missile(self._create_bullet(0, Point(x, y)), self.world, None), False)
+                yield self._collide_test, Missile(self._create_bullet(0, Point(x, y)), self.world, None), False
 
     def test_vehicle_does_not_collide_with_self(self):
         assert_that(self.armour.collide(self.armour), equal_to(False))
