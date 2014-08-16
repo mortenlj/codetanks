@@ -25,17 +25,18 @@ class Shared(object):
     initial_direction = Point2(1, 0)
     initial_turret = Point2(-1, 0)
 
-    def setup_world(self):
-        self.world = create_autospec(World)
-        self.world.arena = Arena(500, 500)
-        self.world.is_valid_position.return_value = True
+    @classmethod
+    def setup_class(cls):
+        cls.world = create_autospec(World)
+        cls.world.arena = Arena(500, 500)
 
     def setup(self):
-        self.setup_world()
         self.tank = self._create_tank()
         self.armour = Armour(self.tank, self.world)
         self.bullet = self._create_bullet()
         self.missile = Missile(self.bullet, self.world, self.armour)
+        self.world.is_valid_position.return_value = True
+        self.world.reset_mock()
 
     def _create_tank(self, tank_id=0, position=None):
         if position is None:
@@ -233,7 +234,6 @@ class TestCollide(Shared):
         yield Point(self.initial_x, self.initial_y + modifier)
 
     def test_armour_overlap_with_armour_is_detected(self):
-        self.setup_world()
         modifiers = (2*TANK_RADIUS, (2*TANK_RADIUS-1), TANK_RADIUS, 1)
         for modifier in modifiers:
             for pos in self._point_generator(modifier):
@@ -241,7 +241,6 @@ class TestCollide(Shared):
         yield self._collide_test, Armour(self._create_tank(1, Point(self.initial_x, self.initial_y)), self.world), True
 
     def test_armour_overlap_with_missile_is_detected(self):
-        self.setup_world()
         modifiers = (2*BULLET_RADIUS, (2*BULLET_RADIUS-1), BULLET_RADIUS, 1)
         for modifier in modifiers:
             for pos in self._point_generator(modifier):
@@ -249,7 +248,6 @@ class TestCollide(Shared):
             yield self._collide_test, Missile(self._create_bullet(0, Point(self.initial_x, self.initial_y)), self.world, None), True
 
     def test_armour_non_overlap_is_accepted(self):
-        self.setup_world()
         abs_modifiers = (2*TANK_RADIUS+1, 3*TANK_RADIUS)
         modifiers = list(chain(abs_modifiers, (-1*m for m in abs_modifiers)))
         for x in (self.initial_x + modifier for modifier in modifiers):
@@ -257,7 +255,6 @@ class TestCollide(Shared):
                 yield self._collide_test, Armour(self._create_tank(1, Point(x, y)), self.world), False
 
     def test_missile_non_overlap_is_accepted(self):
-        self.setup_world()
         abs_modifiers = (TANK_RADIUS+BULLET_RADIUS+1, TANK_RADIUS+2*BULLET_RADIUS)
         modifiers = list(chain(abs_modifiers, (-1*m for m in abs_modifiers)))
         for x in (self.initial_x + modifier for modifier in modifiers):
