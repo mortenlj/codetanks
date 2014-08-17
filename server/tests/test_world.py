@@ -136,7 +136,7 @@ class BulletShared(Shared):
         super(BulletShared, self).setup()
         self.parent = create_autospec(Armour)
         self.parent.position = Point2(230, 50)
-        self.parent.direction = Vector2(-1, 0)
+        self.parent.turret = Vector2(-1, 0)
 
 
 class TestBulletCreation(BulletShared):
@@ -144,7 +144,7 @@ class TestBulletCreation(BulletShared):
         self.world.add_bullet(self.parent)
         bullet = self.world._bullets[0]
         assert_that(bullet.position, equal_to(self.parent.position))
-        assert_that(bullet.direction, equal_to(self.parent.direction))
+        assert_that(bullet.direction, equal_to(self.parent.turret))
         assert_that(bullet._command, instance_of(Move))
 
 
