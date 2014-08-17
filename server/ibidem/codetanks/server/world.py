@@ -60,7 +60,11 @@ class World(object):
             armour.position = Point(randint(0, self.arena.width), randint(0, self.arena.height))
 
     def _select_random_direction(self):
-        return Point(randint(-1, 1), randint(-1, 1))
+        x = randint(-1, 1)
+        y = randint(-1, 1)
+        while x == y == 0:
+            y = randint(-1, 1)
+        return Point(x, y)
 
     def update(self, ticks):
         for tank in self._tanks:

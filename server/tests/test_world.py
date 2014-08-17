@@ -75,13 +75,13 @@ class TestValidPosition(Shared):
 class TestTankCreation(Shared):
     def test_tank_is_placed_inside_arena(self):
         return_values = []
+        return_values.extend([None]*4)
         for x in -TANK_RADIUS, -1, 0, 1, self.width-1, self.width, self.width+1, self.width+TANK_RADIUS:
             for y in -TANK_RADIUS, -1, 0, 1, self.height-1, self.height, self.height+1, self.height+TANK_RADIUS:
                 return_values.append(x)
                 return_values.append(y)
         return_values.append(self.width/2)
         return_values.append(self.height/2)
-        return_values.extend([None]*4)
         with patch("ibidem.codetanks.server.world.randint", side_effect=_MyRandint(return_values)):
             self.world.add_tank(Bot(self.bot_id, 0, None, None))
             vehicle = self.world._tanks[0]
@@ -96,6 +96,18 @@ class TestTankCreation(Shared):
         tank = self.world.tanks[0]
         assert_equal(tank.health, 100)
         assert_equal(tank.status, BotStatus.IDLE)
+
+    def test_tank_has_valid_direction(self):
+        return_values = [0, 0, 1, 0, 0, -1]
+        return_values.extend([None]*10)
+        with patch("ibidem.codetanks.server.world.randint", side_effect=_MyRandint(return_values)):
+            self.world.add_tank(Bot(self.bot_id, 0, None, None))
+            vehicle = self.world._tanks[0]
+            tank = vehicle.entity
+            assert_that(tank.direction.x, equal_to(0))
+            assert_that(tank.direction.y, equal_to(1))
+            assert_that(tank.turret.x, equal_to(0))
+            assert_that(tank.turret.y, equal_to(-1))
 
     def test_tank_status(self):
         self.world.add_tank(Bot(self.bot_id, 0, None, None))
