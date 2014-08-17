@@ -50,7 +50,7 @@ class World(object):
             if not vehicle.radius <= attr <= (upper_bound-vehicle.radius):
                 return False
         for tank in self._tanks:
-            if tank.collide(vehicle):
+            if vehicle.collide(tank):
                 return False
         return True
 
