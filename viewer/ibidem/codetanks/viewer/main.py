@@ -51,7 +51,7 @@ def draw_arena(arena, screen):
 
 
 def draw_entities(arena, bullets, tanks):
-    for group in tanks, bullets:
+    for group in bullets, tanks:
         group.clear(arena.game_field, arena.background)
         group.draw(arena.game_field)
 
