@@ -7,7 +7,7 @@ from mock import create_autospec
 from hamcrest import assert_that, equal_to, less_than, greater_than, instance_of
 from euclid import Point2, Vector2
 
-from ibidem.codetanks.domain.constants import ROTATION_TOLERANCE, TANK_RADIUS, BULLET_RADIUS
+from ibidem.codetanks.domain.constants import ROTATION_TOLERANCE, TANK_RADIUS, BULLET_RADIUS, MAX_HEALTH, BULLET_DAMAGE
 from ibidem.codetanks.domain.ttypes import Tank, Id, Point, BotStatus, Bullet, Arena
 from ibidem.codetanks.server.commands import Idle
 from ibidem.codetanks.server.vehicle import Armour, Missile
@@ -35,7 +35,7 @@ class Shared(object):
         self.armour = Armour(self.tank, self.world)
         self.bullet = self._create_bullet()
         self.missile = Missile(self.bullet, self.world, self.armour)
-        self.world.is_valid_position.return_value = True
+        self.world.is_collision.return_value = False
         self.world.reset_mock()
 
     def _create_tank(self, tank_id=0, position=None):
@@ -62,6 +62,7 @@ class TestVehicle(Shared):
         assert_that(self.armour.turret.x, equal_to(self.tank.turret.x))
         assert_that(self.armour.turret.y, equal_to(self.tank.turret.y))
         assert_that(self.armour.status, equal_to(self.tank.status))
+        assert_that(self.armour.health, equal_to(self.tank.health))
 
     def test_missilie_properties_reflect_bullet(self):
         assert_that(self.missile.position.x,  equal_to(self.bullet.position.x))
@@ -94,6 +95,10 @@ class TestVehicle(Shared):
         self.armour.status = status
         assert_that(self.tank.status, equal_to(status))
 
+    def test_inflicting_damage_is_applied_to_tank(self):
+        self.armour.inflict(BULLET_DAMAGE)
+        assert_that(self.tank.health, equal_to(MAX_HEALTH - BULLET_DAMAGE))
+
 
 class TestMove(Shared):
     def test_move_forwards(self):
@@ -122,14 +127,14 @@ class TestMove(Shared):
     def test_world_is_checked_for_valid_position(self):
         self.armour.move(1)
         self.armour.update(10)
-        self.world.is_valid_position.assert_called_once_with(self.armour)
+        self.world.is_collision.assert_called_once_with(self.armour)
 
     def test_world_is_checked_for_valid_position_for_missile(self):
         self.missile.update(random_ticks())
-        self.world.is_valid_position.assert_called_once_with(self.missile)
+        self.world.is_collision.assert_called_once_with(self.missile)
 
     def test_vehicle_is_not_moved_if_new_position_invalid(self):
-        self.world.is_valid_position.return_value = False
+        self.world.is_collision.return_value = True
         self.missile.update(random_ticks())
         assert_that(self.missile.position.x, equal_to(self.initial_x))
         assert_that(self.missile.position.y, equal_to(self.initial_y))
@@ -138,6 +143,20 @@ class TestMove(Shared):
         assert_that(self.armour.position.x, equal_to(self.initial_x))
         assert_that(self.armour.position.y, equal_to(self.initial_y))
 
+    def test_missile_disappears_when_hitting_boundary(self):
+        self.world.is_collision.return_value = True
+        self.missile.update(random_ticks())
+        self.world.remove_bullet.assert_called_with(self.missile)
+
+    def test_missile_disappears_when_hitting_other_tank(self):
+        self.world.is_collision.return_value = self.armour
+        self.missile.update(random_ticks())
+        self.world.remove_bullet.assert_called_with(self.missile)
+
+    def test_missile_inflicts_damage_when_hitting_other_tank(self):
+        self.world.is_collision.return_value = self.armour
+        self.missile.update(random_ticks())
+        assert_that(self.armour.health, equal_to(MAX_HEALTH - BULLET_DAMAGE))
 
 class RotateAndAim(Shared):
     def _test(self, desc, angle, target_vector):

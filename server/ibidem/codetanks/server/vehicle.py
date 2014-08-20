@@ -6,7 +6,7 @@ import math
 
 from euclid import Point2, Vector2
 
-from ibidem.codetanks.domain.constants import TANK_SPEED, ROTATION_TOLERANCE, TANK_RADIUS, BULLET_SPEED, BULLET_RADIUS
+from ibidem.codetanks.domain.constants import TANK_SPEED, ROTATION_TOLERANCE, TANK_RADIUS, BULLET_SPEED, BULLET_RADIUS, BULLET_DAMAGE
 from ibidem.codetanks.domain.ttypes import Point
 from ibidem.codetanks.server.commands import Idle, Move, Rotate, Aim, Fire
 
@@ -78,8 +78,16 @@ class Armour(Vehicle):
     def status(self, value):
         self.entity.status = value
 
-    def is_valid_position(self):
-        return self._world.is_valid_position(self)
+    @property
+    def health(self):
+        return self.entity.health
+
+    def inflict(self, damage):
+        self.entity.health -= damage
+        LOG.debug("%r has received %d in damage", self, damage)
+
+    def is_collision(self):
+        return self._world.is_collision(self)
 
     def calculate_new_direction(self, theta):
         new = self.direction.rotate(theta)
@@ -129,9 +137,19 @@ class Missile(Vehicle):
         arena = world.arena
         LOG.debug("Missile %r created" % self)
         self._command = Move(self, BULLET_SPEED, arena.width + arena.height)
+        self._is_collision = True
 
-    def is_valid_position(self):
-        return self._world.is_valid_position(self)
+    def update(self, ticks):
+        super(Missile, self).update(ticks)
+        if self._is_collision:
+            LOG.debug("Bullet collided with %r", self._is_collision)
+            if isinstance(self._is_collision, Armour):
+                self._is_collision.inflict(BULLET_DAMAGE)
+            self._world.remove_bullet(self)
+
+    def is_collision(self):
+        self._is_collision = self._world.is_collision(self)
+        return self._is_collision
 
     def collide(self, other):
         if other is self._parent:

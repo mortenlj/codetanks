@@ -32,6 +32,9 @@ class World(object):
         bullet = Missile(Bullet(_bullet_generator.next(), position, direction), self, parent)
         self._bullets.append(bullet)
 
+    def remove_bullet(self, missile):
+        self._bullets.remove(missile)
+
     @property
     def gamedata(self):
         return GameData(self.bullets, self.tanks)
@@ -44,19 +47,19 @@ class World(object):
     def bullets(self):
         return [w.entity for w in self._bullets]
 
-    def is_valid_position(self, vehicle):
+    def is_collision(self, vehicle):
         position = vehicle.position
         for attr, upper_bound in ((position.x, self.arena.width), (position.y, self.arena.height)):
             if not vehicle.radius <= attr <= (upper_bound-vehicle.radius):
-                return False
+                return True
         for tank in self._tanks:
             if vehicle.collide(tank):
-                return False
-        return True
+                return tank
+        return False
 
     def _set_valid_position(self, armour):
         armour.position = Point(randint(0, self.arena.width), randint(0, self.arena.height))
-        while not self.is_valid_position(armour):
+        while self.is_collision(armour):
             armour.position = Point(randint(0, self.arena.width), randint(0, self.arena.height))
 
     def _select_random_direction(self):

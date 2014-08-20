@@ -6,7 +6,7 @@ from random import randint
 from euclid import Point2, Vector2
 from hamcrest import assert_that, equal_to, instance_of
 from mock import create_autospec, patch
-from nose.tools import assert_is_instance, assert_equal, assert_true
+from nose.tools import assert_is_instance, assert_equal
 
 from ibidem.codetanks.domain.constants import TANK_RADIUS
 from ibidem.codetanks.domain.ttypes import Arena, Id, Tank, BotStatus, Bullet
@@ -47,20 +47,20 @@ class TestValidPosition(Shared):
         else:
             vehicle = vehicle_class(entity, self.world)
         vehicle.position = position
-        assert_that(self.world.is_valid_position(vehicle), equal_to(is_valid))
+        assert_that(self.world.is_collision(vehicle), equal_to(is_valid))
 
     def test_bounds(self):
         for cls, entity, parent in (Armour, create_autospec(Tank), None), (Missile, create_autospec(Bullet), create_autospec(Armour)):
             for x in (cls.radius, self.width/2, self.width-cls.radius):
                 for y in (cls.radius, self.height/2, self.height-cls.radius):
-                    yield self._bounds_test, cls, entity, parent, Point2(x, y), True
-                for y in (-cls.radius, -1, 0, 1, self.height-1, self.height, self.height+1, self.height+cls.radius):
                     yield self._bounds_test, cls, entity, parent, Point2(x, y), False
+                for y in (-cls.radius, -1, 0, 1, self.height-1, self.height, self.height+1, self.height+cls.radius):
+                    yield self._bounds_test, cls, entity, parent, Point2(x, y), True
             for x in (-cls.radius, -1, 0, 1, self.width-1, self.width, self.width+1, self.width+cls.radius):
                 for y in (-cls.radius, -1, 0, 1, self.height-1, self.height, self.height+1, self.height+cls.radius):
-                    yield self._bounds_test, cls, entity, parent, Point2(x, y), False
+                    yield self._bounds_test, cls, entity, parent, Point2(x, y), True
                 for y in (cls.radius, self.height/2, self.height-cls.radius):
-                    yield self._bounds_test, cls, entity, parent, Point2(x, y), False
+                    yield self._bounds_test, cls, entity, parent, Point2(x, y), True
 
     def test_simple_tank_collision(self):
         self.world.add_tank(Bot(self.bot_id, 0, None, None))
@@ -69,7 +69,7 @@ class TestValidPosition(Shared):
         tank0.position = Point2(50, 50)
         tank1 = self.world._tanks[1]
         tank1.position = Point2(50, 50)
-        assert_that(self.world.is_valid_position(tank0), equal_to(False))
+        assert_that(self.world.is_collision(tank0), equal_to(tank1))
 
 
 class TestTankCreation(Shared):
@@ -87,7 +87,7 @@ class TestTankCreation(Shared):
             vehicle = self.world._tanks[0]
             tank = vehicle.entity
             assert_is_instance(tank, Tank)
-            assert_true(self.world.is_valid_position(vehicle), "Position is invalid")
+            assert_that(self.world.is_collision(vehicle), equal_to(False), "%r has invalid position" % vehicle)
             assert_that(tank.position.x, equal_to(self.width/2))
             assert_that(tank.position.y, equal_to(self.height/2))
 
@@ -174,6 +174,15 @@ class TestBulletMovement(BulletShared):
         ticks = 10
         self.world.update(ticks)
         self.bullet.update.assert_called_with(ticks)
+
+    def test_correct_bullet_is_removed(self):
+        self.world.add_bullet(self.parent)
+        self.world.add_bullet(self.parent)
+        first, to_remove, last = self.world._bullets
+        self.world.remove_bullet(to_remove)
+        assert_that(len(self.world._bullets), equal_to(2))
+        assert_that(self.world._bullets[0], equal_to(first))
+        assert_that(self.world._bullets[-1], equal_to(last))
 
 
 class _MyRandint(object):
