@@ -46,7 +46,7 @@ class Move(Idle):
         new_pos = self.vehicle.calculate_new_position(distance)
         LOG.debug("New position: %r", new_pos)
         self.vehicle.position = new_pos
-        if not self.vehicle.is_valid_position():
+        if self.vehicle.is_collision():
             LOG.debug("Aborting move, new position is invalid")
             self.vehicle.position = old_pos
             return True
