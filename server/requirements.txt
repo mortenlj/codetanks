@@ -1,5 +1,4 @@
 setuptools
--e hg+http://bitbucket.org/pygame/pygame#egg=pygame
 pyzmq
 nose
 mock
