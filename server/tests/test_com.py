@@ -2,7 +2,7 @@
 # -*- coding: utf-8
 
 from mock import patch
-from nose.tools import eq_
+from hamcrest import assert_that, equal_to
 
 from ibidem.codetanks.domain.ttypes import Id
 from ibidem.codetanks.server.com import Channel, ChannelType
@@ -25,7 +25,7 @@ class TestChannel(object):
     def test_has_valid_urls(self):
         with patch("ibidem.codetanks.server.com.gethostname", return_value=self.hostname):
             socket = Channel(ChannelType.PUBLISH, self.port)
-            eq_(socket.url, "tcp://%s:%d" % (self.hostname, self.port))
+            assert_that(socket.url, equal_to("tcp://%s:%d" % (self.hostname, self.port)))
 
     def test_socket(self):
         with patch.object(Channel, "url_scheme", self.test_url_scheme), \
@@ -35,7 +35,7 @@ class TestChannel(object):
             rep_socket = Channel(ChannelType.REPLY, 0)
             value = Id("name", 1)
             req_socket.send(value)
-            eq_(rep_socket.recv(), value)
+            assert_that(rep_socket.recv(), equal_to(value))
 
 if __name__ == "__main__":
     import nose

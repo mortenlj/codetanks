@@ -2,7 +2,7 @@
 # -*- coding: utf-8
 
 from mock import create_autospec, MagicMock, PropertyMock
-from nose.tools import assert_is_not_none, assert_equal
+from hamcrest import assert_that, equal_to, not_none
 import pygame
 
 from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id, RegistrationReply, Move, CommandReply, CommandResult, \
@@ -59,10 +59,10 @@ class TestBotRegistration(RegistrationSetup):
     def test_registering_bots_are_associated_with_channels(self):
         self.server._run_once()
         bot = self.server._bots[0]
-        assert_is_not_none(bot)
-        assert_is_not_none(bot.event_channel)
-        assert_is_not_none(bot.cmd_channel)
-        assert_equal(bot.tank_id, 0)
+        assert_that(bot, not_none())
+        assert_that(bot.event_channel, not_none())
+        assert_that(bot.cmd_channel, not_none())
+        assert_that(bot.tank_id, equal_to(0))
 
     def test_registering_bots_get_dedicated_channel_urls_and_game_info(self):
         self.server._run_once()
@@ -124,7 +124,7 @@ class TestGame(Shared):
         self.server._world.tank_status.return_value = status
         self.send_on_mock_channel(self.bot.cmd_channel, command)
         self.server._run_once()
-        assert_equal(self.server._world.command.called, False)
+        assert_that(self.server._world.command.called, equal_to(False))
         self.bot.cmd_channel.send.assert_called_once_with(CommandReply(CommandResult.BUSY))
 
     def test_command_aborted_if_busy(self):
