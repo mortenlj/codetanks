@@ -47,7 +47,8 @@ class TankInfo(object):
         self.tank = tank
         self.surface = pygame.Surface((256, 64))
         self.font = pygame.font.Font(None, 16)
-        self.name = self.font.render(self.tank.id, True, self.foreground_color, self.background_color)
+        name = "%s [%d]" % (self.tank.bot_id.name, self.tank.id)
+        self.name = self.font.render(name, True, self.foreground_color, self.background_color)
 
     def draw(self, target, dest):
         self.surface.fill(self.background_color)

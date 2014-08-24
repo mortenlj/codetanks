@@ -3,8 +3,6 @@
 
 import pygame
 
-from ibidem.codetanks.viewer.entities import Tank
-from ibidem.codetanks.viewer.events import CREATED
 from ibidem.codetanks.viewer.server_proxy import ServerProxy
 from ibidem.codetanks.viewer.widgets import Arena, TankInfo
 
@@ -40,10 +38,11 @@ def initialize_main():
 
 
 def draw_tank_info_widgets(arena, screen, tank_infos):
-    y = 16
-    for tank_info in tank_infos:
-        tank_info.draw(screen, (arena.get_width(), y))
-        y += 80
+    for i in range(8):
+        if i in tank_infos:
+            tank_info = tank_infos[i]
+            y = 80 * i + 16
+            tank_info.draw(screen, (arena.get_width(), y))
 
 
 def draw_arena(arena, screen):
@@ -59,18 +58,17 @@ def draw_entities(arena, bullets, tanks):
 def main():
     initialize_and_display_splash()
     arena, screen, server = initialize_main()
-    tank_infos = []
 
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 return
-            elif event.type == CREATED:
-                if isinstance(event.entity, Tank):
-                    tank_infos.append(TankInfo(event.entity))
 
         tanks, bullets = server.update()
+        tank_infos = {}
+        for tank in tanks:
+            tank_infos[tank.id] = TankInfo(tank)
 
         draw_entities(arena, bullets, tanks)
         draw_tank_info_widgets(arena, screen, tank_infos)
