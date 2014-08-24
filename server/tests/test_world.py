@@ -6,7 +6,6 @@ from random import randint
 from euclid import Point2, Vector2
 from hamcrest import assert_that, equal_to, instance_of
 from mock import create_autospec, patch
-from nose.tools import assert_is_instance, assert_equal
 
 from ibidem.codetanks.domain.constants import TANK_RADIUS
 from ibidem.codetanks.domain.ttypes import Arena, Id, Tank, BotStatus, Bullet
@@ -27,17 +26,17 @@ class Shared(object):
 
 class TestWorld(Shared):
     def test_game_data_is_initialized_with_lists(self):
-        assert_is_instance(self.world.bullets, list)
-        assert_is_instance(self.world.tanks, list)
+        assert_that(self.world.bullets, instance_of(list))
+        assert_that(self.world.tanks, instance_of(list))
 
     def test_arena_is_given_size(self):
-        assert_is_instance(self.world.arena, Arena)
-        assert_equal(self.world.arena.width, self.width)
-        assert_equal(self.world.arena.height, self.height)
+        assert_that(self.world.arena, instance_of(Arena))
+        assert_that(self.world.arena.width, equal_to(self.width))
+        assert_that(self.world.arena.height, equal_to(self.height))
 
     def test_gamedata_is_reflected_in_attributes(self):
-        assert_equal(self.world.bullets, self.world.gamedata.bullets)
-        assert_equal(self.world.tanks, self.world.gamedata.tanks)
+        assert_that(self.world.bullets, equal_to(self.world.gamedata.bullets))
+        assert_that(self.world.tanks, equal_to(self.world.gamedata.tanks))
 
 
 class TestValidPosition(Shared):
@@ -86,7 +85,7 @@ class TestTankCreation(Shared):
             self.world.add_tank(Bot(self.bot_id, 0, None, None))
             vehicle = self.world._tanks[0]
             tank = vehicle.entity
-            assert_is_instance(tank, Tank)
+            assert_that(tank, instance_of(Tank))
             assert_that(self.world.is_collision(vehicle), equal_to(False), "%r has invalid position" % vehicle)
             assert_that(tank.position.x, equal_to(self.width/2))
             assert_that(tank.position.y, equal_to(self.height/2))
@@ -94,8 +93,8 @@ class TestTankCreation(Shared):
     def test_tank_has_sensible_values(self):
         self.world.add_tank(Bot(self.bot_id, 0, None, None))
         tank = self.world.tanks[0]
-        assert_equal(tank.health, 100)
-        assert_equal(tank.status, BotStatus.IDLE)
+        assert_that(tank.health, equal_to(100))
+        assert_that(tank.status, equal_to(BotStatus.IDLE))
 
     def test_tank_has_valid_direction(self):
         return_values = [0, 0, 1, 0, 0, -1]
@@ -114,7 +113,7 @@ class TestTankCreation(Shared):
         tank = self.world.tanks[0]
         for status in BotStatus._NAMES_TO_VALUES.values():
             tank.status = status
-            assert_equal(self.world.tank_status(tank.id), status)
+            assert_that(self.world.tank_status(tank.id), equal_to(status))
 
 
 class TestTankMovement(Shared):
