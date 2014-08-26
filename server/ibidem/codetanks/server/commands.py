@@ -2,10 +2,12 @@
 # -*- coding: utf-8
 
 import logging
+import operator
 
 from euclid import Ray2, Circle
 
-from ibidem.codetanks.domain.constants import ROTATION, ROTATION_TOLERANCE
+from ibidem.codetanks.domain.constants import ROTATION
+
 from ibidem.codetanks.domain.ttypes import BotStatus
 
 
@@ -60,19 +62,35 @@ class Move(Idle):
 class RotateAndAim(Idle):
     def __init__(self, vehicle, theta):
         super(RotateAndAim, self).__init__(vehicle)
-        self.rotation = ROTATION if theta > 0.0 else -ROTATION
         self.target = self._calculate(theta)
+        self._set_rotation()
+        self._set_operation()
+        current = self._get_current()
+        LOG.debug("Starting to %r by %r from %r towards %r (current angle %r) until angle is %r 0.0",
+                  self.__class__.__name__,
+                  self.rotation,
+                  current,
+                  self.target,
+                  self.target.angle(current),
+                  self.operation)
+
+    def _set_rotation(self):
+        self.rotation = -ROTATION if self._get_current().clockwise(self.target) else ROTATION
+
+    def _set_operation(self):
+        self.operation = operator.gt if self.rotation > 0.0 else operator.lt
 
     def _reached_target(self, direction):
         angle = self.target.angle(direction)
         LOG.debug("Angle between %r and %r is %r", self.target, direction, angle)
-        return angle < ROTATION_TOLERANCE
+        return self.operation(angle, 0.0)
 
     def update(self, ticks):
         should_end = False
         theta = ticks * self.rotation
         new = self._calculate(theta)
         if self._reached_target(new):
+            LOG.debug("Reached target %r", self.target)
             new = self.target
             should_end = True
         self._update_vehicle(new)
@@ -82,6 +100,9 @@ class RotateAndAim(Idle):
         raise NotImplementedError("This command must be subclassed")
 
     def _update_vehicle(self, new):
+        raise NotImplementedError("This command must be subclassed")
+
+    def _get_current(self):
         raise NotImplementedError("This command must be subclassed")
 
 
@@ -94,6 +115,9 @@ class Rotate(RotateAndAim):
     def _update_vehicle(self, new):
         self.vehicle.direction = new
 
+    def _get_current(self):
+        return self.vehicle.direction
+
 
 class Aim(RotateAndAim):
     status = BotStatus.AIMING
@@ -103,6 +127,9 @@ class Aim(RotateAndAim):
 
     def _update_vehicle(self, new):
         self.vehicle.turret = new
+
+    def _get_current(self):
+        return self.vehicle.turret
 
 
 class Fire(Idle):
