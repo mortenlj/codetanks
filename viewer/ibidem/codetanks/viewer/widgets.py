@@ -68,7 +68,9 @@ class TankInfo(object):
         self.surface.blit(health, (136, 32))
 
     def _draw_tank(self):
-        self.surface.blit(self.tank.image, (8, 8))
+        top = 28 - (self.tank.image.get_height()/2)
+        left = 28 - (self.tank.image.get_width()/2)
+        self.surface.blit(self.tank.image, (top, left))
 
     def _draw_name(self):
         self.surface.blit(self.name, (136, 8))
