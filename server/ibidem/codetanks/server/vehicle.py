@@ -6,7 +6,7 @@ import math
 
 from euclid import Point2, Vector2
 
-from ibidem.codetanks.domain.constants import TANK_SPEED, ROTATION_TOLERANCE, TANK_RADIUS, BULLET_SPEED, BULLET_RADIUS, BULLET_DAMAGE
+from ibidem.codetanks.domain.constants import TANK_SPEED, TANK_RADIUS, BULLET_SPEED, BULLET_RADIUS, BULLET_DAMAGE
 from ibidem.codetanks.domain.ttypes import Point
 from ibidem.codetanks.server.commands import Idle, Move, Rotate, Aim, Fire
 
@@ -110,14 +110,10 @@ class Armour(Vehicle):
 
     def rotate(self, angle):
         theta = math.radians(angle)
-        if abs(theta) < ROTATION_TOLERANCE:
-            return
         self._command = Rotate(self, theta)
 
     def aim(self, angle):
         theta = math.radians(angle)
-        if abs(theta) < ROTATION_TOLERANCE:
-            return
         self._command = Aim(self, theta)
 
     def fire(self):

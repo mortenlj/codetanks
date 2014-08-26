@@ -4,14 +4,17 @@ from itertools import chain
 from random import uniform
 
 from mock import create_autospec
-from hamcrest import assert_that, equal_to, less_than, greater_than, instance_of
+from hamcrest import assert_that, equal_to, less_than, greater_than, instance_of, close_to, is_not
 from euclid import Point2, Vector2
 
-from ibidem.codetanks.domain.constants import ROTATION_TOLERANCE, TANK_RADIUS, BULLET_RADIUS, MAX_HEALTH, BULLET_DAMAGE
+from ibidem.codetanks.domain.constants import TANK_RADIUS, BULLET_RADIUS, MAX_HEALTH, BULLET_DAMAGE
 from ibidem.codetanks.domain.ttypes import Tank, Id, Point, BotStatus, Bullet, Arena
 from ibidem.codetanks.server.commands import Idle
 from ibidem.codetanks.server.vehicle import Armour, Missile
 from ibidem.codetanks.server.world import World
+
+
+DELTA = 0.000001
 
 
 def to_point(p):
@@ -158,6 +161,7 @@ class TestMove(Shared):
         self.missile.update(random_ticks())
         assert_that(self.armour.health, equal_to(MAX_HEALTH - BULLET_DAMAGE))
 
+
 class RotateAndAim(Shared):
     def _test(self, desc, angle, target_vector):
         self._act(angle)
@@ -168,71 +172,91 @@ class RotateAndAim(Shared):
             self._assert_post_update(angle, target_vector)
         self._assert_ending_state(target_vector)
 
+    def _act(self, angle):
+        raise NotImplementedError
 
-class TestRotate(RotateAndAim):
     def _assert_starting_state(self):
-        assert_that(self.armour.status, equal_to(BotStatus.ROTATING))
-        assert_that_vector_matches(self.armour.direction, self.initial_direction, equal_to(0.0))
+        expected_status = self._get_starting_status()
+        assert_that(self.armour.status, equal_to(expected_status), "Starting status")
+        expected_vector = self._get_starting_vector()
+        assert_that_vector_matches(self._get_actual_vector(), expected_vector, equal_to(0.0), "Starting vectors")
+
+    def _get_starting_status(self):
+        raise NotImplementedError
+
+    def _get_starting_vector(self):
+        raise NotImplementedError
+
+    def _continue(self, target_vector):
+        raise NotImplementedError
+
+    def _assert_pre_update(self, expected_vector):
+        expected_status = self._get_pre_update_status()
+        assert_that(self.armour.status, equal_to(expected_status), "Pre-update status")
+        assert_that_vector_matches(self._get_actual_vector(), expected_vector, is_not(equal_to(0.0)), "Pre-update vectors")
+
+    def _get_pre_update_status(self):
+        raise NotImplementedError
+
+    def _get_actual_vector(self):
+        raise NotImplementedError
+
+    def _assert_post_update(self, angle, target_vector):
+        assert_that_vector_matches(self._get_actual_vector(), target_vector, less_than(abs(angle)), "Post-update vectors")
 
     def _assert_ending_state(self, target_vector):
         assert_that(self.armour._command, instance_of(Idle))
-        assert_that_vector_matches(self.armour.direction, target_vector, equal_to(0.0))
+        assert_that_vector_matches(self._get_actual_vector(), target_vector, close_to(0.0, DELTA), "Ending vectors")
+
+
+class TestRotate(RotateAndAim):
+    def _get_starting_status(self):
+        return BotStatus.ROTATING
+
+    def _get_starting_vector(self):
+        return self.initial_direction
+
+    def _get_pre_update_status(self):
+        return BotStatus.ROTATING
+
+    def _get_actual_vector(self):
+        return self.armour.direction
 
     def _continue(self, target_vector):
-        return self.armour.direction.angle(target_vector) != 0.0
+        angle = self.armour.direction.angle(target_vector)
+        return not close_to(0.0, DELTA)._matches(angle)
 
-    def _assert_pre_update(self, target_vector):
-        assert_that(self.armour.status, equal_to(BotStatus.ROTATING))
-        assert_that_vector_matches(self.armour.direction, target_vector, greater_than(0.0))
-
-    def _assert_post_update(self, angle, target_vector):
-        assert_that_vector_matches(self.armour.direction, target_vector, less_than(abs(angle)))
+    def _act(self, angle):
+        self.armour.rotate(angle)
 
     def test_rotation(self):
         yield self._test, "anti-clockwise", 90, Vector2(0, 1)
         yield self._test, "clockwise", -90, Vector2(0, -1)
 
-    def test_rotation_less_than_tolerance_is_illegal(self):
-        self.armour.rotate(1)
-        self.armour.update(random_ticks())
-        assert_that(self.armour.direction, equal_to(self.initial_direction))
-        assert_that(self.armour._command, instance_of(Idle))
-
-    def _act(self, angle):
-        self.armour.rotate(angle)
-
 
 class TestAim(RotateAndAim):
-    def _assert_starting_state(self):
-        assert_that(self.armour.status, equal_to(BotStatus.AIMING))
-        assert_that_vector_matches(self.armour.turret, self.initial_turret, equal_to(0.0))
+    def _get_starting_status(self):
+        return BotStatus.AIMING
 
-    def _assert_ending_state(self, target_vector):
-        assert_that(self.armour._command, instance_of(Idle))
-        assert_that_vector_matches(self.armour.turret, target_vector, equal_to(0.0))
+    def _get_starting_vector(self):
+        return self.initial_turret
+
+    def _get_pre_update_status(self):
+        return BotStatus.AIMING
+
+    def _get_actual_vector(self):
+        return self.armour.turret
 
     def _continue(self, target_vector):
-        return self.armour.turret.angle(target_vector) != 0.0
+        angle = self.armour.turret.angle(target_vector)
+        return not close_to(0.0, DELTA)._matches(angle)
 
-    def _assert_pre_update(self, target_vector):
-        assert_that(self.armour.status, equal_to(BotStatus.AIMING))
-        assert_that_vector_matches(self.armour.turret, target_vector, greater_than(0.0))
-
-    def _assert_post_update(self, angle, target_vector):
-        assert_that_vector_matches(self.armour.turret, target_vector, less_than(abs(angle)))
+    def _act(self, angle):
+        self.armour.aim(angle)
 
     def test_aim(self):
         yield self._test, "anti-clockwise", 90, Vector2(0, -1)
         yield self._test, "clockwise", -90, Vector2(0, 1)
-
-    def test_aim_less_than_tolerance_is_illegal(self):
-        self.armour.aim(ROTATION_TOLERANCE-.001)
-        self.armour.update(random_ticks())
-        assert_that(self.armour.turret, equal_to(self.initial_turret))
-        assert_that(self.armour._command, instance_of(Idle))
-
-    def _act(self, angle):
-        self.armour.aim(angle)
 
 
 class TestFire(Shared):
@@ -288,8 +312,8 @@ class TestCollide(Shared):
         assert_that(self.missile.collide(self.armour), equal_to(False))
 
 
-def assert_that_vector_matches(actual, expected, matcher):
-    assert_that(actual.angle(expected), matcher)
+def assert_that_vector_matches(actual, expected, matcher, reason=""):
+    assert_that(actual.angle(expected), matcher, reason)
 
 
 def random_ticks():
