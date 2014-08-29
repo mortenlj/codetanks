@@ -36,6 +36,7 @@ class BotStatus(object):
   ROTATING = 2
   AIMING = 3
   FIRING = 4
+  SCANNING = 5
 
   _VALUES_TO_NAMES = {
     0: "IDLE",
@@ -43,6 +44,7 @@ class BotStatus(object):
     2: "ROTATING",
     3: "AIMING",
     4: "FIRING",
+    5: "SCANNING",
   }
 
   _NAMES_TO_VALUES = {
@@ -51,6 +53,7 @@ class BotStatus(object):
     "ROTATING": 2,
     "AIMING": 3,
     "FIRING": 4,
+    "SCANNING": 5,
   }
 
 class CommandResult(object):
@@ -891,12 +894,20 @@ class GameData(object):
 
   thrift_spec = (
     None, # 0
-    (1, TType.LIST, 'bullets', (TType.STRUCT,(Bullet, Bullet.thrift_spec)), None, ), # 1
-    (2, TType.LIST, 'tanks', (TType.STRUCT,(Tank, Tank.thrift_spec)), None, ), # 2
+    (1, TType.LIST, 'bullets', (TType.STRUCT,(Bullet, Bullet.thrift_spec)), [
+    ], ), # 1
+    (2, TType.LIST, 'tanks', (TType.STRUCT,(Tank, Tank.thrift_spec)), [
+    ], ), # 2
   )
 
-  def __init__(self, bullets=None, tanks=None,):
+  def __init__(self, bullets=thrift_spec[1][4], tanks=thrift_spec[2][4],):
+    if bullets is self.thrift_spec[1][4]:
+      bullets = [
+    ]
     self.bullets = bullets
+    if tanks is self.thrift_spec[2][4]:
+      tanks = [
+    ]
     self.tanks = tanks
 
   def read(self, iprot):
@@ -960,6 +971,93 @@ class GameData(object):
   def validate(self):
     if self.bullets is None:
       raise TProtocol.TProtocolException(message='Required field bullets is unset!')
+    if self.tanks is None:
+      raise TProtocol.TProtocolException(message='Required field tanks is unset!')
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, getattr(self, key))
+      for key in self.__slots__]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    if not isinstance(other, self.__class__):
+      return False
+    for attr in self.__slots__:
+      my_val = getattr(self, attr)
+      other_val = getattr(other, attr)
+      if my_val != other_val:
+        return False
+    return True
+
+  def __ne__(self, other):
+    return not (self == other)
+
+
+class ScanResult(object):
+  """
+  Attributes:
+   - tanks
+  """
+
+  __slots__ = [ 
+    'tanks',
+   ]
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.LIST, 'tanks', (TType.STRUCT,(Tank, Tank.thrift_spec)), [
+    ], ), # 1
+  )
+
+  def __init__(self, tanks=thrift_spec[1][4],):
+    if tanks is self.thrift_spec[1][4]:
+      tanks = [
+    ]
+    self.tanks = tanks
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.LIST:
+          self.tanks = []
+          (_etype17, _size14) = iprot.readListBegin()
+          for _i18 in xrange(_size14):
+            _elem19 = Tank()
+            _elem19.read(iprot)
+            self.tanks.append(_elem19)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('ScanResult')
+    if self.tanks is not None:
+      oprot.writeFieldBegin('tanks', TType.LIST, 1)
+      oprot.writeListBegin(TType.STRUCT, len(self.tanks))
+      for iter20 in self.tanks:
+        iter20.write(oprot)
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
     if self.tanks is None:
       raise TProtocol.TProtocolException(message='Required field tanks is unset!')
     return
@@ -1311,6 +1409,80 @@ class Fire(object):
     oprot.writeStructEnd()
 
   def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, getattr(self, key))
+      for key in self.__slots__]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    if not isinstance(other, self.__class__):
+      return False
+    for attr in self.__slots__:
+      my_val = getattr(self, attr)
+      other_val = getattr(other, attr)
+      if my_val != other_val:
+        return False
+    return True
+
+  def __ne__(self, other):
+    return not (self == other)
+
+
+class Scan(object):
+  """
+  Attributes:
+   - angle
+  """
+
+  __slots__ = [ 
+    'angle',
+   ]
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I16, 'angle', None, None, ), # 1
+  )
+
+  def __init__(self, angle=None,):
+    self.angle = angle
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I16:
+          self.angle = iprot.readI16();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('Scan')
+    if self.angle is not None:
+      oprot.writeFieldBegin('angle', TType.I16, 1)
+      oprot.writeI16(self.angle)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    if self.angle is None:
+      raise TProtocol.TProtocolException(message='Required field angle is unset!')
     return
 
 

@@ -18,7 +18,8 @@ enum BotStatus {
     MOVING,
     ROTATING,
     AIMING,
-    FIRING
+    FIRING,
+    SCANNING
 }
 
 struct Id {
@@ -68,8 +69,12 @@ struct Tank {
 }
 
 struct GameData {
-    1: required list<Bullet> bullets;
-    2: required list<Tank> tanks;
+    1: required list<Bullet> bullets = [];
+    2: required list<Tank> tanks = [];
+}
+
+struct ScanResult {
+    1: required list<Tank> tanks = [];
 }
 
 // ********
@@ -98,4 +103,8 @@ struct Aim {
 }
 
 struct Fire {
+}
+
+struct Scan {
+    1: required i16 angle;
 }

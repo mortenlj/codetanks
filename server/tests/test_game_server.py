@@ -6,7 +6,7 @@ from hamcrest import assert_that, equal_to, not_none
 import pygame
 
 from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id, RegistrationReply, Move, CommandReply, CommandResult, \
-    Rotate, BotStatus, Aim, Fire
+    Rotate, BotStatus, Aim, Fire, ScanResult
 from ibidem.codetanks.server.com import Channel
 from ibidem.codetanks.server.game_server import GameServer
 from ibidem.codetanks.server.world import World
@@ -103,6 +103,17 @@ class TestGame(Shared):
         self.server.clock.tick.return_value = 30
         self.server._run_once()
         self.server._world.update.assert_called_once_with(30)
+
+    def test_events_gathered_once_per_loop(self):
+        self.server._world.get_events.return_value = {}
+        self.server._run_once()
+        self.server._world.get_events.assert_called_once_with()
+
+    def test_events_sent_when_gathered(self):
+        scan_result = ScanResult([])
+        self.server._world.get_events.return_value = {self.bot.tank_id: [scan_result]}
+        self.server._run_once()
+        self.bot.event_channel.send.assert_called_once_with(scan_result)
 
     def test_bot_command_receives_reply(self):
         self.send_on_mock_channel(self.bot.cmd_channel, Move(10))

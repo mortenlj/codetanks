@@ -8,7 +8,7 @@ from euclid import Point2, Vector2
 
 from ibidem.codetanks.domain.constants import TANK_SPEED, TANK_RADIUS, BULLET_SPEED, BULLET_RADIUS, BULLET_DAMAGE
 from ibidem.codetanks.domain.ttypes import Point
-from ibidem.codetanks.server.commands import Idle, Move, Rotate, Aim, Fire
+from ibidem.codetanks.server.commands import Idle, Move, Rotate, Aim, Fire, Scan
 
 
 LOG = logging.getLogger(__name__)
@@ -82,6 +82,10 @@ class Armour(Vehicle):
     def health(self):
         return self.entity.health
 
+    @property
+    def tank_id(self):
+        return self.entity.id
+
     def inflict(self, damage):
         self.entity.health -= damage
         LOG.debug("%r has received %d in damage", self, damage)
@@ -118,6 +122,12 @@ class Armour(Vehicle):
 
     def fire(self):
         self._command = Fire(self, self._world)
+
+    def scan(self, angle):
+        if angle > 90:
+            return
+        theta = math.radians(angle)
+        self._command = Scan(self, self._world, theta)
 
     def __repr__(self):
         keys = ("entity", "position", "direction", "turret", "status")

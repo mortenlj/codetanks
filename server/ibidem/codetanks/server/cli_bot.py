@@ -8,7 +8,7 @@ from cmd import Cmd
 
 import zmq
 
-from ibidem.codetanks.domain.ttypes import Registration, ClientType, Id, Move, Rotate, CommandResult, Aim, Fire
+from ibidem.codetanks.domain.ttypes import Registration, ClientType, Id, Move, Rotate, CommandResult, Aim, Fire, Scan
 from ibidem.codetanks.domain.util import serialize, deserialize
 
 
@@ -64,9 +64,17 @@ class CliBot(Cmd):
         self._cmd_socket.connect(reply.cmd_url)
         print "Connecting to %s" % reply.cmd_url
 
+    def _print_events(self):
+        while self._update_socket.poll(10):
+            print deserialize(self._update_socket.recv())
+
     def _print_result(self):
         reply = deserialize(self._cmd_socket.recv())
         print "OK" if reply.result == CommandResult.OK else "BUSY"
+        self._print_events()
+
+    def emptyline(self):
+        self._print_events()
 
     def do_exit(self, line):
         """Leave the bot-cli. Your bot will be left in whatever state it is in."""
@@ -91,6 +99,11 @@ class CliBot(Cmd):
     @parse_args
     def do_fire(self):
         self._cmd_socket.send(serialize(Fire()))
+        self._print_result()
+
+    @parse_args
+    def do_scan(self, angle=10):
+        self._cmd_socket.send(serialize(Scan(angle)))
         self._print_result()
 
 
