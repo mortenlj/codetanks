@@ -47,6 +47,10 @@ class GameServer(object):
         self._viewer_channel.send(self._world.gamedata)
         ticks = self.clock.tick(60)
         self._world.update(ticks)
+        for tank_id, events in self._world.get_events().iteritems():
+            bot = self._bots[tank_id]
+            for event in events:
+                bot.event_channel.send(event)
 
     def _handle_registration(self, reply_channel, registration):
         LOG.debug("GameServer received registration: %r", registration)
@@ -73,7 +77,7 @@ class GameServer(object):
         else:
             name = type(command).__name__.lower()
             params = [getattr(command, attr) for _, _, attr, _, _ in command.thrift_spec[1:]]
-            LOG.debug("Calling self._world.command(%s) for bot %r", ", ".join(repr(x) for x in params), bot)
+            LOG.debug("Calling self._world.command(%r, %r, %s) for bot %r", bot.tank_id, name, ", ".join(repr(x) for x in params), bot)
             self._world.command(bot.tank_id, name, *params)
             reply_channel.send(CommandReply(CommandResult.OK))
         LOG.debug("Status for %r after command is %r", bot, self._world.tank_status(bot.tank_id))

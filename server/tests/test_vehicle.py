@@ -4,11 +4,11 @@ from itertools import chain
 from random import uniform
 
 from mock import create_autospec
-from hamcrest import assert_that, equal_to, less_than, greater_than, instance_of, close_to, is_not
+from hamcrest import assert_that, equal_to, less_than, greater_than, instance_of, close_to, is_not, empty
 from euclid import Point2, Vector2
 
 from ibidem.codetanks.domain.constants import TANK_RADIUS, BULLET_RADIUS, MAX_HEALTH, BULLET_DAMAGE
-from ibidem.codetanks.domain.ttypes import Tank, Id, Point, BotStatus, Bullet, Arena
+from ibidem.codetanks.domain.ttypes import Tank, Id, Point, BotStatus, Bullet, Arena, ScanResult
 from ibidem.codetanks.server.commands import Idle
 from ibidem.codetanks.server.vehicle import Armour, Missile
 from ibidem.codetanks.server.world import World
@@ -264,6 +264,20 @@ class TestFire(Shared):
         self.armour.fire()
         self.armour.update(random_ticks())
         self.world.add_bullet.assert_called_with(self.armour)
+
+
+class TestScan(Shared):
+    def test_scan(self):
+        scan_result = ScanResult([])
+        self.world.scan.return_value = scan_result
+        self.armour.scan(10)
+        self.armour.update(random_ticks())
+        self.world.add_event.assert_called_with(self.armour.tank_id, scan_result)
+
+    def test_scan_above_90_degrees_is_ignored(self):
+        self.armour.scan(91)
+        self.armour.update(random_ticks())
+        assert_that(self.world.scan.call_args_list, empty())
 
 
 class TestCollide(Shared):

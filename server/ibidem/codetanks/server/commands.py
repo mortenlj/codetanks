@@ -7,7 +7,6 @@ import operator
 from euclid import Ray2, Circle
 
 from ibidem.codetanks.domain.constants import ROTATION
-
 from ibidem.codetanks.domain.ttypes import BotStatus
 
 
@@ -141,4 +140,19 @@ class Fire(Idle):
 
     def update(self, ticks):
         self._world.add_bullet(self.vehicle)
+        return True
+
+
+class Scan(Idle):
+    status = BotStatus.SCANNING
+
+    def __init__(self, vehicle, world, theta):
+        super(Scan, self).__init__(vehicle)
+        self._world = world
+        self._theta = theta
+
+    def update(self, ticks):
+        scan_ray = Ray2(self.vehicle.position, self.vehicle.turret)
+        result = self._world.scan(scan_ray, self._theta)
+        self._world.add_event(self.vehicle.tank_id, result)
         return True
