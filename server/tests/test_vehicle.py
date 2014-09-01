@@ -8,7 +8,7 @@ from hamcrest import assert_that, equal_to, less_than, greater_than, instance_of
 from euclid import Point2, Vector2
 
 from ibidem.codetanks.domain.constants import TANK_RADIUS, BULLET_RADIUS, MAX_HEALTH, BULLET_DAMAGE
-from ibidem.codetanks.domain.ttypes import Tank, Id, Point, BotStatus, Bullet, Arena, ScanResult
+from ibidem.codetanks.domain.ttypes import Tank, Id, Point, BotStatus, Bullet, Arena, ScanResult, Death
 from ibidem.codetanks.server.commands import Idle
 from ibidem.codetanks.server.vehicle import Armour, Missile
 from ibidem.codetanks.server.world import World
@@ -99,7 +99,7 @@ class TestVehicle(Shared):
         assert_that(self.tank.status, equal_to(status))
 
     def test_inflicting_damage_is_applied_to_tank(self):
-        self.armour.inflict(BULLET_DAMAGE)
+        self.armour.inflict(BULLET_DAMAGE, self.armour)
         assert_that(self.tank.health, equal_to(MAX_HEALTH - BULLET_DAMAGE))
 
 
@@ -324,6 +324,13 @@ class TestCollide(Shared):
 
     def test_missile_does_not_collide_with_parent(self):
         assert_that(self.missile.collide(self.armour), equal_to(False))
+
+
+class TestDeath(Shared):
+    def test_health_goes_to_zero(self):
+        self.tank.health = 5
+        self.armour.inflict(5, self.armour)
+        self.world.add_event.assert_called_with(None, Death(self.tank, self.tank))
 
 
 def assert_that_vector_matches(actual, expected, matcher, reason=""):
