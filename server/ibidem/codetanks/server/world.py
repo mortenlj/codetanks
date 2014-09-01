@@ -5,7 +5,7 @@ from random import randint
 import math
 import logging
 
-from euclid import Circle, LineSegment2
+from euclid import LineSegment2
 
 from ibidem.codetanks.domain.ttypes import GameData, Arena, Tank, Point, Bullet, ScanResult
 from ibidem.codetanks.server.vehicle import Armour, Missile
@@ -89,86 +89,38 @@ class World(object):
     def scan(self, ray, theta):
         radius = self._calculate_scan_radius(theta)
         LOG.debug("Scanning along %r, with spread %.2f, radius is %d", ray, theta, radius)
-        if theta == 0.00:
-            line = LineSegment2(ray.p, ray.v, radius)
-            check_func = lambda tank: self._is_in_scanline(line, tank)
-        else:
-            center_vector = ray.v
-            left = LineSegment2(ray.p, center_vector.rotate(theta/2.), radius)
-            right = LineSegment2(ray.p, center_vector.rotate(-theta/2.), radius)
-            LOG.debug("Left: %r, Right: %r", left, right)
-            check_func = lambda tank: self._is_inside_sector(left, right, radius, tank.position)
         hits = []
         for tank in self._tanks:
             if tank.position == ray.p:
                 continue
-            if check_func(tank):
+            if self._is_hit(ray, theta, tank):
                 hits.append(tank.entity)
         return ScanResult(hits)
 
     def _calculate_scan_radius(self, theta):
         return max(math.pi - theta, 0.0) * (self.arena.height * 0.318)
 
-    def _is_in_scanline(self, line, tank):
-        ##### DEBUG PLOT
-        from cairocffi import SVGSurface, Context
-        debug_plot_id = _debug_generator.next()
-        s = SVGSurface("debug_plot%05d.svg" % debug_plot_id, self.arena.width, self.arena.height)
-        c = Context(s)
-        c.set_source_rgb(0.0, 0.0, 0.0)
-        c.paint()
-        c.move_to(line.p1.x, line.p1.y)
-        c.line_to(line.p2.x, line.p2.y)
-        c.set_source_rgb(1., 0., 0.)
-        c.stroke()
-        c.new_sub_path()
-        c.arc(tank.position.x, tank.position.y, tank.radius, 0, math.pi*2)
-        c.set_source_rgb(1.0, 1.0, 0)
-        c.stroke_preserve()
-        c.set_source_rgb(1.0, 0., 1.0)
-        c.fill()
-        s.finish()
-        return line.intersect(Circle(tank.position, float(tank.radius)))
-
-    def _is_inside_sector(self, left, right, radius, position):
-        ##### DEBUG PLOT
-        from cairocffi import SVGSurface, Context
-        debug_plot_id = _debug_generator.next()
-        s = SVGSurface("debug_plot%05d.svg" % debug_plot_id, self.arena.width, self.arena.height)
-        c = Context(s)
-        c.set_source_rgb(0.0, 0.0, 0.0)
-        c.paint()
-        c.move_to(left.p1.x, left.p1.y)
-        c.line_to(left.p2.x, left.p2.y)
-        c.move_to(right.p1.x, right.p1.y)
-        c.line_to(right.p2.x, right.p2.y)
-        c.set_source_rgb(1., 0., 0.)
-        c.stroke()
-        c.new_sub_path()
-        c.arc(position.x, position.y, 1, 0, math.pi*2)
-        c.new_sub_path()
-        c.arc(position.x, position.y, 16, 0, math.pi*2)
-        c.set_source_rgb(1.0, 0., 1.0)
-        c.fill_preserve()
-        c.set_source_rgb(1.0, 1.0, 0)
-        c.stroke()
-        c.new_sub_path()
-        c.arc(left.p1.x, left.p1.y, radius, 0, math.pi*2)
-        c.set_source_rgb(0., 1., 0.)
-        c.stroke()
-        s.finish()
-        scan_line = LineSegment2(left.p1, position)
-        LOG.debug("Checking if %r is inside sector between %r and %r with radius %r", position, left, right, radius)
-        LOG.debug("Using %r to perform check", scan_line)
-        if scan_line.length > radius:
-            LOG.debug("Outside because %r is %r from center, which is more than radius %r", position, scan_line.length, radius)
+    def _is_hit(self, ray, theta, tank):
+        radius = self._calculate_scan_radius(theta)
+        center_line = LineSegment2(ray.p, ray.v, radius)
+        center_vector = ray.v
+        target_line = LineSegment2(ray.p, tank.position)
+        if theta == 0.:
+            left = right = center_line
+        else:
+            left = LineSegment2(ray.p, center_vector.rotate(theta/2.), radius)
+            right = LineSegment2(ray.p, center_vector.rotate(-theta/2.), radius)
+        LOG.debug("Checking if %r is inside sector between %r and %r with radius %r", tank.position, left, right, radius)
+        if target_line.length > radius:
+            LOG.debug("Outside because %r is %r from center, which is more than radius %r", tank.position, target_line.length, radius)
             return False
-        if not left.v.clockwise(scan_line.v):
-            LOG.debug("Outside because %r is not clockwise of left vector (%r)", scan_line.v, left)
+        if not left.v.clockwise(target_line.v):
+            LOG.debug("Outside because %r is not clockwise of left vector (%r)", target_line.v, left)
             return False
-        if right.v.clockwise(scan_line.v):
-            LOG.debug("Outside because %r is clockwise of right vector (%r)", scan_line.v, right)
+        if right.v.clockwise(target_line.v):
+            LOG.debug("Outside because %r is clockwise of right vector (%r)", target_line.v, right)
             return False
+        LOG.debug("Inside sector")
         return True
 
     def command(self, tank_id, name, *params):
