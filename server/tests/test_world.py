@@ -15,6 +15,7 @@ from ibidem.codetanks.server.commands import Move
 from ibidem.codetanks.server.vehicle import Armour, Missile
 from ibidem.codetanks.server.world import World
 
+
 DELTA = 0.000001
 
 
@@ -24,7 +25,7 @@ class Shared(object):
     bot_id = Id("bot", 1)
 
     def setup(self):
-        self.world = World(self.width, self.height)
+        self.world = World(self.width, self.height, False)
 
 
 class TestWorld(Shared):

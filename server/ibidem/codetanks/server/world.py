@@ -8,6 +8,7 @@ import logging
 from euclid import LineSegment2
 
 from ibidem.codetanks.domain.ttypes import GameData, Arena, Tank, Point, Bullet, ScanResult
+from ibidem.codetanks.server.debug_util import ScanPlot
 from ibidem.codetanks.server.vehicle import Armour, Missile
 
 
@@ -17,11 +18,13 @@ LOG = logging.getLogger(__name__)
 class World(object):
     arena = Arena()
 
-    def __init__(self, world_width, world_height):
+    def __init__(self, world_width, world_height, debug):
+        LOG.debug("Creating world %dx%d (debug: %r)", world_width, world_height, debug)
         self.arena = Arena(world_width, world_height)
         self._bullets = []
         self._tanks = []
         self._events = {}
+        self._debug = debug
 
     def add_tank(self, bot):
         armour = Armour(Tank(
@@ -111,6 +114,8 @@ class World(object):
             left = LineSegment2(ray.p, center_vector.rotate(theta/2.), radius)
             right = LineSegment2(ray.p, center_vector.rotate(-theta/2.), radius)
         LOG.debug("Checking if %r is inside sector between %r and %r with radius %r", tank.position, left, right, radius)
+        if self._debug:
+            ScanPlot(self.arena.width, self.arena.height, left, right, center_line, radius, tank).plot()
         if target_line.length > radius:
             LOG.debug("Outside because %r is %r from center, which is more than radius %r", tank.position, target_line.length, radius)
             return False
