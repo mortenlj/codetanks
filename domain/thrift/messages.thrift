@@ -73,8 +73,17 @@ struct GameData {
     2: required list<Tank> tanks = [];
 }
 
+// ******
+// Events
+// ******
+
 struct ScanResult {
     1: required list<Tank> tanks = [];
+}
+
+struct Death {
+    1: required Tank victim;
+    2: required Tank perpetrator;
 }
 
 // ********

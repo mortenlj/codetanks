@@ -7,7 +7,7 @@ import math
 from euclid import Point2, Vector2
 
 from ibidem.codetanks.domain.constants import TANK_SPEED, TANK_RADIUS, BULLET_SPEED, BULLET_RADIUS, BULLET_DAMAGE
-from ibidem.codetanks.domain.ttypes import Point
+from ibidem.codetanks.domain.ttypes import Point, Death
 from ibidem.codetanks.server.commands import Idle, Move, Rotate, Aim, Fire, Scan
 
 
@@ -86,9 +86,10 @@ class Armour(Vehicle):
     def tank_id(self):
         return self.entity.id
 
-    def inflict(self, damage):
+    def inflict(self, damage, perpetrator):
         self.entity.health -= damage
-        LOG.debug("%r has received %d in damage", self, damage)
+        LOG.debug("%r has received %d in damage from %r", self, damage, perpetrator)
+        self._world.add_event(None, Death(self.entity, perpetrator.entity))
 
     def is_collision(self):
         return self._world.is_collision(self)
@@ -150,7 +151,7 @@ class Missile(Vehicle):
         if self._is_collision:
             LOG.debug("Bullet collided with %r", self._is_collision)
             if isinstance(self._is_collision, Armour):
-                self._is_collision.inflict(BULLET_DAMAGE)
+                self._is_collision.inflict(BULLET_DAMAGE, self._parent)
             self._world.remove_bullet(self)
 
     def is_collision(self):

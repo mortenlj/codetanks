@@ -1082,6 +1082,97 @@ class ScanResult(object):
     return not (self == other)
 
 
+class Death(object):
+  """
+  Attributes:
+   - victim
+   - perpetrator
+  """
+
+  __slots__ = [ 
+    'victim',
+    'perpetrator',
+   ]
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'victim', (Tank, Tank.thrift_spec), None, ), # 1
+    (2, TType.STRUCT, 'perpetrator', (Tank, Tank.thrift_spec), None, ), # 2
+  )
+
+  def __init__(self, victim=None, perpetrator=None,):
+    self.victim = victim
+    self.perpetrator = perpetrator
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.victim = Tank()
+          self.victim.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRUCT:
+          self.perpetrator = Tank()
+          self.perpetrator.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('Death')
+    if self.victim is not None:
+      oprot.writeFieldBegin('victim', TType.STRUCT, 1)
+      self.victim.write(oprot)
+      oprot.writeFieldEnd()
+    if self.perpetrator is not None:
+      oprot.writeFieldBegin('perpetrator', TType.STRUCT, 2)
+      self.perpetrator.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    if self.victim is None:
+      raise TProtocol.TProtocolException(message='Required field victim is unset!')
+    if self.perpetrator is None:
+      raise TProtocol.TProtocolException(message='Required field perpetrator is unset!')
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, getattr(self, key))
+      for key in self.__slots__]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    if not isinstance(other, self.__class__):
+      return False
+    for attr in self.__slots__:
+      my_val = getattr(self, attr)
+      other_val = getattr(other, attr)
+      if my_val != other_val:
+        return False
+    return True
+
+  def __ne__(self, other):
+    return not (self == other)
+
+
 class CommandReply(object):
   """
   Attributes:
