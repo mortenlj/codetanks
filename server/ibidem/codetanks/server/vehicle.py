@@ -7,7 +7,7 @@ import math
 from euclid import Point2, Vector2
 
 from ibidem.codetanks.domain.constants import TANK_SPEED, TANK_RADIUS, BULLET_SPEED, BULLET_RADIUS, BULLET_DAMAGE
-from ibidem.codetanks.domain.ttypes import Point, Death
+from ibidem.codetanks.domain.ttypes import Point, Death, BotStatus
 from ibidem.codetanks.server.commands import Idle, Move, Rotate, Aim, Fire, Scan, Dead
 
 
@@ -27,6 +27,8 @@ class Vehicle(object):
 
     def collide(self, other):
         if other is self:
+            return False
+        if other.status == BotStatus.DEAD:
             return False
         pos = self.position
         other_pos = other.position
