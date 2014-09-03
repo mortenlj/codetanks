@@ -6,7 +6,7 @@ from hamcrest import assert_that, equal_to, not_none
 import pygame
 
 from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id, RegistrationReply, Move, CommandReply, CommandResult, \
-    Rotate, BotStatus, Aim, Fire, ScanResult
+    Rotate, BotStatus, Aim, Fire, ScanResult, Tank, Death
 from ibidem.codetanks.server.com import Channel
 from ibidem.codetanks.server.game_server import GameServer
 from ibidem.codetanks.server.world import World
@@ -114,6 +114,12 @@ class TestGame(Shared):
         self.server._world.get_events.return_value = {self.bot.tank_id: [scan_result]}
         self.server._run_once()
         self.bot.event_channel.send.assert_called_once_with(scan_result)
+
+    def test_events_sent_to_all_when_no_tank_id(self):
+        death = Death(create_autospec(Tank), create_autospec(Tank))
+        self.server._world.get_events.return_value = {None: [death]}
+        self.server._run_once()
+        self.bot.event_channel.send.assert_called_once_with(death)
 
     def test_bot_command_receives_reply(self):
         self.send_on_mock_channel(self.bot.cmd_channel, Move(10))

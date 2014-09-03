@@ -9,7 +9,7 @@ from hamcrest import assert_that, equal_to, instance_of, has_key, has_item, clos
 from mock import create_autospec, patch
 
 from ibidem.codetanks.domain.constants import TANK_RADIUS
-from ibidem.codetanks.domain.ttypes import Arena, Id, Tank, BotStatus, Bullet, ScanResult
+from ibidem.codetanks.domain.ttypes import Arena, Id, Tank, BotStatus, Bullet, ScanResult, Death
 from ibidem.codetanks.server.bot import Bot
 from ibidem.codetanks.server.commands import Move
 from ibidem.codetanks.server.vehicle import Armour, Missile
@@ -156,6 +156,13 @@ class TestTankEvents(TankShared):
         event_map = self.world.get_events()
         assert_that(event_map, has_key(self.tank_id))
         assert_that(event_map[self.tank_id], has_item(event))
+
+    def test_events_to_none_are_gathered(self):
+        event = Death(create_autospec(Tank), create_autospec(Tank))
+        self.world.add_event(None, event)
+        event_map = self.world.get_events()
+        assert_that(event_map, has_key(None))
+        assert_that(event_map[None], has_item(event))
 
 
 class TestScanWorld(TankShared):
