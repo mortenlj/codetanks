@@ -36,6 +36,7 @@ class Shared(object):
     def setup(self):
         self.tank = self._create_tank()
         self.armour = Armour(self.tank, self.world)
+        self.other = Armour(self._create_tank(1, Point(250, 250)), self.world)
         self.bullet = self._create_bullet()
         self.missile = Missile(self.bullet, self.world, self.armour)
         self.world.is_collision.return_value = False
@@ -152,14 +153,14 @@ class TestMove(Shared):
         self.world.remove_bullet.assert_called_with(self.missile)
 
     def test_missile_disappears_when_hitting_other_tank(self):
-        self.world.is_collision.return_value = self.armour
+        self.world.is_collision.return_value = self.other
         self.missile.update(random_ticks())
         self.world.remove_bullet.assert_called_with(self.missile)
 
     def test_missile_inflicts_damage_when_hitting_other_tank(self):
-        self.world.is_collision.return_value = self.armour
+        self.world.is_collision.return_value = self.other
         self.missile.update(random_ticks())
-        assert_that(self.armour.health, equal_to(MAX_HEALTH - BULLET_DAMAGE))
+        assert_that(self.other.health, equal_to(MAX_HEALTH - BULLET_DAMAGE))
 
 
 class RotateAndAim(Shared):
@@ -323,7 +324,13 @@ class TestCollide(Shared):
         assert_that(self.missile.collide(self.missile), equal_to(False))
 
     def test_missile_does_not_collide_with_parent(self):
+        self.missile.position = self.armour.position
         assert_that(self.missile.collide(self.armour), equal_to(False))
+
+    def test_missile_does_not_collide_with_dead_tank(self):
+        self.other.status = BotStatus.DEAD
+        self.missile.position = self.other.position
+        assert_that(self.missile.collide(self.other), equal_to(False))
 
 
 class TestDeath(Shared):
@@ -340,7 +347,8 @@ class TestDeath(Shared):
     def test_state_is_set_to_dead_after_death(self):
         self.tank.health = 5
         self.armour.inflict(5, self.armour)
-        assert_that(self.armour.status, equal_to())
+        assert_that(self.armour.status, equal_to(BotStatus.DEAD))
+
 
 def assert_that_vector_matches(actual, expected, matcher, reason=""):
     assert_that(actual.angle(expected), matcher, reason)
