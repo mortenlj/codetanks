@@ -332,6 +332,15 @@ class TestDeath(Shared):
         self.armour.inflict(5, self.armour)
         self.world.add_event.assert_called_with(None, Death(self.tank, self.tank))
 
+    def test_death_is_not_sent_while_alive(self):
+        self.tank.health = 10
+        self.armour.inflict(5, self.armour)
+        assert_that(self.world.add_event.call_args_list, empty())
+
+    def test_state_is_set_to_dead_after_death(self):
+        self.tank.health = 5
+        self.armour.inflict(5, self.armour)
+        assert_that(self.armour.status, equal_to())
 
 def assert_that_vector_matches(actual, expected, matcher, reason=""):
     assert_that(actual.angle(expected), matcher, reason)

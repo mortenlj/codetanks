@@ -24,6 +24,10 @@ class Idle(object):
         return False
 
 
+class Dead(Idle):
+    status = BotStatus.DEAD
+
+
 class Move(Idle):
     status = BotStatus.MOVING
 

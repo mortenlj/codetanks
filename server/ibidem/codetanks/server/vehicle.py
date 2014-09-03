@@ -8,7 +8,7 @@ from euclid import Point2, Vector2
 
 from ibidem.codetanks.domain.constants import TANK_SPEED, TANK_RADIUS, BULLET_SPEED, BULLET_RADIUS, BULLET_DAMAGE
 from ibidem.codetanks.domain.ttypes import Point, Death
-from ibidem.codetanks.server.commands import Idle, Move, Rotate, Aim, Fire, Scan
+from ibidem.codetanks.server.commands import Idle, Move, Rotate, Aim, Fire, Scan, Dead
 
 
 LOG = logging.getLogger(__name__)
@@ -89,7 +89,9 @@ class Armour(Vehicle):
     def inflict(self, damage, perpetrator):
         self.entity.health -= damage
         LOG.debug("%r has received %d in damage from %r", self, damage, perpetrator)
-        self._world.add_event(None, Death(self.entity, perpetrator.entity))
+        if self.health <= 0:
+            self._world.add_event(None, Death(self.entity, perpetrator.entity))
+            self._command = Dead(self)
 
     def is_collision(self):
         return self._world.is_collision(self)

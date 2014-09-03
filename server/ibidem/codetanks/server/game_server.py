@@ -48,9 +48,14 @@ class GameServer(object):
         ticks = self.clock.tick(60)
         self._world.update(ticks)
         for tank_id, events in self._world.get_events().iteritems():
-            bot = self._bots[tank_id]
-            for event in events:
-                bot.event_channel.send(event)
+            if tank_id is None:
+                for event in events:
+                    for bot in self._bots:
+                        bot.event_channel.send(event)
+            else:
+                bot = self._bots[tank_id]
+                for event in events:
+                    bot.event_channel.send(event)
 
     def _handle_registration(self, reply_channel, registration):
         LOG.debug("GameServer received registration: %r", registration)
