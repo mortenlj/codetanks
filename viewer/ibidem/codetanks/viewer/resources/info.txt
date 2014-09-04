@@ -1,3 +1,4 @@
-The images in this folder is from http://www.vickiwenderlich.com/2011/10/free-game-art-tanks-top-down-tiles/
+Most of the images in this folder are from http://www.vickiwenderlich.com/2011/10/free-game-art-tanks-top-down-tiles/
 They are shared under a Creative Commons Attribution License (http://www.vickiwenderlich.com/free-art/licensing/)
 
+TODO: Remove unused images, maintain list of downloaded vs. created images
