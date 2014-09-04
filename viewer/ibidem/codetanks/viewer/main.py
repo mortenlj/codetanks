@@ -49,10 +49,9 @@ def draw_arena(arena, screen):
     arena.draw(screen, (0, 0))
 
 
-def draw_entities(arena, bullets, tanks):
-    for group in bullets, tanks:
-        group.clear(arena.game_field, arena.background)
-        group.draw(arena.game_field)
+def draw_entities(arena, entities):
+    entities.clear(arena.game_field, arena.background)
+    entities.draw(arena.game_field)
 
 
 def main():
@@ -65,12 +64,12 @@ def main():
                 pygame.quit()
                 return
 
-        tanks, bullets = server.update()
+        tanks, entities = server.update()
         tank_infos = {}
         for tank in tanks:
             tank_infos[tank.id] = TankInfo(tank)
 
-        draw_entities(arena, bullets, tanks)
+        draw_entities(arena, entities)
         draw_tank_info_widgets(arena, screen, tank_infos)
         draw_arena(arena, screen)
 
