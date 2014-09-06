@@ -163,11 +163,28 @@ class TestStartedGame(Shared):
         self.server.start()
         self.server.clock = create_autospec(pygame.time.Clock)
         self.server.clock.tick = MagicMock()
+        self.world.number_of_live_bots = PLAYER_COUNT
 
     def test_world_updated_once_per_loop(self):
         self.server.clock.tick.return_value = 30
         self.server._run_once()
         self.world.update.assert_called_once_with(30)
+
+    def test_game_ends_when_only_one_bot_left(self):
+        for i in range(PLAYER_COUNT-1):
+            self.server._handle_bot_registration(self.registration_channel, Registration(ClientType.BOT, Id("bot", 1)))
+        self.world.number_of_live_bots = 1
+        assert_that(self.server.finished(), equal_to(True))
+
+    def test_game_does_not_end_when_only_one_bot_registered(self):
+        self.world.number_of_live_bots = 1
+        assert_that(self.server.finished(), equal_to(False))
+
+    def test_loop_exits_when_game_finished(self):
+        for i in range(PLAYER_COUNT-1):
+            self.server._handle_bot_registration(self.registration_channel, Registration(ClientType.BOT, Id("bot", 1)))
+        self.world.number_of_live_bots = 1
+        self.server.run()
 
 
 if __name__ == "__main__":

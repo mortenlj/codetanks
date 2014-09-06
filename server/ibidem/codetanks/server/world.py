@@ -7,7 +7,7 @@ import logging
 
 from euclid import LineSegment2
 
-from ibidem.codetanks.domain.ttypes import GameData, Arena, Tank, Point, Bullet, ScanResult
+from ibidem.codetanks.domain.ttypes import GameData, Arena, Tank, Point, Bullet, ScanResult, BotStatus
 from ibidem.codetanks.server.debug_util import ScanPlot
 from ibidem.codetanks.server.vehicle import Armour, Missile
 
@@ -57,6 +57,11 @@ class World(object):
     @property
     def bullets(self):
         return [w.entity for w in self._bullets]
+
+    @property
+    def number_of_live_bots(self):
+        live_bots = [w for w in self._tanks if w.status != BotStatus.DEAD]
+        return len(live_bots)
 
     def is_collision(self, vehicle):
         position = vehicle.position

@@ -31,9 +31,13 @@ class GameServer(object):
     def started(self):
         return self.clock is not None
 
+    def finished(self):
+        live_count = self._world.number_of_live_bots
+        return len(self._bots) > 1 and live_count <= 1
+
     def run(self):
         LOG.info("GameServer starting, registration available on %s", self._registration_channel.url)
-        while True:
+        while not self.finished():
             self._run_once()
 
     def _run_once(self):
