@@ -2,9 +2,10 @@
 # -*- coding: utf-8
 
 from mock import create_autospec, MagicMock, PropertyMock
-from hamcrest import assert_that, equal_to, not_none
+from hamcrest import assert_that, equal_to, not_none, empty
 import pygame
 
+from ibidem.codetanks.domain.constants import PLAYER_COUNT
 from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id, RegistrationReply, Move, CommandReply, CommandResult, \
     Rotate, BotStatus, Aim, Fire, ScanResult, Tank, Death
 from ibidem.codetanks.server.com import Channel
@@ -21,8 +22,8 @@ class Shared(object):
             mock = create_autospec(Channel(x))
             mock.ready.return_value = False
             return mock
-        self.server = GameServer(self.registration_channel, self.viewer_channel, channel_factory, create_autospec(World))
-        self.server.start()
+        self.world = create_autospec(World)
+        self.server = GameServer(self.registration_channel, self.viewer_channel, channel_factory, self.world)
 
     def send_on_mock_channel(self, channel, value):
         channel.ready.return_value = True
@@ -81,43 +82,36 @@ class TestBotRegistration(RegistrationSetup):
     def test_bot_is_added_to_world(self):
         self.server._run_once()
         bot = self.server._bots[0]
-        self.server._world.add_tank.assert_called_once_with(bot)
+        self.world.add_tank.assert_called_once_with(bot)
 
 
 class TestGame(Shared):
     def setup(self):
         super(TestGame, self).setup()
-        self.server.clock = create_autospec(pygame.time.Clock)
-        self.server.clock.tick = MagicMock()
         self.server._handle_bot_registration(self.registration_channel, Registration(ClientType.BOT, Id("bot", 1)))
         self.bot = self.server._bots[0]
-        self.server._world.tank_status.return_value = BotStatus.IDLE
+        self.world.tank_status.return_value = BotStatus.IDLE
 
     def test_game_data_sent_once_per_loop(self):
         game_data = GameData([], [])
-        type(self.server._world).gamedata = PropertyMock(return_value=game_data)
+        type(self.world).gamedata = PropertyMock(return_value=game_data)
         self.server._run_once()
         self.viewer_channel.send.assert_called_with(game_data)
 
-    def test_world_updated_once_per_loop(self):
-        self.server.clock.tick.return_value = 30
-        self.server._run_once()
-        self.server._world.update.assert_called_once_with(30)
-
     def test_events_gathered_once_per_loop(self):
-        self.server._world.get_events.return_value = {}
+        self.world.get_events.return_value = {}
         self.server._run_once()
-        self.server._world.get_events.assert_called_once_with()
+        self.world.get_events.assert_called_once_with()
 
     def test_events_sent_when_gathered(self):
         scan_result = ScanResult([])
-        self.server._world.get_events.return_value = {self.bot.tank_id: [scan_result]}
+        self.world.get_events.return_value = {self.bot.tank_id: [scan_result]}
         self.server._run_once()
         self.bot.event_channel.send.assert_called_once_with(scan_result)
 
     def test_events_sent_to_all_when_no_tank_id(self):
         death = Death(create_autospec(Tank), create_autospec(Tank))
-        self.server._world.get_events.return_value = {None: [death]}
+        self.world.get_events.return_value = {None: [death]}
         self.server._run_once()
         self.bot.event_channel.send.assert_called_once_with(death)
 
@@ -129,7 +123,7 @@ class TestGame(Shared):
     def _command_test(self, command, name, *params):
         self.send_on_mock_channel(self.bot.cmd_channel, command)
         self.server._run_once()
-        self.server._world.command.assert_called_once_with(self.bot.tank_id, name, *params)
+        self.world.command.assert_called_once_with(self.bot.tank_id, name, *params)
 
     def test_commands_forwarded_to_world(self):
         yield self._command_test, Move(10), "move", 10
@@ -138,10 +132,10 @@ class TestGame(Shared):
         yield self._command_test, Fire(), "fire"
 
     def _command_abort_if_busy_test(self, status, command):
-        self.server._world.tank_status.return_value = status
+        self.world.tank_status.return_value = status
         self.send_on_mock_channel(self.bot.cmd_channel, command)
         self.server._run_once()
-        assert_that(self.server._world.command.called, equal_to(False))
+        assert_that(self.world.command.called, equal_to(False))
         self.bot.cmd_channel.send.assert_called_once_with(CommandReply(CommandResult.BUSY))
 
     def test_command_aborted_if_busy(self):
@@ -150,6 +144,30 @@ class TestGame(Shared):
         for status in states:
             for command in (Move(10), Rotate(1.5), Aim(-1.5)):
                 yield self._command_abort_if_busy_test, status, command
+
+    def test_game_started_after_fourth_bot(self):
+        # One from setup, and another three here
+        for i in range(PLAYER_COUNT-1):
+            assert_that(self.server.started(), equal_to(False))
+            self.server._handle_bot_registration(self.registration_channel, Registration(ClientType.BOT, Id("bot", 1)))
+        assert_that(self.server.started(), equal_to(True))
+
+    def test_update_not_called_before_game_started(self):
+        self.server._run_once()
+        assert_that(self.world.update.call_args_list, empty())
+
+
+class TestStartedGame(Shared):
+    def setup(self):
+        super(TestStartedGame, self).setup()
+        self.server.start()
+        self.server.clock = create_autospec(pygame.time.Clock)
+        self.server.clock.tick = MagicMock()
+
+    def test_world_updated_once_per_loop(self):
+        self.server.clock.tick.return_value = 30
+        self.server._run_once()
+        self.world.update.assert_called_once_with(30)
 
 
 if __name__ == "__main__":

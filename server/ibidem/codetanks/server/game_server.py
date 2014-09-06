@@ -6,6 +6,7 @@ import logging
 import pygame
 from pinject import copy_args_to_internal_fields
 
+from ibidem.codetanks.domain.constants import PLAYER_COUNT
 from ibidem.codetanks.domain.ttypes import GameInfo, RegistrationReply, ClientType, CommandResult, CommandReply, BotStatus
 from ibidem.codetanks.server.bot import Bot
 from ibidem.codetanks.server.com import ChannelType
@@ -32,8 +33,7 @@ class GameServer(object):
 
     def run(self):
         LOG.info("GameServer starting, registration available on %s", self._registration_channel.url)
-        self.start()
-        while self.started():
+        while True:
             self._run_once()
 
     def _run_once(self):
@@ -45,8 +45,9 @@ class GameServer(object):
         if received_messages > 0:
             LOG.debug("GameServer processed %d messages", received_messages)
         self._viewer_channel.send(self._world.gamedata)
-        ticks = self.clock.tick(60)
-        self._world.update(ticks)
+        if self.started():
+            ticks = self.clock.tick(60)
+            self._world.update(ticks)
         for tank_id, events in self._world.get_events().iteritems():
             if tank_id is None:
                 for event in events:
@@ -73,6 +74,8 @@ class GameServer(object):
         self._world.add_tank(bot)
         reply_channel.send(RegistrationReply(self.build_game_info(), event_channel.url, cmd_channel.url))
         self._handlers[bot.cmd_channel] = partial(self._handle_bot_cmd, bot)
+        if len(self._bots) == PLAYER_COUNT:
+            self.start()
 
     def _handle_bot_cmd(self, bot, reply_channel, command):
         LOG.debug("Handling command %r for bot %r", command, bot)
