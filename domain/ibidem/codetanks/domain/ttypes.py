@@ -59,6 +59,20 @@ class BotStatus(object):
     "DEAD": 6,
   }
 
+class RegistrationResult(object):
+  SUCCESS = 0
+  FAILURE = 1
+
+  _VALUES_TO_NAMES = {
+    0: "SUCCESS",
+    1: "FAILURE",
+  }
+
+  _NAMES_TO_VALUES = {
+    "SUCCESS": 0,
+    "FAILURE": 1,
+  }
+
 class CommandResult(object):
   BUSY = 0
   OK = 1
@@ -420,12 +434,14 @@ class GameInfo(object):
 class RegistrationReply(object):
   """
   Attributes:
+   - result
    - game_info
    - event_url
    - cmd_url
   """
 
   __slots__ = [ 
+    'result',
     'game_info',
     'event_url',
     'cmd_url',
@@ -433,12 +449,14 @@ class RegistrationReply(object):
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRUCT, 'game_info', (GameInfo, GameInfo.thrift_spec), None, ), # 1
-    (2, TType.STRING, 'event_url', None, None, ), # 2
-    (3, TType.STRING, 'cmd_url', None, None, ), # 3
+    (1, TType.I32, 'result', None, None, ), # 1
+    (2, TType.STRUCT, 'game_info', (GameInfo, GameInfo.thrift_spec), None, ), # 2
+    (3, TType.STRING, 'event_url', None, None, ), # 3
+    (4, TType.STRING, 'cmd_url', None, None, ), # 4
   )
 
-  def __init__(self, game_info=None, event_url=None, cmd_url=None,):
+  def __init__(self, result=None, game_info=None, event_url=None, cmd_url=None,):
+    self.result = result
     self.game_info = game_info
     self.event_url = event_url
     self.cmd_url = cmd_url
@@ -453,17 +471,22 @@ class RegistrationReply(object):
       if ftype == TType.STOP:
         break
       if fid == 1:
+        if ftype == TType.I32:
+          self.result = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
         if ftype == TType.STRUCT:
           self.game_info = GameInfo()
           self.game_info.read(iprot)
         else:
           iprot.skip(ftype)
-      elif fid == 2:
+      elif fid == 3:
         if ftype == TType.STRING:
           self.event_url = iprot.readString().decode('utf-8')
         else:
           iprot.skip(ftype)
-      elif fid == 3:
+      elif fid == 4:
         if ftype == TType.STRING:
           self.cmd_url = iprot.readString().decode('utf-8')
         else:
@@ -478,26 +501,30 @@ class RegistrationReply(object):
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('RegistrationReply')
+    if self.result is not None:
+      oprot.writeFieldBegin('result', TType.I32, 1)
+      oprot.writeI32(self.result)
+      oprot.writeFieldEnd()
     if self.game_info is not None:
-      oprot.writeFieldBegin('game_info', TType.STRUCT, 1)
+      oprot.writeFieldBegin('game_info', TType.STRUCT, 2)
       self.game_info.write(oprot)
       oprot.writeFieldEnd()
     if self.event_url is not None:
-      oprot.writeFieldBegin('event_url', TType.STRING, 2)
+      oprot.writeFieldBegin('event_url', TType.STRING, 3)
       oprot.writeString(self.event_url.encode('utf-8'))
       oprot.writeFieldEnd()
     if self.cmd_url is not None:
-      oprot.writeFieldBegin('cmd_url', TType.STRING, 3)
+      oprot.writeFieldBegin('cmd_url', TType.STRING, 4)
       oprot.writeString(self.cmd_url.encode('utf-8'))
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
   def validate(self):
+    if self.result is None:
+      raise TProtocol.TProtocolException(message='Required field result is unset!')
     if self.game_info is None:
       raise TProtocol.TProtocolException(message='Required field game_info is unset!')
-    if self.event_url is None:
-      raise TProtocol.TProtocolException(message='Required field event_url is unset!')
     return
 
 
