@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
+from datetime import datetime
 from functools import partial
 import logging
 
@@ -17,13 +18,19 @@ LOG = logging.getLogger(__name__)
 
 class GameServer(object):
     @copy_args_to_internal_fields
-    def __init__(self, registration_channel, viewer_channel, channel_factory, world):
+    def __init__(self,
+                 registration_channel,
+                 viewer_channel,
+                 channel_factory,
+                 world,
+                 victory_delay):
         pygame.init()
         self.clock = None
         self._handlers = {
             self._registration_channel: self._handle_registration
         }
         self._bots = []
+        self._victory_delay = victory_delay
 
     def start(self):
         self.clock = pygame.time.Clock()
@@ -38,6 +45,10 @@ class GameServer(object):
     def run(self):
         LOG.info("GameServer starting, registration available on %s", self._registration_channel.url)
         while not self.finished():
+            self._run_once()
+        LOG.info("Game finished, allowing %d seconds for victory celebrations", self._victory_delay.seconds)
+        start = datetime.now()
+        while (datetime.now() - start) < self._victory_delay:
             self._run_once()
 
     def _run_once(self):

@@ -2,6 +2,7 @@
 # -*- coding: utf-8
 
 import argparse
+from datetime import timedelta
 import logging
 
 import pinject
@@ -22,6 +23,7 @@ class ObjectGraph(pinject.BindingSpec):
         bind("registration_port", to_instance=self._registration_port)
         bind("debug", to_instance=self._debug)
         bind("world", to_class=World)
+        bind("victory_delay", to_instance=timedelta(seconds=30))
 
     def provide_viewer_channel(self):
         return Channel(ChannelType.PUBLISH)
