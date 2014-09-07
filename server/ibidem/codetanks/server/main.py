@@ -38,11 +38,14 @@ class ObjectGraph(pinject.BindingSpec):
 
 
 def main():
-    logging.basicConfig(level=logging.DEBUG)
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--port", type=int, default=13337)
     parser.add_argument("--debug", action="store_true", help="Enable debug features")
     args = parser.parse_args()
+    loglevel = logging.INFO
+    if args.debug:
+        loglevel = logging.DEBUG
+    logging.basicConfig(level=loglevel)
     obj_graph = pinject.new_object_graph(binding_specs=[ObjectGraph(args.port, args.debug)])
     game_server = obj_graph.provide(GameServer)
     game_server.run()
