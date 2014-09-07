@@ -24,6 +24,11 @@ enum BotStatus {
     DEAD
 }
 
+enum RegistrationResult {
+    SUCCESS,
+    FAILURE
+}
+
 struct Id {
     1: required string name;
     2: required i16 version;
@@ -44,9 +49,10 @@ struct GameInfo {
 }
 
 struct RegistrationReply {
-    1: required GameInfo game_info;
-    2: required string event_url;
-    3: optional string cmd_url;
+    1: required RegistrationResult result;
+    2: required GameInfo game_info;
+    3: optional string event_url;
+    4: optional string cmd_url;
 }
 
 struct Point {

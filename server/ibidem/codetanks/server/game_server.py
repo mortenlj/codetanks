@@ -8,7 +8,8 @@ import pygame
 from pinject import copy_args_to_internal_fields
 
 from ibidem.codetanks.domain.constants import PLAYER_COUNT
-from ibidem.codetanks.domain.ttypes import GameInfo, RegistrationReply, ClientType, CommandResult, CommandReply, BotStatus
+from ibidem.codetanks.domain.ttypes import GameInfo, RegistrationReply, ClientType, CommandResult, CommandReply, BotStatus, \
+    RegistrationResult
 from ibidem.codetanks.server.bot import Bot
 from ibidem.codetanks.server.com import ChannelType
 
@@ -78,17 +79,20 @@ class GameServer(object):
         if registration.client_type == ClientType.BOT:
             self._handle_bot_registration(reply_channel, registration)
         else:
-            reply_channel.send(RegistrationReply(self.build_game_info(), self._viewer_channel.url))
+            reply_channel.send(RegistrationReply(RegistrationResult.SUCCESS, self.build_game_info(), self._viewer_channel.url))
 
     def _handle_bot_registration(self, reply_channel, registration):
+        if self.started():
+            reply_channel.send(RegistrationReply(RegistrationResult.FAILURE, self.build_game_info()))
+            return
         event_channel = self._channel_factory(ChannelType.PUBLISH)
         cmd_channel = self._channel_factory(ChannelType.REPLY)
         tank_id = len(self._bots)
         bot = Bot(registration.id, tank_id, event_channel, cmd_channel)
         self._bots.append(bot)
         self._world.add_tank(bot)
-        reply_channel.send(RegistrationReply(self.build_game_info(), event_channel.url, cmd_channel.url))
         self._handlers[bot.cmd_channel] = partial(self._handle_bot_cmd, bot)
+        reply_channel.send(RegistrationReply(RegistrationResult.SUCCESS, self.build_game_info(), event_channel.url, cmd_channel.url))
         if len(self._bots) == PLAYER_COUNT:
             self.start()
 

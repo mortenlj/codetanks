@@ -8,7 +8,7 @@ from cmd import Cmd
 
 import zmq
 
-from ibidem.codetanks.domain.ttypes import Registration, ClientType, Id, Move, Rotate, CommandResult, Aim, Fire, Scan
+from ibidem.codetanks.domain.ttypes import Registration, ClientType, Id, Move, Rotate, CommandResult, Aim, Fire, Scan, RegistrationResult
 from ibidem.codetanks.domain.util import serialize, deserialize
 
 
@@ -51,10 +51,21 @@ class CliBot(Cmd):
     def __init__(self, server_url):
         Cmd.__init__(self)
         zmq_context = zmq.Context.instance()
+        reply = self._register(server_url, zmq_context)
+        if reply.result == RegistrationResult.FAILURE:
+            print "No room for more bots on server, exiting"
+            self.cmdqueue.insert(0, "exit\n")
+        else:
+            self._init_sockets(reply, zmq_context)
+
+    def _register(self, server_url, zmq_context):
         registration_socket = zmq_context.socket(zmq.REQ)
         registration_socket.connect(server_url)
         registration_socket.send(serialize(Registration(ClientType.BOT, Id("clibot", 1))))
         reply = deserialize(registration_socket.recv())
+        return reply
+
+    def _init_sockets(self, reply, zmq_context):
         self._update_socket = zmq_context.socket(zmq.SUB)
         self._update_socket.set(zmq.SUBSCRIBE, "")
         event_url = reply.event_url
