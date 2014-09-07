@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
+from datetime import datetime, timedelta
 
 from mock import create_autospec, MagicMock, PropertyMock
-from hamcrest import assert_that, equal_to, not_none, empty
+from hamcrest import assert_that, equal_to, not_none, empty, close_to
 import pygame
 
 from ibidem.codetanks.domain.constants import PLAYER_COUNT
@@ -23,7 +24,12 @@ class Shared(object):
             mock.ready.return_value = False
             return mock
         self.world = create_autospec(World)
-        self.server = GameServer(self.registration_channel, self.viewer_channel, channel_factory, self.world)
+        self.victory_delay = timedelta(seconds=1)
+        self.server = GameServer(self.registration_channel,
+                                 self.viewer_channel,
+                                 channel_factory,
+                                 self.world,
+                                 self.victory_delay)
 
     def send_on_mock_channel(self, channel, value):
         channel.ready.return_value = True
@@ -176,15 +182,24 @@ class TestStartedGame(Shared):
         self.world.number_of_live_bots = 1
         assert_that(self.server.finished(), equal_to(True))
 
+    def test_game_ends_when_all_bots_are_dead(self):
+        for i in range(PLAYER_COUNT-1):
+            self.server._handle_bot_registration(self.registration_channel, Registration(ClientType.BOT, Id("bot", 1)))
+        self.world.number_of_live_bots = 0
+        assert_that(self.server.finished(), equal_to(True))
+
     def test_game_does_not_end_when_only_one_bot_registered(self):
         self.world.number_of_live_bots = 1
         assert_that(self.server.finished(), equal_to(False))
 
-    def test_loop_exits_when_game_finished(self):
+    def test_loop_exits_30_seconds_after_game_finished(self):
         for i in range(PLAYER_COUNT-1):
             self.server._handle_bot_registration(self.registration_channel, Registration(ClientType.BOT, Id("bot", 1)))
         self.world.number_of_live_bots = 1
+        start = datetime.now()
         self.server.run()
+        end = datetime.now()
+        assert_that((end - start).total_seconds(), close_to(self.victory_delay.total_seconds(), 0.001))
 
 
 if __name__ == "__main__":
