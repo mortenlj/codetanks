@@ -188,12 +188,20 @@ class TestScanWorld(TankShared):
 
     def test_scan(self):
         base_vector = Vector2(1., 1.)
-        for angle in range(1, 91):
+        for angle in range(10, 91, 5):
             theta = (math.pi / 180.) * angle
             for vector, assert_func_name in (base_vector.rotate(theta/3.)*150, "_assert_found_tank"), \
                                             (base_vector.rotate(theta/1.)*150, "_assert_no_tanks_found"):
                 position = self.ray.p + vector
                 yield self._scan_test, position, angle, theta, assert_func_name
+
+    def test_scan_catches_tank_off_center(self):
+        base_vector = Vector2(1., 1.)
+        angle = 10
+        theta = math.pi / 180. * angle
+        position_vector = base_vector.rotate(theta) * 100
+        position = self.ray.p + position_vector
+        yield self._scan_test, position, angle, theta, "_assert_found_tank"
 
     def test_scan_radius(self):
         close_position = self.ray.p + Vector2(50., 50.)
