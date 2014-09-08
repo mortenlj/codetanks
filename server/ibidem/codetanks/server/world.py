@@ -5,7 +5,7 @@ from random import randint
 import math
 import logging
 
-from euclid import LineSegment2
+from euclid import LineSegment2, Circle
 
 from ibidem.codetanks.domain.ttypes import GameData, Arena, Tank, Point, Bullet, ScanResult, BotStatus
 from ibidem.codetanks.server.debug_util import ScanPlot
@@ -113,6 +113,7 @@ class World(object):
         center_line = LineSegment2(ray.p, ray.v, radius)
         center_vector = ray.v
         target_line = LineSegment2(ray.p, tank.position)
+        tank_circle = Circle(tank.position, float(tank.radius))
         if theta == 0.:
             left = right = center_line
         else:
@@ -121,6 +122,11 @@ class World(object):
         LOG.debug("Checking if %r is inside sector between %r and %r with radius %r", tank.position, left, right, radius)
         if self._debug:
             ScanPlot(self.arena.width, self.arena.height, left, right, center_line, radius, tank).plot()
+        for side in left, right:
+            intersect = side.intersect(tank_circle)
+            if intersect:
+                LOG.debug("Inside because tank intersects side vector (%r) at %r", side, intersect)
+                return True
         if target_line.length > radius:
             LOG.debug("Outside because %r is %r from center, which is more than radius %r", tank.position, target_line.length, radius)
             return False
