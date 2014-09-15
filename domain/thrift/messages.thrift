@@ -1,4 +1,5 @@
 namespace py ibidem.codetanks.domain
+namespace java ibidem.codetanks.domain
 
 const byte MAX_HEALTH = 100;
 const byte BULLET_DAMAGE = 5;
