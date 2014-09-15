@@ -9,14 +9,18 @@ class Thrift(Command):
     description = "Compile Thrift IDL into python source"
     user_options = []
 
+    _languages = [
+        "py:new_style,utf8strings,slots",
+        "java:private-members,hashcode"
+    ]
+
     def initialize_options(self):
         self.thrift_file = os.path.join("thrift", "messages.thrift")
 
     def finalize_options(self):
         pass
 
-    def run(self):
-        self.spawn(["thrift-0.9.1", "-strict", "-verbose", "--gen", "py:new_style,utf8strings,slots", "-o", "src", self.thrift_file])
+    def _fixup_py(self):
         path = "."
         for folder in ("src", "gen-py", "ibidem", "codetanks"):
             path = os.path.join(path, folder)
@@ -25,6 +29,15 @@ class Thrift(Command):
                 with open(filename, "w") as fobj:
                     fobj.write("__import__('pkg_resources').declare_namespace(__name__)\n")
         os.unlink(os.path.join("src", "gen-py", "__init__.py"))
+
+    def run(self):
+        cmd_args = ["thrift-0.9.1", "-strict", "-verbose"]
+        for lang in self._languages:
+            cmd_args.append("--gen")
+            cmd_args.append(lang)
+        cmd_args.extend(["-o", "src", self.thrift_file])
+        self.spawn(cmd_args)
+        self._fixup_py()
 
 
 def read(filename):
