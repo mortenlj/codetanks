@@ -16,14 +16,15 @@ class Thrift(Command):
         pass
 
     def run(self):
-        self.spawn(["thrift-0.9.1", "-strict", "-verbose", "--gen", "py:new_style,utf8strings,slots", "-out", ".", self.thrift_file])
-        os.unlink("__init__.py")
+        self.spawn(["thrift-0.9.1", "-strict", "-verbose", "--gen", "py:new_style,utf8strings,slots", "-o", "src", self.thrift_file])
         path = "."
-        for folder in ("ibidem", "codetanks"):
+        for folder in ("src", "gen-py", "ibidem", "codetanks"):
             path = os.path.join(path, folder)
             filename = os.path.join(path, "__init__.py")
-            with open(filename, "w") as fobj:
-                fobj.write("__import__('pkg_resources').declare_namespace(__name__)\n")
+            if os.path.exists(filename):
+                with open(filename, "w") as fobj:
+                    fobj.write("__import__('pkg_resources').declare_namespace(__name__)\n")
+        os.unlink(os.path.join("src", "gen-py", "__init__.py"))
 
 
 def read(filename):
@@ -51,6 +52,9 @@ setup(
     name="Codetanks Domain",
     version="0.1",
     packages=["ibidem", "ibidem.codetanks", "ibidem.codetanks.domain"],
+    package_dir={
+        '': 'src/gen-py'
+    },
     install_requires=parse_requirements("requirements.txt"),
     namespace_packages=["ibidem", "ibidem.codetanks"],
     zip_safe=True,
