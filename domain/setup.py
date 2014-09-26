@@ -10,8 +10,7 @@ class Thrift(Command):
     user_options = []
 
     _languages = [
-        "py:new_style,utf8strings,slots",
-        "java:private-members,hashcode"
+        "py:new_style,utf8strings,slots"
     ]
 
     def initialize_options(self):

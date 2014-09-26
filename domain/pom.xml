@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>ibidem.codetanks</groupId>
+    <artifactId>domain</artifactId>
+    <version>0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.thrift</groupId>
+            <artifactId>libthrift</artifactId>
+            <version>0.9.1</version>
+        </dependency>
+    </dependencies>
+
+    <properties>
+        <version.thrift>0.9.1</version.thrift>
+    </properties>
+
+
+    <build>
+        <sourceDirectory>src/gen-java</sourceDirectory>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <inherited>true</inherited>
+                <configuration>
+                    <source>1.7</source>
+                    <target>1.7</target>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.2.1</version>
+                <inherited>true</inherited>
+                <executions>
+                    <execution>
+                        <id>attach-sources-no-fork</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                            <goal>test-jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.6</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.7</version>
+                <inherited>true</inherited>
+                <executions>
+                    <execution>
+                        <id>thrift-compilation</id>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <tasks>
+                                <fileset id="thrift.src.files" dir=".">
+                                    <include name="thrift/*.thrift"/>
+                                </fileset>
+                                <mkdir dir="src"/>
+                                <echo>Using thrift-${version.thrift}</echo>
+                                <apply executable="thrift-${version.thrift}" failonerror="true" osfamily="mac">
+                                    <arg value="-v"/>
+                                    <arg value="--gen"/>
+                                    <arg value="java:beans,hashcode"/>
+                                    <arg value="-o"/>
+                                    <arg value="src"/>
+                                    <fileset refid="thrift.src.files"/>
+                                </apply>
+                                <apply executable="thrift-${version.thrift}" failonerror="true" osfamily="unix">
+                                    <arg value="-v"/>
+                                    <arg value="--gen"/>
+                                    <arg value="java:beans,hashcode"/>
+                                    <arg value="-o"/>
+                                    <arg value="src"/>
+                                    <fileset refid="thrift.src.files"/>
+                                </apply>
+                                <apply executable="thrift-${version.thrift}.exe" failonerror="true" osfamily="windows">
+                                    <arg value="-v"/>
+                                    <arg value="--gen"/>
+                                    <arg value="java:beans,hashcode"/>
+                                    <arg value="-o"/>
+                                    <arg value="src"/>
+                                    <fileset refid="thrift.src.files"/>
+                                </apply>
+                            </tasks>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>1.8</version>
+                <inherited>true</inherited>
+                <executions>
+                    <execution>
+                        <id>add-thrift-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>src/gen-javabean</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

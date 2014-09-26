@@ -1,5 +1,6 @@
 .idea
 /gen-.*/
+target
 
 syntax: glob
 *.iml
