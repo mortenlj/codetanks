@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import shutil
+
 from setuptools import setup, Command
 import os
 import re
@@ -21,20 +23,24 @@ class Thrift(Command):
 
     def _fixup_py(self):
         path = "."
-        for folder in ("src", "gen-py", "ibidem", "codetanks"):
+        for folder in ("target", "gen-py", "ibidem", "codetanks"):
             path = os.path.join(path, folder)
             filename = os.path.join(path, "__init__.py")
             if os.path.exists(filename):
                 with open(filename, "w") as fobj:
                     fobj.write("__import__('pkg_resources').declare_namespace(__name__)\n")
-        os.unlink(os.path.join("src", "gen-py", "__init__.py"))
+        os.unlink(os.path.join("target", "gen-py", "__init__.py"))
 
     def run(self):
+        gen_py_path = os.path.join("target", "gen-py")
+        os.makedirs(gen_py_path)
+        shutil.rmtree(gen_py_path)
+        shutil.copytree(os.path.join("src", "python", "ibidem"), os.path.join("target", "gen-py", "ibidem"))
         cmd_args = ["thrift-0.9.1", "-strict", "-verbose"]
         for lang in self._languages:
             cmd_args.append("--gen")
             cmd_args.append(lang)
-        cmd_args.extend(["-o", "src", self.thrift_file])
+        cmd_args.extend(["-o", "target", self.thrift_file])
         self.spawn(cmd_args)
         self._fixup_py()
 
@@ -65,7 +71,7 @@ setup(
     version="0.1",
     packages=["ibidem", "ibidem.codetanks", "ibidem.codetanks.domain"],
     package_dir={
-        '': 'src/gen-py'
+        '': 'target/gen-py'
     },
     install_requires=parse_requirements("requirements.txt"),
     namespace_packages=["ibidem", "ibidem.codetanks"],
