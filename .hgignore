@@ -1,7 +1,9 @@
 .idea
 /gen-.*/
 target
-.gradle
+^.gradle
+build/
+dist/
 
 syntax: glob
 *.iml
