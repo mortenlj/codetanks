@@ -1,0 +1,5 @@
+include 'domain'
+
+rootProject.name = 'codetanks'
+
+project(':domain').name = "$rootProject.name-domain"

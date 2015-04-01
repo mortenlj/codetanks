@@ -1,0 +1,71 @@
+apply plugin: 'java'
+apply plugin: 'org.jruyi.thrift'
+apply plugin: 'maven'
+
+def generatedSourcesRoot = "$buildDir/generated-sources"
+def generatedJavaSources = "$generatedSourcesRoot/gen-javabean"
+def generatedPythonSources = "$generatedSourcesRoot/gen-py/ibidem"
+def builtPython = "$buildDir/python/ibidem"
+
+logger.quiet("Building $parent - $project - $version")
+
+compileThrift {
+    sourceDir 'thrift'
+    outputDir generatedSourcesRoot
+    thriftExecutable 'thrift-0.9.1'
+
+    generator 'java', 'beans,hashcode'
+    generator 'py', 'new_style,utf8strings,slots'
+}
+
+task copyPythonExtras(type:Copy) {
+    dependsOn compileThrift
+
+    from 'src/python/ibidem'
+    into generatedPythonSources
+}
+
+task processPythonSources(type:Sync) {
+    dependsOn copyPythonExtras
+
+    from generatedPythonSources
+    into builtPython
+
+    eachFile {
+        if (it.sourcePath in ['__init__.py', 'codetanks/__init__.py']) {
+            it.file.text = "__import__('pkg_resources').declare_namespace(__name__)\n"
+        }
+    }
+}
+
+task buildPython(type:Exec) {
+    dependsOn processPythonSources
+
+    commandLine 'python', 'setup.py', 'sdist', '--dist-dir', "$buildDir/libs/python"
+}
+
+build.dependsOn buildPython
+
+compileJava.dependsOn compileThrift
+
+jar {
+    baseName 'codetanks-domain'
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs generatedJavaSources
+        }
+    }
+}
+
+dependencies {
+    compile 'org.apache.thrift:libthrift:0.9.1'
+}
+
+buildscript {
+    dependencies {
+        classpath 'org.jruyi.gradle:thrift-gradle-plugin:0.2.0'
+    }
+}
