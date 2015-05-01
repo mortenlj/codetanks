@@ -40,11 +40,19 @@ task processPythonSources(type:Sync) {
 
 task buildPython(type:Exec) {
     dependsOn processPythonSources
+    inputs.dir builtPython
+    outputs.file "$buildDir/libs/python/Codetanks Domain-0.1.dev-r0.tar.gz" // TODO: Set this name based on the same as setup.py
 
     commandLine 'python', 'setup.py', 'sdist', '--dist-dir', "$buildDir/libs/python"
 }
-
 build.dependsOn buildPython
+
+task installPython(type:Exec) {
+    dependsOn buildPython
+
+    commandLine 'python', 'setup.py', 'develop'
+}
+install.dependsOn installPython
 
 compileJava.dependsOn compileThrift
 
