@@ -7,7 +7,6 @@ import inspect
 from cmd import Cmd
 
 import zmq
-
 from ibidem.codetanks.domain.ttypes import Registration, ClientType, Id, Move, Rotate, CommandResult, Aim, Fire, Scan, RegistrationResult
 from ibidem.codetanks.domain.util import serialize, deserialize
 
@@ -28,7 +27,7 @@ def parse_args(func):
     args.remove("self")
     parser = NoExitArgumentParser(prog=name, add_help=False)
     if args:
-        assert defaults is not None, "You must supplie example values for all args of %s" % name
+        assert defaults is not None, "You must supply example values for all args of %s" % name
         assert len(args) == len(defaults), "You must supply example value for all args of %s" % name
         assert None not in defaults, "You can't use None as an example value in %s" % name
         for name, value in zip(args, defaults):
