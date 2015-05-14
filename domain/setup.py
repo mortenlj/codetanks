@@ -35,6 +35,7 @@ setup(
     install_requires=parse_requirements("requirements.txt"),
     namespace_packages=["ibidem", "ibidem.codetanks"],
     zip_safe=True,
+    test_suite="nose.collector",
 
     # Metadata
     author="Morten Lied Johansen",
