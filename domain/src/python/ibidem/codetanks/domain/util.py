@@ -5,13 +5,14 @@ from thrift.protocol import TBinaryProtocol
 from thrift.transport import TTransport
 
 from ibidem.codetanks.domain import ttypes
+from ibidem.codetanks.domain.constants import MESSAGE_WRAPPER_TYPE
 
 
 def serialize(value, protocol_factory=TBinaryProtocol.TBinaryProtocolFactory()):
     value.validate()
     transport = TTransport.TMemoryBuffer()
     protocol = protocol_factory.getProtocol(transport)
-    protocol.writeMessageBegin(value.__class__.__name__, 255, 0)
+    protocol.writeMessageBegin(value.__class__.__name__, MESSAGE_WRAPPER_TYPE, 0)
     value.write(protocol)
     protocol.writeMessageEnd()
     data = transport.getvalue()

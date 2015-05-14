@@ -5,12 +5,14 @@ allprojects {
     repositories {
         mavenCentral()
         jcenter()
+        mavenLocal()
     }
 
     buildscript {
         repositories {
             mavenCentral()
             jcenter()
+            mavenLocal()
         }
     }
 }
