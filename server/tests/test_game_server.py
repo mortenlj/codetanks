@@ -74,7 +74,7 @@ class TestBotRegistration(RegistrationSetup):
         self.server._run_once()
         bot = self.server._bots[0]
         self.registration_channel.send.assert_called_once_with(
-            RegistrationReply(RegistrationResult.SUCCESS, self.server.build_game_info(), bot.event_channel.url, bot.cmd_channel.url)
+            RegistrationReply(RegistrationResult.SUCCESS, self.server.build_game_info(), bot.event_channel.url, bot.cmd_channel.url, 0)
         )
 
     def test_bot_cmd_channel_is_polled(self):

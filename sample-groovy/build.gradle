@@ -1,0 +1,20 @@
+apply plugin: 'groovy'
+apply plugin: 'maven'
+apply plugin: 'java'
+apply plugin: 'com.github.tkruse.groovysh'
+
+dependencies {
+    compile project(':codetanks-domain')
+    compile 'org.codehaus.groovy:groovy-all:2.3.6'
+    compile 'org.apache.thrift:libthrift:0.9.1'
+    compile 'org.zeromq:jeromq:0.3.4'
+    compile 'org.apache.logging.log4j:log4j-api:2.2'
+    compile 'org.apache.logging.log4j:log4j-core:2.2'
+    compile 'org.apache.logging.log4j:log4j-slf4j-impl:2.2'
+}
+
+buildscript {
+    dependencies {
+        classpath 'com.tkruse.gradle:gradle-groovysh-plugin:1.0.5'
+    }
+}

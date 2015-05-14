@@ -6,10 +6,10 @@ import logging
 
 import pygame
 from pinject import copy_args_to_internal_fields
-
 from ibidem.codetanks.domain.constants import PLAYER_COUNT
 from ibidem.codetanks.domain.ttypes import GameInfo, RegistrationReply, ClientType, CommandResult, CommandReply, BotStatus, \
     RegistrationResult
+
 from ibidem.codetanks.server.bot import Bot
 from ibidem.codetanks.server.com import ChannelType
 
@@ -92,7 +92,7 @@ class GameServer(object):
         self._bots.append(bot)
         self._world.add_tank(bot)
         self._handlers[bot.cmd_channel] = partial(self._handle_bot_cmd, bot)
-        reply_channel.send(RegistrationReply(RegistrationResult.SUCCESS, self.build_game_info(), event_channel.url, cmd_channel.url))
+        reply_channel.send(RegistrationReply(RegistrationResult.SUCCESS, self.build_game_info(), event_channel.url, cmd_channel.url, tank_id))
         if len(self._bots) == PLAYER_COUNT:
             self.start()
 

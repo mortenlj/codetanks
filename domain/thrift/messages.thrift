@@ -1,6 +1,8 @@
 namespace py ibidem.codetanks.domain
 namespace java ibidem.codetanks.domain
 
+const byte MESSAGE_WRAPPER_TYPE = 127;
+
 const byte MAX_HEALTH = 100;
 const byte BULLET_DAMAGE = 5;
 const byte PLAYER_COUNT = 4;
@@ -54,6 +56,7 @@ struct RegistrationReply {
     2: required GameInfo game_info;
     3: optional string event_url;
     4: optional string cmd_url;
+    5: optional i32 id;
 }
 
 struct Point {
