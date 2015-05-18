@@ -98,6 +98,11 @@ struct Death {
     2: required Tank perpetrator;
 }
 
+union Event {
+    1: ScanResult scan;
+    2: Death death;
+}
+
 // ********
 // Commands
 // ********
@@ -111,21 +116,15 @@ struct CommandReply {
     1: required CommandResult result;
 }
 
-struct Move {
-    1: required i16 distance;
+enum CommandType {
+    MOVE,
+    ROTATE,
+    AIM,
+    FIRE,
+    SCAN
 }
 
-struct Rotate {
-    1: required i16 angle;
-}
-
-struct Aim {
-    1: required i16 angle;
-}
-
-struct Fire {
-}
-
-struct Scan {
-    1: required i16 angle;
+struct Command {
+    1: required CommandType type;
+    2: optional i16 value;
 }

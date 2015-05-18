@@ -6,8 +6,8 @@ import math
 import logging
 
 from euclid import LineSegment2, Circle
+from ibidem.codetanks.domain.ttypes import GameData, Arena, Tank, Point, Bullet, ScanResult, BotStatus, Event
 
-from ibidem.codetanks.domain.ttypes import GameData, Arena, Tank, Point, Bullet, ScanResult, BotStatus
 from ibidem.codetanks.server.debug_util import ScanPlot
 from ibidem.codetanks.server.vehicle import Armour, Missile
 
@@ -103,7 +103,7 @@ class World(object):
                 continue
             if self._is_hit(ray, theta, tank):
                 hits.append(tank.entity)
-        return ScanResult(hits)
+        return Event(scan=ScanResult(hits))
 
     def _calculate_scan_radius(self, theta):
         return max(math.pi - theta, 0.0) * (self.arena.height * 0.318)

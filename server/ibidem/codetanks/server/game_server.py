@@ -8,7 +8,7 @@ import pygame
 from pinject import copy_args_to_internal_fields
 from ibidem.codetanks.domain.constants import PLAYER_COUNT
 from ibidem.codetanks.domain.ttypes import GameInfo, RegistrationReply, ClientType, CommandResult, CommandReply, BotStatus, \
-    RegistrationResult
+    RegistrationResult, CommandType, Event
 
 from ibidem.codetanks.server.bot import Bot
 from ibidem.codetanks.server.com import ChannelType
@@ -67,11 +67,13 @@ class GameServer(object):
         for tank_id, events in self._world.get_events().iteritems():
             if tank_id is None:
                 for event in events:
+                    assert isinstance(event, Event), "%r is not an instance of Event" % event
                     for bot in self._bots:
                         bot.event_channel.send(event)
             else:
                 bot = self._bots[tank_id]
                 for event in events:
+                    assert isinstance(event, Event), "%r is not an instance of Event" % event
                     bot.event_channel.send(event)
 
     def _handle_registration(self, reply_channel, registration):
@@ -102,8 +104,8 @@ class GameServer(object):
         if self._world.tank_status(bot.tank_id) != BotStatus.IDLE:
             reply_channel.send(CommandReply(CommandResult.BUSY))
         else:
-            name = type(command).__name__.lower()
-            params = [getattr(command, attr) for _, _, attr, _, _ in command.thrift_spec[1:]]
+            name = CommandType._VALUES_TO_NAMES[command.type].lower()
+            params = [] if command.value is None else [command.value]
             LOG.debug("Calling self._world.command(%r, %r, %s) for bot %r", bot.tank_id, name, ", ".join(repr(x) for x in params), bot)
             self._world.command(bot.tank_id, name, *params)
             reply_channel.send(CommandReply(CommandResult.OK))

@@ -7,7 +7,7 @@ import inspect
 from cmd import Cmd
 
 import zmq
-from ibidem.codetanks.domain.ttypes import Registration, ClientType, Id, Move, Rotate, CommandResult, Aim, Fire, Scan, RegistrationResult
+from ibidem.codetanks.domain.ttypes import Registration, ClientType, Id, CommandResult, Command, CommandType, RegistrationResult
 from ibidem.codetanks.domain.util import serialize, deserialize
 
 
@@ -93,27 +93,27 @@ class CliBot(Cmd):
 
     @parse_args
     def do_move(self, distance=10):
-        self._cmd_socket.send(serialize(Move(distance)))
+        self._cmd_socket.send(serialize(Command(CommandType.MOVE, distance)))
         self._print_result()
 
     @parse_args
     def do_rotate(self, angle=10):
-        self._cmd_socket.send(serialize(Rotate(angle)))
+        self._cmd_socket.send(serialize(Command(CommandType.ROTATE, angle)))
         self._print_result()
 
     @parse_args
     def do_aim(self, angle=10):
-        self._cmd_socket.send(serialize(Aim(angle)))
+        self._cmd_socket.send(serialize(Command(CommandType.AIM, angle)))
         self._print_result()
 
     @parse_args
     def do_fire(self):
-        self._cmd_socket.send(serialize(Fire()))
+        self._cmd_socket.send(serialize(Command(CommandType.FIRE)))
         self._print_result()
 
     @parse_args
     def do_scan(self, angle=10):
-        self._cmd_socket.send(serialize(Scan(angle)))
+        self._cmd_socket.send(serialize(Command(CommandType.SCAN, angle)))
         self._print_result()
 
 
