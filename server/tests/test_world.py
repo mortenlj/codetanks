@@ -7,9 +7,9 @@ import math
 from euclid import Point2, Vector2, Ray2
 from hamcrest import assert_that, equal_to, instance_of, has_key, has_item, close_to, has_length, empty
 from mock import create_autospec, patch
-
 from ibidem.codetanks.domain.constants import TANK_RADIUS
-from ibidem.codetanks.domain.ttypes import Arena, Id, Tank, BotStatus, Bullet, ScanResult, Death
+from ibidem.codetanks.domain.ttypes import Arena, Id, Tank, BotStatus, Bullet, ScanResult, Death, Event
+
 from ibidem.codetanks.server.bot import Bot
 from ibidem.codetanks.server.commands import Move
 from ibidem.codetanks.server.vehicle import Armour, Missile
@@ -151,14 +151,14 @@ class TestTankMovement(TankShared):
 
 class TestTankEvents(TankShared):
     def test_events_gathered(self):
-        event = ScanResult([])
+        event = Event(scan=ScanResult([]))
         self.world.add_event(self.tank_id, event)
         event_map = self.world.get_events()
         assert_that(event_map, has_key(self.tank_id))
         assert_that(event_map[self.tank_id], has_item(event))
 
     def test_events_to_none_are_gathered(self):
-        event = Death(create_autospec(Tank), create_autospec(Tank))
+        event = Event(death=Death(create_autospec(Tank), create_autospec(Tank)))
         self.world.add_event(None, event)
         event_map = self.world.get_events()
         assert_that(event_map, has_key(None))
@@ -175,9 +175,10 @@ class TestScanWorld(TankShared):
 
     def _scan_test(self, position, angle, theta, assert_func_name):
         self.armour.position = position
-        scan_result = self.world.scan(self.ray, theta)
+        event = self.world.scan(self.ray, theta)
+        assert_that(event, instance_of(Event))
         assert_func = getattr(self, assert_func_name)
-        assert_func(scan_result)
+        assert_func(event.scan)
 
     def _assert_found_tank(self, scan_result):
         assert_that(scan_result.tanks, has_length(1))

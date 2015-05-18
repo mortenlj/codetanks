@@ -4,10 +4,10 @@ from datetime import datetime, timedelta
 
 from mock import create_autospec, MagicMock, PropertyMock
 from hamcrest import assert_that, equal_to, not_none, empty, close_to
-
 from ibidem.codetanks.domain.constants import PLAYER_COUNT
-from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id, RegistrationReply, Move, CommandReply, CommandResult, \
-    Rotate, BotStatus, Aim, Fire, ScanResult, Tank, Death, GameInfo, RegistrationResult
+from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id, RegistrationReply, Command, CommandType, CommandReply,\
+    CommandResult, BotStatus, ScanResult, Tank, Death, GameInfo, RegistrationResult, Event
+
 from ibidem.codetanks.server.com import Channel
 from ibidem.codetanks.server.game_server import GameServer
 from ibidem.codetanks.server.world import World
@@ -109,19 +109,19 @@ class TestGame(Shared):
         self.world.get_events.assert_called_once_with()
 
     def test_events_sent_when_gathered(self):
-        scan_result = ScanResult([])
+        scan_result = Event(scan=ScanResult([]))
         self.world.get_events.return_value = {self.bot.tank_id: [scan_result]}
         self.server._run_once()
         self.bot.event_channel.send.assert_called_once_with(scan_result)
 
     def test_events_sent_to_all_when_no_tank_id(self):
-        death = Death(create_autospec(Tank), create_autospec(Tank))
+        death = Event(death=Death(create_autospec(Tank), create_autospec(Tank)))
         self.world.get_events.return_value = {None: [death]}
         self.server._run_once()
         self.bot.event_channel.send.assert_called_once_with(death)
 
     def test_bot_command_receives_reply(self):
-        self.send_on_mock_channel(self.bot.cmd_channel, Move(10))
+        self.send_on_mock_channel(self.bot.cmd_channel, Command(CommandType.MOVE, 10))
         self.server._run_once()
         self.bot.cmd_channel.send.assert_called_once_with(CommandReply(CommandResult.OK))
 
@@ -131,10 +131,17 @@ class TestGame(Shared):
         self.world.command.assert_called_once_with(self.bot.tank_id, name, *params)
 
     def test_commands_forwarded_to_world(self):
-        yield self._command_test, Move(10), "move", 10
-        yield self._command_test, Rotate(10), "rotate", 10
-        yield self._command_test, Aim(10), "aim", 10
-        yield self._command_test, Fire(), "fire"
+        yield self._command_test, Command(CommandType.MOVE, 10), "move", 10
+        yield self._command_test, Command(CommandType.ROTATE, 10), "rotate", 10
+        yield self._command_test, Command(CommandType.AIM, 10), "aim", 10
+        yield self._command_test, Command(CommandType.SCAN, 10), "scan", 10
+        yield self._command_test, Command(CommandType.FIRE), "fire"
+
+    def test_commands_with_value_zero_forwarded_to_world(self):
+        yield self._command_test, Command(CommandType.MOVE, 0), "move", 0
+        yield self._command_test, Command(CommandType.ROTATE, 0), "rotate", 0
+        yield self._command_test, Command(CommandType.AIM, 0), "aim", 0
+        yield self._command_test, Command(CommandType.SCAN, 0), "scan", 0
 
     def _command_abort_if_busy_test(self, status, command):
         self.world.tank_status.return_value = status
@@ -147,7 +154,7 @@ class TestGame(Shared):
         states = list(BotStatus._NAMES_TO_VALUES.values())
         states.remove(BotStatus.IDLE)
         for status in states:
-            for command in (Move(10), Rotate(1.5), Aim(-1.5)):
+            for command in (Command(CommandType.MOVE, 10), Command(CommandType.ROTATE, 1.5), Command(CommandType.AIM, -1.5)):
                 yield self._command_abort_if_busy_test, status, command
 
     def test_game_started_after_fourth_bot(self):

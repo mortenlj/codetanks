@@ -1,19 +1,16 @@
 package ibidem.codetanks.sample.groovy
 
 import groovy.util.logging.Log4j2
-import ibidem.codetanks.domain.Aim
 import ibidem.codetanks.domain.ClientType
+import ibidem.codetanks.domain.Command
 import ibidem.codetanks.domain.CommandReply
-import ibidem.codetanks.domain.Death
-import ibidem.codetanks.domain.Fire
+import ibidem.codetanks.domain.CommandType
+import ibidem.codetanks.domain.Event
 import ibidem.codetanks.domain.GameInfo
 import ibidem.codetanks.domain.Id
-import ibidem.codetanks.domain.Move
 import ibidem.codetanks.domain.Registration
 import ibidem.codetanks.domain.RegistrationReply
 import ibidem.codetanks.domain.RegistrationResult
-import ibidem.codetanks.domain.Rotate
-import ibidem.codetanks.domain.Scan
 import ibidem.codetanks.domain.messagesConstants
 import org.apache.thrift.TBase
 import org.apache.thrift.protocol.TBinaryProtocol
@@ -25,7 +22,6 @@ import org.zeromq.ZMQ
 
 @Log4j2
 class Tank {
-    private final CMDS = ["move", "rotate", "aim", "fire", "scan"]
     private final RANDOM = new Random()
 
     ZMQ.Context ctx
@@ -100,42 +96,39 @@ class Tank {
     def handleEvents() {
         def bytes = event.recv(ZMQ.NOBLOCK)
         while (bytes != null) {
-            def msg = deserialize(bytes)
-            if (msg instanceof Death) {
-                if (msg.victim.id == myId) {
+            Event event = deserialize(bytes) as Event
+            if (event.isSetDeath()) {
+                if (event.death.victim.id == myId) {
                     isAlive = false;
                 }
             }
-            log.info(msg.toString())
-            bytes = event.recv(ZMQ.NOBLOCK)
+            log.info(event.toString())
+            bytes = this.event.recv(ZMQ.NOBLOCK)
         }
     }
 
     def runSingle() {
-        def nextCmdName = CMDS[this.RANDOM.nextInt(CMDS.size())]
+        def nextCmdType = CommandType.values()[this.RANDOM.nextInt(CommandType.values().size())]
+        def nextCmdName = nextCmdType.name()
         log.info("Next cmd is $nextCmdName")
-        def nextCmd
-        switch (nextCmdName) {
-            case "move":
-                def distance = this.RANDOM.nextInt(gameInfo.arena.height) as short
-                nextCmd = new Move(distance)
+        def nextCmd = new Command(nextCmdType)
+        switch (nextCmdType) {
+            case CommandType.MOVE:
+                nextCmd.setValue(this.RANDOM.nextInt(gameInfo.arena.height) as short)
                 break
-            case "rotate":
-                def angle = this.RANDOM.nextInt(270) as short
-                nextCmd = new Rotate(angle)
+            case CommandType.ROTATE:
+                nextCmd.setValue(this.RANDOM.nextInt(270) as short)
                 break
-            case "aim":
-                def angle = this.RANDOM.nextInt(270) as short
-                nextCmd = new Aim(angle)
+            case CommandType.AIM:
+                nextCmd.setValue(this.RANDOM.nextInt(270) as short)
                 break
-            case "fire":
-                nextCmd = new Fire()
+            case CommandType.FIRE:
                 break
-            case "scan":
-                nextCmd = new Scan(10 as short)
+            case CommandType.SCAN:
+                nextCmd.setValue(10 as short)
                 break
             default:
-                throw new IllegalStateException("Picked non-existing command: $nextCmdName")
+                throw new IllegalStateException("Picked non-existing command: $nextCmdType")
         }
         log.info("Sending cmd: $nextCmd")
         cmd.send(serialize(nextCmd))
