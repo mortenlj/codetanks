@@ -65,15 +65,10 @@ class GameServer(object):
             ticks = self.clock.tick(60)
             self._world.update(ticks)
         for tank_id, events in self._world.get_events().iteritems():
-            if tank_id is None:
-                for event in events:
-                    assert isinstance(event, Event), "%r is not an instance of Event" % event
-                    for bot in self._bots:
-                        bot.event_channel.send(event)
-            else:
-                bot = self._bots[tank_id]
-                for event in events:
-                    assert isinstance(event, Event), "%r is not an instance of Event" % event
+            bots = self._bots if tank_id is None else (self._bots[tank_id],)
+            for event in events:
+                assert isinstance(event, Event), "%r is not an instance of Event" % event
+                for bot in bots:
                     bot.event_channel.send(event)
 
     def _handle_registration(self, reply_channel, registration):
@@ -105,7 +100,7 @@ class GameServer(object):
             reply_channel.send(CommandReply(CommandResult.BUSY))
         else:
             name = CommandType._VALUES_TO_NAMES[command.type].lower()
-            params = [] if command.value is None else [command.value]
+            params = () if command.value is None else (command.value,)
             LOG.debug("Calling self._world.command(%r, %r, %s) for bot %r", bot.tank_id, name, ", ".join(repr(x) for x in params), bot)
             self._world.command(bot.tank_id, name, *params)
             reply_channel.send(CommandReply(CommandResult.OK))
