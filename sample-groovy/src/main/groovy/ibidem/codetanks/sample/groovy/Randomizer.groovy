@@ -61,7 +61,7 @@ class Tank {
         log.info("Registering at $serverUrl")
         def regSocket = ctx.socket(ZMQ.REQ)
         regSocket.connect(serverUrl)
-        def registration = new Registration(ClientType.BOT, new Id('sample-groovy', 1 as short))
+        def registration = new Registration(ClientType.BOT, new Id('Randomizer', 1 as short))
         def bytes = serialize(registration)
         regSocket.send(bytes, 0)
         RegistrationReply reply = deserialize(regSocket.recv()) as RegistrationReply
