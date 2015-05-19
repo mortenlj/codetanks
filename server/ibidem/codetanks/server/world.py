@@ -4,6 +4,7 @@
 from random import randint
 import math
 import logging
+from collections import defaultdict
 
 from euclid import LineSegment2, Circle
 from ibidem.codetanks.domain.ttypes import GameData, Arena, Tank, Point, Bullet, ScanResult, BotStatus, Event
@@ -23,7 +24,7 @@ class World(object):
         self.arena = Arena(world_width, world_height)
         self._bullets = []
         self._tanks = []
-        self._events = {}
+        self._events = defaultdict(list)
         self._debug = debug
 
     def add_tank(self, bot):
@@ -60,8 +61,7 @@ class World(object):
 
     @property
     def number_of_live_bots(self):
-        live_bots = [w for w in self._tanks if w.status != BotStatus.DEAD]
-        return len(live_bots)
+        return len([w for w in self._tanks if w.status != BotStatus.DEAD])
 
     def is_collision(self, vehicle):
         position = vehicle.position
@@ -146,12 +146,10 @@ class World(object):
 
     def get_events(self):
         events = self._events
-        self._events = {}
+        self._events = defaultdict(list)
         return events
 
     def add_event(self, tank_id, event):
-        if not self._events.has_key(tank_id):
-            self._events[tank_id] = []
         self._events[tank_id].append(event)
 
 
