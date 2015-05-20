@@ -9,7 +9,7 @@ import zmq
 
 from ibidem.codetanks.viewer.entities import Tank, Bullet
 from ibidem.codetanks.domain.util import serialize, deserialize
-from ibidem.codetanks.domain.ttypes import Registration, ClientType, Id, BotStatus
+from ibidem.codetanks.domain.ttypes import Registration, ClientType, Id, BotStatus, RegistrationReply, Event, GameData
 
 
 class ServerProxy(object):
@@ -27,7 +27,7 @@ class ServerProxy(object):
         registration_socket = zmq_context.socket(zmq.REQ)
         registration_socket.connect(server_url)
         registration_socket.send(serialize(Registration(ClientType.VIEWER, Id("viewer:%s:%s" % (socket.gethostname(), uuid4()), 1))))
-        reply = deserialize(registration_socket.recv())
+        reply = deserialize(registration_socket.recv(), RegistrationReply())
         self._update_socket = zmq_context.socket(zmq.SUB)
         self._update_socket.set(zmq.SUBSCRIBE, "")
         arena = reply.game_info.arena
@@ -56,7 +56,7 @@ class ServerProxy(object):
     def _get_server_update(self):
         events = self._update_socket.poll(100)
         if events == zmq.POLLIN:
-            return deserialize(self._update_socket.recv())
+            return deserialize(self._update_socket.recv(), GameData())
         raise Empty()
 
     def update(self):

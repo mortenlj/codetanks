@@ -7,7 +7,8 @@ import inspect
 from cmd import Cmd
 
 import zmq
-from ibidem.codetanks.domain.ttypes import Registration, ClientType, Id, CommandResult, Command, CommandType, RegistrationResult
+from ibidem.codetanks.domain.ttypes import Registration, ClientType, Id, CommandResult, Command, CommandType, RegistrationResult, \
+    RegistrationReply, Event, CommandReply
 from ibidem.codetanks.domain.util import serialize, deserialize
 
 
@@ -61,7 +62,7 @@ class CliBot(Cmd):
         registration_socket = zmq_context.socket(zmq.REQ)
         registration_socket.connect(server_url)
         registration_socket.send(serialize(Registration(ClientType.BOT, Id("clibot", 1))))
-        reply = deserialize(registration_socket.recv())
+        reply = deserialize(registration_socket.recv(), RegistrationReply())
         return reply
 
     def _init_sockets(self, reply, zmq_context):
@@ -76,10 +77,10 @@ class CliBot(Cmd):
 
     def _print_events(self):
         while self._update_socket.poll(10):
-            print deserialize(self._update_socket.recv())
+            print deserialize(self._update_socket.recv(), Event())
 
     def _print_result(self):
-        reply = deserialize(self._cmd_socket.recv())
+        reply = deserialize(self._cmd_socket.recv(), CommandReply())
         print "OK" if reply.result == CommandResult.OK else "BUSY"
         self._print_events()
 
