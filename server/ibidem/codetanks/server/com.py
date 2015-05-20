@@ -2,26 +2,29 @@
 # -*- coding: utf-8
 
 from socket import gethostname
+from collections import namedtuple
 
+from ibidem.codetanks.domain.ttypes import CommandReply, Command, Event
 import zmq
-
 from ibidem.codetanks.domain.util import deserialize, serialize
 
 
 class ChannelType(object):
-    REQUEST = zmq.REQ
-    REPLY = zmq.REP
-    PUBLISH = zmq.PUB
-    SUBSCRIBE = zmq.SUB
+    _Type = namedtuple("_Type", ["socket", "clz"])
+    REQUEST = _Type(zmq.REQ, CommandReply)
+    REPLY = _Type(zmq.REP, Command)
+    PUBLISH = _Type(zmq.PUB, None)
+    SUBSCRIBE = _Type(zmq.SUB, Event)
 
 
 class Channel(object):
     url_scheme = "tcp"
     url_wildcard = "*"
 
-    def __init__(self, channel_type, port=None):
+    def __init__(self, channel_type, port=None, override_clz=None):
         ctx = zmq.Context.instance()
-        self.zmq_socket = ctx.socket(channel_type)
+        self._clz = override_clz or channel_type.clz
+        self.zmq_socket = ctx.socket(channel_type.socket)
         self.port = self._bind_socket(port)
 
     def _bind_socket(self, port):
@@ -44,7 +47,7 @@ class Channel(object):
 
     def recv(self):
         data = self.zmq_socket.recv(copy=False)
-        value = deserialize(data.buffer)
+        value = deserialize(data.buffer, self._clz())
         return value
 
     def send(self, value):

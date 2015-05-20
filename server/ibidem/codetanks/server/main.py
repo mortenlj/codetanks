@@ -5,6 +5,7 @@ import argparse
 from datetime import timedelta
 import logging
 
+from ibidem.codetanks.domain.ttypes import Registration
 import pinject
 
 from ibidem.codetanks.server.com import Channel, ChannelType
@@ -29,7 +30,7 @@ class ObjectGraph(pinject.BindingSpec):
         return Channel(ChannelType.PUBLISH)
 
     def provide_registration_channel(self, registration_port):
-        return Channel(ChannelType.REPLY, registration_port)
+        return Channel(ChannelType.REPLY, registration_port, Registration)
 
     def provide_channel_factory(self):
         def factory(channel_type):

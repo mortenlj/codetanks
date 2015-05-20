@@ -3,8 +3,8 @@
 
 from mock import patch
 from hamcrest import assert_that, equal_to
+from ibidem.codetanks.domain.ttypes import Command, CommandType, Registration, ClientType, Id
 
-from ibidem.codetanks.domain.ttypes import Id
 from ibidem.codetanks.server.com import Channel, ChannelType
 
 
@@ -33,7 +33,17 @@ class TestChannel(object):
              patch.object(Channel, "_bind_socket", _test_bind):
             req_socket = Channel(ChannelType.REQUEST, 1)
             rep_socket = Channel(ChannelType.REPLY, 0)
-            value = Id("name", 1)
+            value = Command(CommandType.FIRE)
+            req_socket.send(value)
+            assert_that(rep_socket.recv(), equal_to(value))
+
+    def test_socket_with_special_class(self):
+        with patch.object(Channel, "url_scheme", self.test_url_scheme), \
+             patch.object(Channel, "url_wildcard", self.test_url_wildcard), \
+             patch.object(Channel, "_bind_socket", _test_bind):
+            req_socket = Channel(ChannelType.REQUEST, 1)
+            rep_socket = Channel(ChannelType.REPLY, 0, Registration)
+            value = Registration(ClientType.VIEWER, Id("test", 1))
             req_socket.send(value)
             assert_that(rep_socket.recv(), equal_to(value))
 

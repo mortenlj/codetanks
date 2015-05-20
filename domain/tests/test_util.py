@@ -11,7 +11,7 @@ class TestSerialization():
     def test_back_and_forth(self):
         gi = GameInfo(Arena(10, 90))
         data = serialize(gi)
-        eq_(gi, deserialize(data))
+        eq_(gi, deserialize(data, GameInfo()))
 
 
 if __name__ == "__main__":

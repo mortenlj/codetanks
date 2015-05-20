@@ -1,5 +1,4 @@
 package ibidem.codetanks.sample.groovy
-
 import groovy.util.logging.Log4j2
 import ibidem.codetanks.domain.ClientType
 import ibidem.codetanks.domain.Command
@@ -11,10 +10,8 @@ import ibidem.codetanks.domain.Id
 import ibidem.codetanks.domain.Registration
 import ibidem.codetanks.domain.RegistrationReply
 import ibidem.codetanks.domain.RegistrationResult
-import ibidem.codetanks.domain.messagesConstants
 import org.apache.thrift.TBase
 import org.apache.thrift.protocol.TBinaryProtocol
-import org.apache.thrift.protocol.TMessage
 import org.apache.thrift.protocol.TProtocol
 import org.apache.thrift.transport.TIOStreamTransport
 import org.apache.thrift.transport.TMemoryInputTransport
@@ -40,20 +37,14 @@ class Tank {
         ByteArrayOutputStream baos = new ByteArrayOutputStream()
         TIOStreamTransport transport = new TIOStreamTransport(baos)
         TProtocol protocol = new TBinaryProtocol.Factory().getProtocol(transport)
-        protocol.writeMessageBegin(new TMessage(value.getClass().getSimpleName(), messagesConstants.MESSAGE_WRAPPER_TYPE, 0))
         value.write(protocol)
-        protocol.writeMessageEnd()
         baos.toByteArray()
     }
 
-    static def deserialize(byte[] bytes) {
+    static <T extends TBase> T deserialize(byte[] bytes, T instance) {
         TMemoryInputTransport transport = new TMemoryInputTransport(bytes);
         TProtocol protocol = new TBinaryProtocol.Factory().getProtocol(transport)
-        TMessage message = protocol.readMessageBegin()
-        def clazz = Class.forName("ibidem.codetanks.domain."+message.name)
-        TBase instance = clazz.newInstance() as TBase
         instance.read(protocol)
-        protocol.readMessageEnd()
         instance
     }
 
@@ -64,7 +55,7 @@ class Tank {
         def registration = new Registration(ClientType.BOT, new Id('Randomizer', 1 as short))
         def bytes = serialize(registration)
         regSocket.send(bytes, 0)
-        RegistrationReply reply = deserialize(regSocket.recv()) as RegistrationReply
+        RegistrationReply reply = deserialize(regSocket.recv(), new RegistrationReply())
         if (reply.result == RegistrationResult.FAILURE) {
             throw new IllegalStateException("Unable to register for game")
         }
@@ -96,7 +87,7 @@ class Tank {
     def handleEvents() {
         def bytes = event.recv(ZMQ.NOBLOCK)
         while (bytes != null) {
-            Event event = deserialize(bytes) as Event
+            Event event = deserialize(bytes, new Event())
             if (event.isSetDeath()) {
                 if (event.death.victim.id == myId) {
                     isAlive = false;
@@ -133,7 +124,7 @@ class Tank {
         log.info("Sending cmd: $nextCmd")
         cmd.send(serialize(nextCmd))
         log.info("Waiting for reply")
-        CommandReply reply = deserialize(cmd.recv()) as CommandReply
+        CommandReply reply = deserialize(cmd.recv(), new CommandReply())
         log.info(reply.toString())
     }
 }
