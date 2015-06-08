@@ -1,11 +1,11 @@
 apply plugin: 'java'
+apply plugin: ibidem.gradle.python.PythonPlugin
 apply plugin: 'org.jruyi.thrift'
 apply plugin: 'maven'
 
 def generatedSourcesRoot = "$buildDir/generated-sources"
 def generatedJavaSources = "$generatedSourcesRoot/gen-javabean"
-def generatedPythonSources = "$generatedSourcesRoot/gen-py/ibidem"
-def builtPython = "$buildDir/python/ibidem"
+def generatedPythonSources = "$generatedSourcesRoot/gen-py"
 
 logger.quiet("Building $parent - $project - $version")
 
@@ -18,43 +18,8 @@ compileThrift {
     generator 'py', 'new_style,utf8strings,slots'
 }
 
-task copyPythonExtras(type:Copy) {
-    dependsOn compileThrift
-
-    from 'src/python/ibidem'
-    into generatedPythonSources
-}
-
-task processPythonSources(type:Sync) {
-    dependsOn copyPythonExtras
-
-    from generatedPythonSources
-    into builtPython
-
-    eachFile {
-        if (it.sourcePath in ['__init__.py', 'codetanks/__init__.py']) {
-            it.file.text = "__import__('pkg_resources').declare_namespace(__name__)\n"
-        }
-    }
-}
-
-task buildPython(type:Exec) {
-    dependsOn processPythonSources
-    inputs.dir builtPython
-    outputs.file "$buildDir/libs/python/Codetanks Domain-0.1.dev-r0.tar.gz" // TODO: Set this name based on the same as setup.py
-
-    commandLine 'python', 'setup.py', 'sdist', '--dist-dir', "$buildDir/libs/python"
-}
-build.dependsOn buildPython
-
-task installPython(type:Exec) {
-    dependsOn buildPython
-
-    commandLine 'python', 'setup.py', 'develop'
-}
-install.dependsOn installPython
-
 compileJava.dependsOn compileThrift
+buildPython.dependsOn compileThrift
 
 jar {
     baseName 'codetanks-domain'
@@ -70,6 +35,28 @@ sourceSets {
 
 dependencies {
     compile 'org.apache.thrift:libthrift:0.9.1'
+}
+
+python {
+    dependencies {
+        main (
+            'thrift==0.9.1',
+            'nose',
+            'wheel'
+        )
+    }
+    srcDir generatedPythonSources
+    collector { details, target ->
+        if (details.name != "__init__.py") {
+            details.copyTo(target)
+        } else if (details.relativePath.segments.length == 1) {
+            // Skip
+        } else if (details.relativePath.segments.length <= 3) {
+            target.text = "__import__('pkg_resources').declare_namespace(__name__)\n"
+        } else {
+            details.copyTo(target)
+        }
+    }
 }
 
 buildscript {
