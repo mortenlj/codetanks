@@ -19,7 +19,7 @@ class PythonPlugin implements Plugin<Project> {
             project.configurations.create('main')
             project.configurations.create('develop')
             BuildPythonTask build = project.tasks.create(BuildPythonTask.NAME, BuildPythonTask.class)
-            def python = project.extensions.create('python', Python.class, project, build)
+            def python = project.extensions.create('python', Python.class, project)
 
             afterEvaluate {
                 build.dependencies = project.configurations.getByName('main').dependencies

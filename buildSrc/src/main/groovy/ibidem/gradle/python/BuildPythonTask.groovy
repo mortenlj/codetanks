@@ -64,12 +64,12 @@ class BuildPythonTask extends DefaultTask {
     def collectFiles() {
         inputs.sourceFiles.asFileTree.visit { FileVisitDetails details ->
             def target = new File(targetDir, details.relativePath.toString())
-            LOG.info("Collecting ${details.relativePath}, copy to ${target}")
             if (details.isDirectory() && !target.exists()) {
                 target.mkdirs()
             } else if (details.name == 'setup.py') {
                 // skip
             } else {
+                LOG.info("Collecting ${details.relativePath} => ${target}")
                 collector(details, target)
             }
         }

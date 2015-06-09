@@ -19,7 +19,22 @@ compileThrift {
 }
 
 compileJava.dependsOn compileThrift
-buildPython.dependsOn compileThrift
+buildPython {
+    dependsOn compileThrift
+    inputs.source generatedPythonSources
+
+    collector { details, target ->
+        if (details.name != "__init__.py") {
+            details.copyTo(target)
+        } else if (details.relativePath.segments.length == 1) {
+            // Skip
+        } else if (details.relativePath.segments.length <= 3) {
+            target.text = "__import__('pkg_resources').declare_namespace(__name__)\n"
+        } else {
+            details.copyTo(target)
+        }
+    }
+}
 
 jar {
     baseName 'codetanks-domain'
@@ -44,18 +59,6 @@ python {
             'nose',
             'wheel'
         )
-    }
-    srcDir generatedPythonSources
-    collector { details, target ->
-        if (details.name != "__init__.py") {
-            details.copyTo(target)
-        } else if (details.relativePath.segments.length == 1) {
-            // Skip
-        } else if (details.relativePath.segments.length <= 3) {
-            target.text = "__import__('pkg_resources').declare_namespace(__name__)\n"
-        } else {
-            details.copyTo(target)
-        }
     }
 }
 

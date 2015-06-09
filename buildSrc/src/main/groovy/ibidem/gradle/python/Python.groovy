@@ -7,9 +7,8 @@ import org.gradle.util.ConfigureUtil
 
 class Python {
     DependencyHandler dependencyHandler
-    BuildPythonTask build
 
-    Python(Project project, BuildPythonTask build) {
+    Python(Project project) {
         dependencyHandler = new DefaultDependencyHandler(
                 project.getConfigurations(),
                 new PythonDependencyFactory(),
@@ -18,18 +17,9 @@ class Python {
                 null, // TOOD
                 null  // TODO
         )
-        this.build = build
     }
 
     void dependencies(Closure config) {
         ConfigureUtil.configure(config, dependencyHandler)
-    }
-
-    void srcDir(def dir) {
-        build.inputs.source(dir)
-    }
-
-    void collector(Closure collector) {
-        build.collector = collector
     }
 }
