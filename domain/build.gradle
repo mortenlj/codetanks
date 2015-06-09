@@ -19,6 +19,7 @@ compileThrift {
 }
 
 compileJava.dependsOn compileThrift
+
 buildPython {
     dependsOn compileThrift
     inputs.source generatedPythonSources
@@ -50,16 +51,12 @@ sourceSets {
 
 dependencies {
     compile 'org.apache.thrift:libthrift:0.9.1'
-}
 
-python {
-    dependencies {
-        main (
-            'thrift==0.9.1',
-            'nose',
-            'wheel'
-        )
-    }
+    python (
+        ':thrift:0.9.1',
+        ':nose',
+        ':wheel'
+    )
 }
 
 buildscript {
