@@ -3,9 +3,9 @@ apply plugin: ibidem.gradle.python.PythonPlugin
 apply plugin: 'org.jruyi.thrift'
 apply plugin: 'maven'
 
-def generatedSourcesRoot = "$buildDir/generated-sources"
-def generatedJavaSources = "$generatedSourcesRoot/gen-javabean"
-def generatedPythonSources = "$generatedSourcesRoot/gen-py"
+def generatedSourcesRoot = new File(file(buildDir), 'generated-sources')
+def generatedJavaSources = new File(generatedSourcesRoot, 'gen-javabean')
+def generatedPythonSources = new File(generatedSourcesRoot, 'gen-py')
 
 logger.quiet("Building $parent - $project - $version")
 
