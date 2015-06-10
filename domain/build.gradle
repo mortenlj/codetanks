@@ -20,7 +20,7 @@ compileThrift {
 
 compileJava.dependsOn compileThrift
 
-buildPython {
+collectPython {
     dependsOn compileThrift
     inputs.source generatedPythonSources
 

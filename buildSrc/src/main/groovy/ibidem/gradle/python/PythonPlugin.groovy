@@ -11,6 +11,7 @@ import org.gradle.api.internal.file.FileResolver
 
 class PythonPlugin implements Plugin<Project> {
     private final FileResolver fileResolver
+    private File pythonBuildRoot
 
     @Inject
     PythonPlugin(FileResolver fileResolver) {
@@ -18,17 +19,32 @@ class PythonPlugin implements Plugin<Project> {
     }
 
     void apply(Project project) {
+        pythonBuildRoot = new File(project.buildDir, 'python')
         project.configure(project) {
             project.configurations.create('python')
-            BuildPythonTask build = project.tasks.create(BuildPythonTask.NAME, BuildPythonTask.class)
+            CollectPython collect = project.tasks.create(CollectPython.NAME, CollectPython.class) {
+                targetDir = new File(pythonBuildRoot, 'collect')
+                inputs.source('src/main/python')
+                outputs.dir(targetDir)
+            }
+            GenerateSetup setup = project.tasks.create(GenerateSetup.NAME, GenerateSetup.class) {
+                sourceDir = collect.targetDir
+                dependsOn CollectPython.NAME
+            }
+            BuildPython build = project.tasks.create(BuildPython.NAME, BuildPython.class) {
+                outputDir = pythonBuildRoot
+                dependsOn GenerateSetup.NAME
+                inputs.source(collect.targetDir)
+                outputs.dir(outputDir)
+            }
 
             afterEvaluate {
                 def pythonDependencies = project.configurations.getByName('python')
                         .dependencies.collect { dep -> new PythonDependency(dep.name, dep.version) }
                 def domainObjectSet = new DefaultDomainObjectSet<Dependency>(PythonDependency.class, pythonDependencies)
-                build.dependencies = new DefaultDependencySet("python dependencies", domainObjectSet)
+                setup.dependencies = new DefaultDependencySet("python dependencies", domainObjectSet)
 
-                project.tasks.getByName('assemble').dependsOn(BuildPythonTask.NAME)
+                project.tasks.getByName('assemble').dependsOn(BuildPython.NAME)
             }
         }
 
