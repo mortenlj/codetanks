@@ -55,7 +55,8 @@ dependencies {
     python (
         ':thrift:0.9.1',
         ':nose',
-        ':wheel'
+        ':wheel',
+        ':setuptools'
     )
 }
 

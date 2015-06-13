@@ -37,6 +37,10 @@ class PythonPlugin implements Plugin<Project> {
                 inputs.source(collect.targetDir)
                 outputs.dir(outputDir)
             }
+            TestPython test = project.tasks.create(TestPython.NAME, TestPython.class) {
+                dependsOn BuildPython.NAME
+                testDir 'src/test/python'
+            }
 
             afterEvaluate {
                 def pythonDependencies = project.configurations.getByName('python')
@@ -45,25 +49,13 @@ class PythonPlugin implements Plugin<Project> {
                 setup.dependencies = new DefaultDependencySet("python dependencies", domainObjectSet)
 
                 project.tasks.getByName('assemble').dependsOn(BuildPython.NAME)
+                project.tasks.getByName('test').dependsOn(TestPython.NAME)
             }
         }
 
         //developPythonTask(project)
-        //testPythonTask(project)
     }
 /*
-    private static testPythonTask(Project project) {
-        def options = [
-            (Task.TASK_TYPE): TestPythonTask.class,
-            (Task.TASK_DEPENDS_ON): ['generateSetup', 'buildPython'],
-            (Task.TASK_GROUP): LifecycleBasePlugin.VERIFICATION_GROUP,
-            (Task.TASK_DESCRIPTION): 'Test python code'
-        ]
-        def test = project.task(options, 'testPython')
-        project.getTasks().getByName('test').dependsOn test
-    }
-
-
     private static developPythonTask(Project project) {
         def options = [
             (Task.TASK_TYPE): DevelopPythonTask.class,
