@@ -5,6 +5,7 @@ target
 build/
 dist/
 domain/setup.py
+buildSrc/.gradle
 
 syntax: glob
 *.iml
