@@ -6,8 +6,6 @@ import org.gradle.api.tasks.TaskAction
 class TestPython extends DefaultTask {
     public static final String NAME = 'testPython'
 
-    String testDir
-
     TestPython() {
         description = 'Run Python tests'
     }

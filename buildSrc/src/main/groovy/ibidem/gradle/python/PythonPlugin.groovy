@@ -18,28 +18,39 @@ class PythonPlugin implements Plugin<Project> {
         this.fileResolver = fileResolver
     }
 
+    private static Map<String, File> definePaths(File buildDir) {
+        File root = new File(buildDir, 'python')
+        [
+                root: root,
+                collectedSources: new File(root, 'collect'),
+                buildTarget: new File(root, 'target'),
+                eggInfo: root,
+                distTemp: new File(root, 'distTemp'),
+                distFinal: new File(root, 'dist')
+        ]
+    }
+
     void apply(Project project) {
-        pythonBuildRoot = new File(project.buildDir, 'python')
+        def myPaths = definePaths(project.buildDir)
         project.configure(project) {
             project.configurations.create('python')
             CollectPython collect = project.tasks.create(CollectPython.NAME, CollectPython.class) {
-                targetDir = new File(pythonBuildRoot, 'collect')
-                inputs.source('src/main/python')
-                outputs.dir(targetDir)
+                paths = myPaths
             }
             GenerateSetup setup = project.tasks.create(GenerateSetup.NAME, GenerateSetup.class) {
-                sourceDir = collect.targetDir
+                paths = myPaths
                 dependsOn CollectPython.NAME
             }
             BuildPython build = project.tasks.create(BuildPython.NAME, BuildPython.class) {
-                outputDir = pythonBuildRoot
+                paths = myPaths
                 dependsOn GenerateSetup.NAME
-                inputs.source(collect.targetDir)
-                outputs.dir(outputDir)
             }
             TestPython test = project.tasks.create(TestPython.NAME, TestPython.class) {
                 dependsOn BuildPython.NAME
-                testDir 'src/test/python'
+            }
+            InstallPython install = project.tasks.create(InstallPython.NAME, InstallPython.class) {
+                paths = myPaths
+                dependsOn BuildPython.NAME
             }
 
             afterEvaluate {
@@ -50,19 +61,8 @@ class PythonPlugin implements Plugin<Project> {
 
                 project.tasks.getByName('assemble').dependsOn(BuildPython.NAME)
                 project.tasks.getByName('test').dependsOn(TestPython.NAME)
+                project.tasks.getByName('install').dependsOn(InstallPython.NAME)
             }
         }
-
-        //developPythonTask(project)
     }
-/*
-    private static developPythonTask(Project project) {
-        def options = [
-            (Task.TASK_TYPE): DevelopPythonTask.class,
-            (Task.TASK_DEPENDS_ON): ['generateSetup', 'buildPython'],
-            (Task.TASK_DESCRIPTION): 'Install python-package in "development mode"'
-        ]
-        project.task(options, 'develop')
-    }
-*/
 }

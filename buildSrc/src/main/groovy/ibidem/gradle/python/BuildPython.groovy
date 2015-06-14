@@ -1,22 +1,26 @@
 package ibidem.gradle.python
 
-import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.Task
 
-class BuildPython extends DefaultTask {
+class BuildPython extends AbstractSetupTask {
     public static final String NAME = 'buildPython'
 
-    String outputDir
+    Map<String, File> paths
 
     BuildPython() {
         description = 'Build the python library'
     }
 
-    @TaskAction
-    def build() {
-        project.exec {
-            executable = 'python'
-            args = ['setup.py', 'build', '-b', outputDir]
-        }
+    @Override
+    Task configure(Closure closure) {
+        def task = super.configure(closure)
+        inputs.source(paths.collectedSources)
+        outputs.dir(paths.buildTarget)
+        return task
+    }
+
+    @Override
+    def getCommand() {
+        'build'
     }
 }
