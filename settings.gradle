@@ -1,7 +1,9 @@
 include 'domain'
 include 'sample-groovy'
+include 'server'
 
 rootProject.name = 'codetanks'
 
 project(':domain').name = "$rootProject.name-domain"
 project(':sample-groovy').name = "$rootProject.name-sample-groovy"
+project(':server').name = "$rootProject.name-server"

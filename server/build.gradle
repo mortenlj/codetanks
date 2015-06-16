@@ -1,0 +1,19 @@
+apply plugin: 'java'
+apply plugin: ibidem.gradle.python.PythonPlugin
+apply plugin: 'maven'
+
+logger.quiet("Building $parent - $project - $version")
+
+dependencies {
+    python (
+            ':setuptools',
+            ':pyzmq',
+            ':nose',
+            ':mock',
+            ':pinject',
+            ':Codetanks-Domain',
+            ':PyHamcrest',
+            ':euclid-ng',
+
+    )
+}

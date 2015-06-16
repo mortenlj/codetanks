@@ -7,7 +7,6 @@ import logging
 
 from ibidem.codetanks.domain.ttypes import Registration
 import pinject
-
 from ibidem.codetanks.server.com import Channel, ChannelType
 from ibidem.codetanks.server.game_server import GameServer
 from ibidem.codetanks.server.world import World

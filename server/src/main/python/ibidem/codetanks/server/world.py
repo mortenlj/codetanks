@@ -8,7 +8,6 @@ from collections import defaultdict
 
 from euclid import LineSegment2, Circle
 from ibidem.codetanks.domain.ttypes import GameData, Arena, Tank, Point, Bullet, ScanResult, BotStatus, Event
-
 from ibidem.codetanks.server.debug_util import ScanPlot
 from ibidem.codetanks.server.vehicle import Armour, Missile
 

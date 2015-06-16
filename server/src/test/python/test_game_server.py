@@ -7,7 +7,6 @@ from hamcrest import assert_that, equal_to, not_none, empty, close_to
 from ibidem.codetanks.domain.constants import PLAYER_COUNT
 from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id, RegistrationReply, Command, CommandType, CommandReply,\
     CommandResult, BotStatus, ScanResult, Tank, Death, GameInfo, RegistrationResult, Event
-
 from ibidem.codetanks.server.com import Channel
 from ibidem.codetanks.server.game_server import GameServer
 from ibidem.codetanks.server.world import World
