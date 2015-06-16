@@ -5,7 +5,6 @@ import logging
 import operator
 
 from euclid import Ray2, Circle
-
 from ibidem.codetanks.domain.constants import ROTATION
 from ibidem.codetanks.domain.ttypes import BotStatus
 

@@ -9,6 +9,16 @@ import org.gradle.api.internal.DefaultDomainObjectSet
 import org.gradle.api.internal.artifacts.DefaultDependencySet
 import org.gradle.api.internal.file.FileResolver
 
+/*
+TODO:
+    - Connect test to build task?
+    - If java-plugin is not applied, create necessary build and install tasks
+    - Remove dependencies in build.gradle, they should be in requirements, test_requirements and setup_requirements
+    - Set more properties in generated setup.py:
+        - project name
+        - metadata? (Does gradle have standard metadata support?)
+*/
+
 class PythonPlugin implements Plugin<Project> {
     private final FileResolver fileResolver
     private File pythonBuildRoot
@@ -39,7 +49,6 @@ class PythonPlugin implements Plugin<Project> {
             }
             GenerateSetup setup = project.tasks.create(GenerateSetup.NAME, GenerateSetup.class) {
                 paths = myPaths
-                dependsOn CollectPython.NAME
             }
             BuildPython build = project.tasks.create(BuildPython.NAME, BuildPython.class) {
                 paths = myPaths

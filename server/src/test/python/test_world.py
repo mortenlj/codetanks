@@ -9,7 +9,6 @@ from hamcrest import assert_that, equal_to, instance_of, has_key, has_item, clos
 from mock import create_autospec, patch
 from ibidem.codetanks.domain.constants import TANK_RADIUS
 from ibidem.codetanks.domain.ttypes import Arena, Id, Tank, BotStatus, Bullet, ScanResult, Death, Event
-
 from ibidem.codetanks.server.bot import Bot
 from ibidem.codetanks.server.commands import Move
 from ibidem.codetanks.server.vehicle import Armour, Missile
