@@ -5,11 +5,10 @@ import javax.inject.Inject
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.internal.file.FileResolver
+import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 /*
 TODO:
-    - Connect test to build task?
-    - If java-plugin is not applied, create necessary build and install tasks
     - Set more properties in generated setup.py:
         - project name
         - metadata? (Does gradle have standard metadata support?)
@@ -36,6 +35,7 @@ class PythonPlugin implements Plugin<Project> {
     }
 
     void apply(Project project) {
+        project.getPluginManager().apply(LifecycleBasePlugin.class);
         def myPaths = definePaths(project.buildDir)
         project.configure(project) {
             CollectPython collect = project.tasks.create(CollectPython.NAME, CollectPython.class) {
@@ -57,10 +57,19 @@ class PythonPlugin implements Plugin<Project> {
             }
 
             afterEvaluate {
-                project.tasks.getByName('assemble').dependsOn(BuildPython.NAME)
-                project.tasks.getByName('test').dependsOn(TestPython.NAME)
-                project.tasks.getByName('install').dependsOn(InstallPython.NAME)
+                attachTask(project, TestPython.NAME, LifecycleBasePlugin.CHECK_TASK_NAME, LifecycleBasePlugin.VERIFICATION_GROUP)
+                attachTask(project, BuildPython.NAME, LifecycleBasePlugin.ASSEMBLE_TASK_NAME, LifecycleBasePlugin.BUILD_GROUP)
+                attachTask(project, InstallPython.NAME, 'install', null)
             }
         }
+    }
+
+    static def attachTask(Project project, String taskName, String parentName, String group) {
+        def parent = project.tasks.findByName(parentName)
+        if (parent == null) {
+            parent = project.tasks.create(parentName)
+            parent.group = group
+        }
+        parent.dependsOn(taskName)
     }
 }
