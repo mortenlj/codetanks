@@ -3,7 +3,6 @@ package ibidem.gradle.python
 import groovy.text.SimpleTemplateEngine
 import org.gradle.api.DefaultTask
 import org.gradle.api.Task
-import org.gradle.api.artifacts.DependencySet
 import org.gradle.api.tasks.TaskAction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -13,7 +12,7 @@ class GenerateSetup extends DefaultTask {
     public static final String NAME = 'generateSetup'
 
     Map<String, File> paths
-    DependencySet dependencies
+    Map<DependencyCollection.Type, DependencyCollection> deps
     File setupTemplate
     File setup
     File config
@@ -22,6 +21,15 @@ class GenerateSetup extends DefaultTask {
         description = 'Generate the setup.py used be later tasks'
         setupTemplate = project.file('setup.py.in')
         inputs.file(setupTemplate)
+        deps = [:]
+        DependencyCollection.Type.values().each {
+            def name = "${it.prefix}requirements.txt"
+            def file = project.file(name)
+            if (file.exists()) {
+                inputs.file(file)
+                deps[it] = new DependencyCollection(file)
+            }
+        }
     }
 
     @Override
@@ -37,24 +45,21 @@ class GenerateSetup extends DefaultTask {
 
     @TaskAction
     def generate() {
-        def engine = new SimpleTemplateEngine()
-        def template = engine.createTemplate(setupTemplate)
-        def binding = [
-                version     : pythonicVersion(),
-                package_dir : paths.collectedSources,
-                requirements: requirements()
-        ]
-        LOG.info("Generating ${setup}")
-        setup.withWriter {
-            template.make(binding).writeTo(it)
+        if (!paths.root.exists()) {
+            paths.root.mkdirs()
         }
+        generateSetup()
+        generateConfig()
+    }
+
+    private generateConfig() {
         def cfg = [
-                bdist_egg: [ bdist_dir: paths.distTemp, dist_dir: paths.distFinal, skip_build: 1 ],
-                build: [ build_base: paths.buildTarget ],
-                build_py: [ build_lib: paths.buildTarget, optimize: 2 ],
-                egg_info: [ egg_base: paths.eggInfo ],
-                install: [ optimize: 2, skip_build: 1 ],
-                install_lib: [ build_dir: paths.buildTarget, optimize: 2, skip_build: 1 ],
+                bdist_egg  : [bdist_dir: paths.distTemp, dist_dir: paths.distFinal, skip_build: 1],
+                build      : [build_base: paths.buildTarget],
+                build_py   : [build_lib: paths.buildTarget, optimize: 2],
+                egg_info   : [egg_base: paths.eggInfo],
+                install    : [optimize: 2, skip_build: 1],
+                install_lib: [build_dir: paths.buildTarget, optimize: 2, skip_build: 1],
 
         ]
         LOG.info("Generating ${config}")
@@ -69,12 +74,20 @@ class GenerateSetup extends DefaultTask {
         }
     }
 
-    def requirements() {
-        def all = dependencies.collect {
-            "'${it.pythonReq}'"
+    private generateSetup() {
+        def engine = new SimpleTemplateEngine()
+        def template = engine.createTemplate(setupTemplate)
+        def binding = [
+            version     : pythonicVersion(),
+            package_dir : paths.collectedSources
+        ]
+        deps.each { k, v ->
+            binding["${k.prefix}requirements"] = v.requirements()
         }
-        def joined = all.join(', ')
-        "($joined)"
+        LOG.info("Generating ${setup}")
+        setup.withWriter {
+            template.make(binding).writeTo(it)
+        }
     }
 
     def pythonicVersion() {
