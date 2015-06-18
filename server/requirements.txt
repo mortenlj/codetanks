@@ -1,8 +1,5 @@
 setuptools
 pyzmq
-nose
-mock
 pinject
 Codetanks-Domain
-PyHamcrest
 -e hg+https://bitbucket.org/mortenlj/euclid#egg=euclid-ng

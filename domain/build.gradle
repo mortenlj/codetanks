@@ -51,13 +51,6 @@ sourceSets {
 
 dependencies {
     compile 'org.apache.thrift:libthrift:0.9.1'
-
-    python (
-        ':thrift:0.9.1',
-        ':nose',
-        ':wheel',
-        ':setuptools'
-    )
 }
 
 buildscript {
