@@ -1,0 +1,3 @@
+apply plugin: ibidem.gradle.python.PythonPlugin
+
+logger.quiet("Building $parent - $project - $version")

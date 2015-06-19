@@ -5,6 +5,7 @@ import org.gradle.api.tasks.TaskAction
 
 class TestPython extends DefaultTask {
     public static final String NAME = 'testPython'
+    private static final String TEST_SOURCES = "src/test/python"
 
     TestPython() {
         description = 'Run Python tests'
@@ -12,9 +13,12 @@ class TestPython extends DefaultTask {
 
     @TaskAction
     def test() {
-        project.exec {
-            environment["NOSE_WHERE"] = "src/test/python"
-            executable = 'nosetests'
+        def testDir = project.file(TEST_SOURCES)
+        if (testDir.exists()) {
+            project.exec {
+                environment["NOSE_WHERE"] = TEST_SOURCES
+                executable = 'nosetests'
+            }
         }
     }
 }
