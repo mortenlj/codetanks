@@ -5,10 +5,14 @@ from setuptools import setup
 setup(
     name = "Codetanks Viewer",
     version="${version}",
-    packages = ["ibidem", "ibidem.codetanks", "ibidem.codetanks.viewer"],
+    packages = ["ibidem", "ibidem.codetanks", "ibidem.codetanks.viewer", "ibidem.codetanks.viewer.resources"],
     package_dir={
         '': '${package_dir}'
     },
+    package_data={
+        'ibidem.codetanks.viewer.resources': ['*.png']
+    },
+    include_package_data=True,
     install_requires=${requirements},
     namespace_packages = ["ibidem", "ibidem.codetanks"],
     zip_safe = True,

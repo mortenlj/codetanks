@@ -28,7 +28,6 @@ class PythonPlugin implements Plugin<Project> {
                 root: root,
                 collectedSources: new File(root, 'collect'),
                 buildTarget: new File(root, 'target'),
-                eggInfo: root,
                 distTemp: new File(root, 'distTemp'),
                 distFinal: new File(root, 'dist')
         ]
