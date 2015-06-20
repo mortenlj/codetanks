@@ -54,12 +54,11 @@ class GenerateSetup extends DefaultTask {
 
     private generateConfig() {
         def cfg = [
-                bdist_egg  : [bdist_dir: paths.distTemp, dist_dir: paths.distFinal, skip_build: 1],
-                build      : [build_base: paths.buildTarget],
-                build_py   : [build_lib: paths.buildTarget, optimize: 2],
-                egg_info   : [egg_base: paths.eggInfo],
+                bdist_egg  : [bdist_dir: makeRelative(paths.distTemp), dist_dir: makeRelative(paths.distFinal), skip_build: 1],
+                build      : [build_base: makeRelative(paths.buildTarget)],
+                build_py   : [build_lib: makeRelative(paths.buildTarget), optimize: 2],
                 install    : [optimize: 2, skip_build: 1],
-                install_lib: [build_dir: paths.buildTarget, optimize: 2, skip_build: 1],
+                install_lib: [build_dir: makeRelative(paths.buildTarget), optimize: 2, skip_build: 1],
 
         ]
         LOG.info("Generating ${config}")
@@ -78,8 +77,8 @@ class GenerateSetup extends DefaultTask {
         def engine = new SimpleTemplateEngine()
         def template = engine.createTemplate(setupTemplate)
         def binding = [
-            version     : pythonicVersion(),
-            package_dir : paths.collectedSources
+                version    : pythonicVersion(),
+                package_dir: makeRelative(paths.collectedSources)
         ]
         deps.each { k, v ->
             binding["${k.prefix}requirements"] = v.requirements()
@@ -88,6 +87,10 @@ class GenerateSetup extends DefaultTask {
         setup.withWriter {
             template.make(binding).writeTo(it)
         }
+    }
+
+    def makeRelative(File path) {
+        paths.root.toPath().relativize(path.toPath()).toFile()
     }
 
     def pythonicVersion() {
