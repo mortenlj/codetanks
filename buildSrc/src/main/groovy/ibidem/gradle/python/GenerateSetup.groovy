@@ -78,7 +78,8 @@ class GenerateSetup extends DefaultTask {
         def template = engine.createTemplate(setupTemplate)
         def binding = [
                 version    : pythonicVersion(),
-                package_dir: makeRelative(paths.collectedSources)
+                package_dir: makeRelative(paths.collectedSources),
+                name: project.name
         ]
         deps.each { k, v ->
             binding["${k.prefix}requirements"] = v.requirements()

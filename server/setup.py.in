@@ -4,7 +4,7 @@ from setuptools import setup
 
 
 setup(
-    name="Codetanks Server",
+    name = "${name}",
     version="${version}",
     packages=["ibidem", "ibidem.codetanks", "ibidem.codetanks.server"],
     package_dir={
