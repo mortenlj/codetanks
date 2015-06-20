@@ -3,7 +3,7 @@
 from setuptools import setup
 
 setup(
-    name = "Codetanks Viewer",
+    name = "${name}",
     version="${version}",
     packages = ["ibidem", "ibidem.codetanks", "ibidem.codetanks.viewer", "ibidem.codetanks.viewer.resources"],
     package_dir={

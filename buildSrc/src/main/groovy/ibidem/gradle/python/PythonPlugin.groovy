@@ -7,13 +7,6 @@ import org.gradle.api.Project
 import org.gradle.api.internal.file.FileResolver
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
-/*
-TODO:
-    - Set more properties in generated setup.py:
-        - project name
-        - metadata? (Does gradle have standard metadata support?)
-*/
-
 class PythonPlugin implements Plugin<Project> {
     private final FileResolver fileResolver
 
