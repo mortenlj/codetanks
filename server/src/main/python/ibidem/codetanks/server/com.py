@@ -6,7 +6,7 @@ from collections import namedtuple
 
 from ibidem.codetanks.domain.ttypes import CommandReply, Command, Event
 import zmq
-from ibidem.codetanks.domain.util import deserialize, serialize
+from thrift.TSerialization import serialize, deserialize
 
 
 class ChannelType(object):
@@ -47,7 +47,7 @@ class Channel(object):
 
     def recv(self):
         data = self.zmq_socket.recv(copy=False)
-        value = deserialize(data.buffer, self._clz())
+        value = deserialize(self._clz(), data.buffer)
         return value
 
     def send(self, value):
