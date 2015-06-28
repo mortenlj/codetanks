@@ -12,7 +12,6 @@ from ibidem.codetanks.domain.ttypes import GameInfo, RegistrationReply, ClientTy
 from ibidem.codetanks.server.bot import Bot
 from ibidem.codetanks.server.com import ChannelType
 
-
 LOG = logging.getLogger(__name__)
 
 
@@ -55,7 +54,7 @@ class GameServer(object):
         received_messages = 0
         for channel in self._handlers.keys():
             if channel.ready():
-                self._handlers[channel](channel, channel.recv())
+                self._handlers[channel](channel.recv())
                 received_messages += 1
         if received_messages > 0:
             LOG.debug("GameServer processed %d messages", received_messages)
@@ -70,16 +69,16 @@ class GameServer(object):
                 for bot in bots:
                     bot.event_channel.send(event)
 
-    def _handle_registration(self, reply_channel, registration):
+    def _handle_registration(self, registration):
         LOG.debug("GameServer received registration: %r", registration)
         if registration.client_type == ClientType.BOT:
-            self._handle_bot_registration(reply_channel, registration)
+            self._handle_bot_registration(registration)
         else:
-            reply_channel.send(RegistrationReply(RegistrationResult.SUCCESS, self.build_game_info(), self._viewer_channel.url))
+            self._registration_channel.send(RegistrationReply(RegistrationResult.SUCCESS, self.build_game_info(), self._viewer_channel.url))
 
-    def _handle_bot_registration(self, reply_channel, registration):
+    def _handle_bot_registration(self, registration):
         if self.started():
-            reply_channel.send(RegistrationReply(RegistrationResult.FAILURE, self.build_game_info()))
+            self._registration_channel.send(RegistrationReply(RegistrationResult.FAILURE, self.build_game_info()))
             return
         event_channel = self._channel_factory(ChannelType.PUBLISH)
         cmd_channel = self._channel_factory(ChannelType.REPLY)
@@ -88,21 +87,21 @@ class GameServer(object):
         self._bots.append(bot)
         self._world.add_tank(bot)
         self._handlers[bot.cmd_channel] = partial(self._handle_bot_cmd, bot)
-        reply_channel.send(RegistrationReply(RegistrationResult.SUCCESS, self.build_game_info(), event_channel.url, cmd_channel.url, tank_id))
+        self._registration_channel.send(RegistrationReply(RegistrationResult.SUCCESS, self.build_game_info(), event_channel.url, cmd_channel.url, tank_id))
         if len(self._bots) == PLAYER_COUNT:
             self.start()
 
-    def _handle_bot_cmd(self, bot, reply_channel, command):
+    def _handle_bot_cmd(self, bot, command):
         LOG.debug("Handling command %r for bot %r", command, bot)
         LOG.debug("Current status for %r is %r", bot, self._world.tank_status(bot.tank_id))
         if self._world.tank_status(bot.tank_id) != BotStatus.IDLE:
-            reply_channel.send(CommandReply(CommandResult.BUSY))
+            bot.cmd_channel.send(CommandReply(CommandResult.BUSY))
         else:
             name = CommandType._VALUES_TO_NAMES[command.type].lower()
             params = () if command.value is None else (command.value,)
             LOG.debug("Calling self._world.command(%r, %r, %s) for bot %r", bot.tank_id, name, ", ".join(repr(x) for x in params), bot)
             self._world.command(bot.tank_id, name, *params)
-            reply_channel.send(CommandReply(CommandResult.OK))
+            bot.cmd_channel.send(CommandReply(CommandResult.OK))
         LOG.debug("Status for %r after command is %r", bot, self._world.tank_status(bot.tank_id))
 
     def build_game_info(self):
