@@ -77,7 +77,7 @@ class CliBot(Cmd):
 
     def _print_events(self):
         while self._update_socket.poll(10):
-            print deserialize(self._update_socket.recv(), Event())
+            print deserialize(Event(), self._update_socket.recv())
 
     def _print_result(self):
         reply = deserialize(CommandReply(), self._cmd_socket.recv())
