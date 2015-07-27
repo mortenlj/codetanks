@@ -92,7 +92,7 @@ class TestBotRegistration(RegistrationSetup):
 class TestGame(Shared):
     def setup(self):
         super(TestGame, self).setup()
-        self.server._handle_bot_registration(self.registration_channel, Registration(ClientType.BOT, Id("bot", 1)))
+        self.server._handle_bot_registration(Registration(ClientType.BOT, Id("bot", 1)))
         self.bot = self.server._bots[0]
         self.world.tank_status.return_value = BotStatus.IDLE
 
@@ -160,7 +160,7 @@ class TestGame(Shared):
         # One from setup, and another three here
         for i in range(PLAYER_COUNT-1):
             assert_that(self.server.started(), equal_to(False))
-            self.server._handle_bot_registration(self.registration_channel, Registration(ClientType.BOT, Id("bot", 1)))
+            self.server._handle_bot_registration(Registration(ClientType.BOT, Id("bot", 1)))
         assert_that(self.server.started(), equal_to(True))
 
     def test_update_not_called_before_game_started(self):
@@ -176,7 +176,7 @@ class TestStartedGame(Shared):
     def setup(self):
         super(TestStartedGame, self).setup()
         for i in range(PLAYER_COUNT):
-            self.server._handle_bot_registration(self.registration_channel, Registration(ClientType.BOT, Id("bot", 1)))
+            self.server._handle_bot_registration(Registration(ClientType.BOT, Id("bot", 1)))
         self.world.number_of_live_bots = PLAYER_COUNT
 
     def test_world_updated_once_per_loop(self):
@@ -201,7 +201,7 @@ class TestStartedGame(Shared):
         assert_that((end - start).total_seconds(), close_to(self.victory_delay.total_seconds(), 0.1))
 
     def test_new_bots_are_refused_when_game_started(self):
-        self.server._handle_bot_registration(self.registration_channel, Registration(ClientType.BOT, Id("bot", 1)))
+        self.server._handle_bot_registration(Registration(ClientType.BOT, Id("bot", 1)))
         self.registration_channel.send.assert_called_with(RegistrationReply(RegistrationResult.FAILURE, GameInfo(self.world.arena)))
 
 
