@@ -7,6 +7,7 @@ from hamcrest import assert_that, equal_to, not_none, empty, close_to
 from ibidem.codetanks.domain.constants import PLAYER_COUNT
 from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id, RegistrationReply, Command, CommandType, CommandReply,\
     CommandResult, BotStatus, ScanResult, Tank, Death, GameInfo, RegistrationResult, Event
+
 from ibidem.codetanks.server.com import Channel
 from ibidem.codetanks.server.game_server import GameServer
 from ibidem.codetanks.server.world import World
@@ -85,8 +86,7 @@ class TestBotRegistration(RegistrationSetup):
 
     def test_bot_is_added_to_world(self):
         self.server._run_once()
-        bot = self.server._bots[0]
-        self.world.add_tank.assert_called_once_with(bot)
+        self.world.add_tank.assert_called_once_with(self.client_id, 0)
 
 
 class TestGame(Shared):
@@ -94,7 +94,7 @@ class TestGame(Shared):
         super(TestGame, self).setup()
         self.server._handle_bot_registration(Registration(ClientType.BOT, Id("bot", 1)))
         self.bot = self.server._bots[0]
-        self.world.tank_status.return_value = BotStatus.IDLE
+        self.bot._tank.status = BotStatus.IDLE
 
     def test_game_data_sent_once_per_loop(self):
         game_data = GameData([], [])
@@ -127,9 +127,9 @@ class TestGame(Shared):
     def _command_test(self, command, name, *params):
         self.send_on_mock_channel(self.bot.cmd_channel, command)
         self.server._run_once()
-        self.world.command.assert_called_once_with(self.bot.tank_id, name, *params)
+        getattr(self.bot._tank, name).assert_called_once_with(*params)
 
-    def test_commands_forwarded_to_world(self):
+    def test_commands_forwarded(self):
         yield self._command_test, Command(CommandType.MOVE, 10), "move", 10
         yield self._command_test, Command(CommandType.ROTATE, 10), "rotate", 10
         yield self._command_test, Command(CommandType.AIM, 10), "aim", 10
@@ -143,10 +143,10 @@ class TestGame(Shared):
         yield self._command_test, Command(CommandType.SCAN, 0), "scan", 0
 
     def _command_abort_if_busy_test(self, status, command):
-        self.world.tank_status.return_value = status
+        self.bot._tank.status = status
         self.send_on_mock_channel(self.bot.cmd_channel, command)
         self.server._run_once()
-        assert_that(self.world.command.called, equal_to(False))
+        assert_that(getattr(self.bot._tank, CommandType._VALUES_TO_NAMES[command.type]).called, equal_to(False))
         self.bot.cmd_channel.send.assert_called_once_with(CommandReply(CommandResult.BUSY))
 
     def test_command_aborted_if_busy(self):
