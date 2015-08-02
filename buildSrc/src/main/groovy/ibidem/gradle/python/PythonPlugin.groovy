@@ -40,18 +40,17 @@ class PythonPlugin implements Plugin<Project> {
                 paths = myPaths
                 dependsOn GenerateSetup.NAME, CollectPython.NAME
             }
-            TestPython test = project.tasks.create(TestPython.NAME, TestPython.class) {
-                dependsOn BuildPython.NAME
-            }
             InstallPython install = project.tasks.create(InstallPython.NAME, InstallPython.class) {
                 paths = myPaths
                 dependsOn BuildPython.NAME
             }
+            TestPython test = project.tasks.create(TestPython.NAME, TestPython.class) {
+                dependsOn InstallPython.NAME
+            }
 
             afterEvaluate {
                 attachTask(project, TestPython.NAME, LifecycleBasePlugin.CHECK_TASK_NAME, LifecycleBasePlugin.VERIFICATION_GROUP)
-                attachTask(project, BuildPython.NAME, LifecycleBasePlugin.ASSEMBLE_TASK_NAME, LifecycleBasePlugin.BUILD_GROUP)
-                attachTask(project, InstallPython.NAME, 'install', null)
+                attachTask(project, InstallPython.NAME, LifecycleBasePlugin.ASSEMBLE_TASK_NAME, LifecycleBasePlugin.BUILD_GROUP)
             }
         }
     }
