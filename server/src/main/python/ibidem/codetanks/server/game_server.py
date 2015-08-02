@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 from datetime import datetime
-from functools import partial
 import logging
 
 import pygame
-from pinject import copy_args_to_internal_fields
 from ibidem.codetanks.domain.constants import PLAYER_COUNT
-from ibidem.codetanks.domain.ttypes import GameInfo, RegistrationReply, ClientType, CommandResult, CommandReply, BotStatus, \
-    RegistrationResult, CommandType, Event
+from ibidem.codetanks.domain.ttypes import GameInfo, RegistrationReply, ClientType, RegistrationResult, Event
+
 from ibidem.codetanks.server.bot import Bot
 from ibidem.codetanks.server.com import ChannelType
 
@@ -16,13 +14,16 @@ LOG = logging.getLogger(__name__)
 
 
 class GameServer(object):
-    @copy_args_to_internal_fields
     def __init__(self,
                  registration_channel,
                  viewer_channel,
                  channel_factory,
                  world,
                  victory_delay):
+        self._registration_channel = registration_channel
+        self._viewer_channel = viewer_channel
+        self._channel_factory = channel_factory
+        self._world = world
         pygame.init()
         self.clock = None
         self._handlers = {
@@ -83,26 +84,13 @@ class GameServer(object):
         event_channel = self._channel_factory(ChannelType.PUBLISH)
         cmd_channel = self._channel_factory(ChannelType.REPLY)
         tank_id = len(self._bots)
-        bot = Bot(registration.id, tank_id, event_channel, cmd_channel)
+        tank = self._world.add_tank(registration.id, tank_id)
+        bot = Bot(registration.id, tank_id, event_channel, cmd_channel, tank)
         self._bots.append(bot)
-        self._world.add_tank(bot)
-        self._handlers[bot.cmd_channel] = partial(self._handle_bot_cmd, bot)
+        self._handlers[bot.cmd_channel] = bot.handle_command
         self._registration_channel.send(RegistrationReply(RegistrationResult.SUCCESS, self.build_game_info(), event_channel.url, cmd_channel.url, tank_id))
         if len(self._bots) == PLAYER_COUNT:
             self.start()
-
-    def _handle_bot_cmd(self, bot, command):
-        LOG.debug("Handling command %r for bot %r", command, bot)
-        LOG.debug("Current status for %r is %r", bot, self._world.tank_status(bot.tank_id))
-        if self._world.tank_status(bot.tank_id) != BotStatus.IDLE:
-            bot.cmd_channel.send(CommandReply(CommandResult.BUSY))
-        else:
-            name = CommandType._VALUES_TO_NAMES[command.type].lower()
-            params = () if command.value is None else (command.value,)
-            LOG.debug("Calling self._world.command(%r, %r, %s) for bot %r", bot.tank_id, name, ", ".join(repr(x) for x in params), bot)
-            self._world.command(bot.tank_id, name, *params)
-            bot.cmd_channel.send(CommandReply(CommandResult.OK))
-        LOG.debug("Status for %r after command is %r", bot, self._world.tank_status(bot.tank_id))
 
     def build_game_info(self):
         return GameInfo(self._world.arena)

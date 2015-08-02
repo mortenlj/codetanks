@@ -3,18 +3,19 @@
 
 from random import randint
 import math
+import logging
 
 from euclid import Point2, Vector2, Ray2
-from hamcrest import assert_that, equal_to, instance_of, has_key, has_item, close_to, has_length, empty
+from hamcrest import assert_that, is_, equal_to, instance_of, has_key, has_item, close_to, has_length, empty
 from mock import create_autospec, patch
 from ibidem.codetanks.domain.constants import TANK_RADIUS
 from ibidem.codetanks.domain.ttypes import Arena, Id, Tank, BotStatus, Bullet, ScanResult, Death, Event
-from ibidem.codetanks.server.bot import Bot
+
 from ibidem.codetanks.server.commands import Move
 from ibidem.codetanks.server.vehicle import Armour, Missile
 from ibidem.codetanks.server.world import World
 
-
+LOG = logging.getLogger(__name__)
 DELTA = 0.000001
 
 
@@ -65,11 +66,9 @@ class TestValidPosition(Shared):
                     yield self._bounds_test, cls, entity, parent, Point2(x, y), True
 
     def test_simple_tank_collision(self):
-        self.world.add_tank(Bot(self.bot_id, 0, None, None))
-        self.world.add_tank(Bot(self.bot_id, 1, None, None))
-        tank0 = self.world._tanks[0]
+        tank0 = self.world.add_tank(self.bot_id, 0)
+        tank1 = self.world.add_tank(self.bot_id, 1)
         tank0.position = Point2(50, 50)
-        tank1 = self.world._tanks[1]
         tank1.position = Point2(50, 50)
         assert_that(self.world.is_collision(tank0), equal_to(tank1))
 
@@ -85,8 +84,7 @@ class TestTankCreation(Shared):
         return_values.append(self.width/2)
         return_values.append(self.height/2)
         with patch("ibidem.codetanks.server.world.randint", side_effect=_MyRandint(return_values)):
-            self.world.add_tank(Bot(self.bot_id, 0, None, None))
-            vehicle = self.world._tanks[0]
+            vehicle = self.world.add_tank(self.bot_id, 0)
             tank = vehicle.entity
             assert_that(tank, instance_of(Tank))
             assert_that(self.world.is_collision(vehicle), equal_to(False), "%r has invalid position" % vehicle)
@@ -94,8 +92,7 @@ class TestTankCreation(Shared):
             assert_that(tank.position.y, equal_to(self.height/2))
 
     def test_tank_has_sensible_values(self):
-        self.world.add_tank(Bot(self.bot_id, 0, None, None))
-        tank = self.world.tanks[0]
+        tank = self.world.add_tank(self.bot_id, 0)
         assert_that(tank.health, equal_to(100))
         assert_that(tank.status, equal_to(BotStatus.IDLE))
 
@@ -103,20 +100,17 @@ class TestTankCreation(Shared):
         return_values = [0, 0, 1, 0, 0, -1]
         return_values.extend([None]*10)
         with patch("ibidem.codetanks.server.world.randint", side_effect=_MyRandint(return_values)):
-            self.world.add_tank(Bot(self.bot_id, 0, None, None))
-            vehicle = self.world._tanks[0]
+            vehicle = self.world.add_tank(self.bot_id, 0)
             tank = vehicle.entity
             assert_that(tank.direction.x, equal_to(0))
             assert_that(tank.direction.y, equal_to(1))
             assert_that(tank.turret.x, equal_to(0))
             assert_that(tank.turret.y, equal_to(-1))
 
-    def test_tank_status(self):
-        self.world.add_tank(Bot(self.bot_id, 0, None, None))
-        tank = self.world.tanks[0]
-        for status in BotStatus._NAMES_TO_VALUES.values():
-            tank.status = status
-            assert_that(self.world.tank_status(tank.id), equal_to(status))
+    def test_added_tank_is_returned(self):
+        returned_tank = self.world.add_tank(self.bot_id, 0)
+        added_tank = self.world._tanks[0]
+        assert_that(returned_tank, is_(added_tank))
 
 
 class TankShared(Shared):
@@ -124,7 +118,7 @@ class TankShared(Shared):
 
     def setup(self):
         super(TankShared, self).setup()
-        self.world.add_tank(Bot(self.bot_id, 0, None, None))
+        self.world.add_tank(self.bot_id, 0)
         self.armour = create_autospec(Armour)
         self.world._tanks[self.tank_id] = self.armour
 
@@ -134,18 +128,6 @@ class TestTankMovement(TankShared):
         ticks = 10
         self.world.update(ticks)
         self.armour.update.assert_called_with(ticks)
-
-    def _command_test(self, name, *params):
-        self.world.command(self.tank_id, name, *params)
-        func = getattr(self.armour, name)
-        func.assert_called_with(*params)
-
-    def test_commands_forwarded_to_vehicle(self):
-        yield self._command_test, "move", 10
-        yield self._command_test, "rotate", 10
-        yield self._command_test, "aim", 10
-        yield self._command_test, "fire"
-        yield self._command_test, "scan", 10
 
 
 class TestTankEvents(TankShared):
@@ -268,9 +250,11 @@ class TestBulletMovement(BulletShared):
 
 class _MyRandint(object):
     def __init__(self, return_values):
+        LOG.debug("Creating MyRandint with values: %r", return_values)
         self.return_values = list(return_values)
 
     def __call__(self, *args, **kwargs):
+        LOG.debug("Returning 'random' value from list of %d elements: %r", len(self.return_values), self.return_values)
         if self.return_values:
             value = self.return_values.pop(0)
             return randint(*args, **kwargs) if value is None else value

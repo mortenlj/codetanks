@@ -8,9 +8,9 @@ from collections import defaultdict
 
 from euclid import LineSegment2, Circle
 from ibidem.codetanks.domain.ttypes import GameData, Arena, Tank, Point, Bullet, ScanResult, BotStatus, Event
+
 from ibidem.codetanks.server.debug_util import ScanPlot
 from ibidem.codetanks.server.vehicle import Armour, Missile
-
 
 LOG = logging.getLogger(__name__)
 
@@ -26,16 +26,17 @@ class World(object):
         self._events = defaultdict(list)
         self._debug = debug
 
-    def add_tank(self, bot):
+    def add_tank(self, bot_id, tank_id):
         armour = Armour(Tank(
-            bot.tank_id,
-            bot.bot_id,
+            tank_id,
+            bot_id,
             None,
             self._select_random_direction(),
             self._select_random_direction()
         ), self)
         self._set_valid_position(armour)
         self._tanks.append(armour)
+        return armour
 
     def add_bullet(self, parent):
         position = Point(parent.position.x, parent.position.y)
@@ -90,9 +91,6 @@ class World(object):
         for bullet in self._bullets:
             bullet.update(ticks)
 
-    def tank_status(self, tank_id):
-        return self._tanks[tank_id].status
-
     def scan(self, ray, theta):
         radius = self._calculate_scan_radius(theta)
         LOG.debug("Scanning along %r, with spread %.2f, radius is %d", ray, theta, radius)
@@ -137,11 +135,6 @@ class World(object):
             return False
         LOG.debug("Inside sector")
         return True
-
-    def command(self, tank_id, name, *params):
-        wrapper = self._tanks[tank_id]
-        func = getattr(wrapper, name)
-        func(*params)
 
     def get_events(self):
         events = self._events
