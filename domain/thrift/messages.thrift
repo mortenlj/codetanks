@@ -1,8 +1,6 @@
 namespace py ibidem.codetanks.domain
 namespace java ibidem.codetanks.domain
 
-const byte MESSAGE_WRAPPER_TYPE = 127;
-
 const byte MAX_HEALTH = 100;
 const byte BULLET_DAMAGE = 5;
 const byte PLAYER_COUNT = 4;
@@ -114,6 +112,7 @@ enum CommandResult {
 
 struct CommandReply {
     1: required CommandResult result;
+    2: optional ScanResult scan;
 }
 
 enum CommandType {

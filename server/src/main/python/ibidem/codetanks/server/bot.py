@@ -23,8 +23,7 @@ class Bot(object):
         else:
             name = CommandType._VALUES_TO_NAMES[command.type].lower()
             params = () if command.value is None else (command.value,)
-            LOG.debug("Calling self._world.command(%r, %r, %s) for bot %r",
-                      self.tank_id, name, ", ".join(repr(x) for x in params), self)
+            LOG.debug("Calling %s(%s) for bot %r", name, ", ".join(repr(x) for x in params), self)
             func = getattr(self._tank, name)
             func(*params)
             self.cmd_channel.send(CommandReply(CommandResult.OK))
