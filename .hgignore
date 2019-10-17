@@ -1,13 +1,12 @@
+^sample-groovy/.gradle
 .idea
-/gen-.*/
-target
-^.gradle
 build/
 dist/
-domain/setup.py
-buildSrc/.gradle
+__pycache__
 
 syntax: glob
 *.iml
 *.pyc
 *.egg-info
+viewer/ibidem/codetanks/domain/
+server/ibidem/codetanks/domain/
