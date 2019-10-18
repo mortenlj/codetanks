@@ -2,9 +2,8 @@
 # -*- coding: utf-8
 
 from mock import patch
-from hamcrest import assert_that, equal_to
-from ibidem.codetanks.domain.ttypes import Command, CommandType, Registration, ClientType, Id
 
+from ibidem.codetanks.domain.ttypes import Command, CommandType, Registration, ClientType, Id
 from ibidem.codetanks.server.com import Channel, ChannelType
 
 
@@ -25,7 +24,7 @@ class TestChannel(object):
     def test_has_valid_urls(self):
         with patch("ibidem.codetanks.server.com.gethostname", return_value=self.hostname):
             socket = Channel(ChannelType.PUBLISH, self.port)
-            assert_that(socket.url, equal_to("tcp://%s:%d" % (self.hostname, self.port)))
+            assert socket.url == "tcp://%s:%d" % (self.hostname, self.port)
 
     def test_socket(self):
         with patch.object(Channel, "url_scheme", self.test_url_scheme), \
@@ -35,7 +34,7 @@ class TestChannel(object):
             rep_socket = Channel(ChannelType.REPLY, 0)
             value = Command(CommandType.FIRE)
             req_socket.send(value)
-            assert_that(rep_socket.recv(), equal_to(value))
+            assert rep_socket.recv() == value
 
     def test_socket_with_special_class(self):
         with patch.object(Channel, "url_scheme", self.test_url_scheme), \
@@ -45,8 +44,4 @@ class TestChannel(object):
             rep_socket = Channel(ChannelType.REPLY, 0, Registration)
             value = Registration(ClientType.VIEWER, Id("test", 1))
             req_socket.send(value)
-            assert_that(rep_socket.recv(), equal_to(value))
-
-if __name__ == "__main__":
-    import nose
-    nose.main()
+            assert rep_socket.recv() == value

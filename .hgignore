@@ -5,6 +5,7 @@ dist/
 __pycache__
 .pytest_cache
 .eggs
+.coverage
 
 syntax: glob
 *.iml
