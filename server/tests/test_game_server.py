@@ -2,12 +2,14 @@
 # -*- coding: utf-8
 from datetime import datetime, timedelta
 
-from mock import create_autospec, MagicMock, PropertyMock
+import pytest
 from hamcrest import assert_that, equal_to, not_none, empty, close_to
-from ibidem.codetanks.domain.constants import PLAYER_COUNT
-from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id, RegistrationReply, Command, CommandType, CommandReply,\
-    CommandResult, BotStatus, ScanResult, Tank, Death, GameInfo, RegistrationResult, Event
+from mock import create_autospec, MagicMock, PropertyMock
 
+from ibidem.codetanks.domain.constants import PLAYER_COUNT
+from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id, RegistrationReply, Command, \
+    CommandType, CommandReply, \
+    CommandResult, BotStatus, ScanResult, Tank, Death, GameInfo, RegistrationResult, Event
 from ibidem.codetanks.server.com import Channel
 from ibidem.codetanks.server.game_server import GameServer
 from ibidem.codetanks.server.world import World
@@ -18,10 +20,12 @@ class Shared(object):
         self.registration_channel = create_autospec(Channel)
         self.registration_channel.ready.return_value = False
         self.viewer_channel = create_autospec(Channel)
+
         def channel_factory(x):
             mock = create_autospec(Channel(x))
             mock.ready.return_value = False
             return mock
+
         self.world = create_autospec(World)
         self.victory_delay = timedelta(seconds=1)
         self.server = GameServer(self.registration_channel,
@@ -54,7 +58,8 @@ class TestViewerRegistration(RegistrationSetup):
     def test_registering_viewer_gets_generic_urls_and_game_info(self):
         self.server._run_once()
         self.registration_channel.send.assert_called_once_with(
-            RegistrationReply(RegistrationResult.SUCCESS, self.server.build_game_info(), self.server._viewer_channel.url)
+            RegistrationReply(RegistrationResult.SUCCESS, self.server.build_game_info(),
+                              self.server._viewer_channel.url)
         )
 
 
@@ -74,7 +79,8 @@ class TestBotRegistration(RegistrationSetup):
         self.server._run_once()
         bot = self.server._bots[0]
         self.registration_channel.send.assert_called_once_with(
-            RegistrationReply(RegistrationResult.SUCCESS, self.server.build_game_info(), bot.event_channel.url, bot.cmd_channel.url, 0)
+            RegistrationReply(RegistrationResult.SUCCESS, self.server.build_game_info(), bot.event_channel.url,
+                              bot.cmd_channel.url, 0)
         )
 
     def test_bot_cmd_channel_is_polled(self):
@@ -124,41 +130,44 @@ class TestGame(Shared):
         self.server._run_once()
         self.bot.cmd_channel.send.assert_called_once_with(CommandReply(CommandResult.OK))
 
-    def _command_test(self, command, name, *params):
+    @pytest.mark.parametrize("command, name, param", (
+            (Command(CommandType.MOVE, 10), "move", 10),
+            (Command(CommandType.ROTATE, 10), "rotate", 10),
+            (Command(CommandType.AIM, 10), "aim", 10),
+            (Command(CommandType.SCAN, 10), "scan", 10),
+            (Command(CommandType.FIRE), "fire", None),
+            (Command(CommandType.MOVE, 0), "move", 0),
+            (Command(CommandType.ROTATE, 0), "rotate", 0),
+            (Command(CommandType.AIM, 0), "aim", 0),
+            (Command(CommandType.SCAN, 0), "scan", 0),
+    ))
+    def test_command(self, command, name, param):
         self.send_on_mock_channel(self.bot.cmd_channel, command)
         self.server._run_once()
-        getattr(self.bot._tank, name).assert_called_once_with(*params)
+        if param is None:
+            getattr(self.bot._tank, name).assert_called_once_with()
+        else:
+            getattr(self.bot._tank, name).assert_called_once_with(param)
 
-    def test_commands_forwarded(self):
-        yield self._command_test, Command(CommandType.MOVE, 10), "move", 10
-        yield self._command_test, Command(CommandType.ROTATE, 10), "rotate", 10
-        yield self._command_test, Command(CommandType.AIM, 10), "aim", 10
-        yield self._command_test, Command(CommandType.SCAN, 10), "scan", 10
-        yield self._command_test, Command(CommandType.FIRE), "fire"
+    @pytest.fixture(params=(s for s in BotStatus._NAMES_TO_VALUES.values() if s != BotStatus.IDLE))
+    def command_abort_if_busy_states(self, request):
+        yield request.param
 
-    def test_commands_with_value_zero_forwarded_to_world(self):
-        yield self._command_test, Command(CommandType.MOVE, 0), "move", 0
-        yield self._command_test, Command(CommandType.ROTATE, 0), "rotate", 0
-        yield self._command_test, Command(CommandType.AIM, 0), "aim", 0
-        yield self._command_test, Command(CommandType.SCAN, 0), "scan", 0
-
-    def _command_abort_if_busy_test(self, status, command):
-        self.bot._tank.status = status
+    @pytest.mark.parametrize("command", (
+            Command(CommandType.MOVE, 10),
+            Command(CommandType.ROTATE, 1.5),
+            Command(CommandType.AIM, -1.5)
+    ))
+    def test_command_abort_if_busy_test(self, command_abort_if_busy_states, command):
+        self.bot._tank.status = command_abort_if_busy_states
         self.send_on_mock_channel(self.bot.cmd_channel, command)
         self.server._run_once()
         assert_that(getattr(self.bot._tank, CommandType._VALUES_TO_NAMES[command.type]).called, equal_to(False))
         self.bot.cmd_channel.send.assert_called_once_with(CommandReply(CommandResult.BUSY))
 
-    def test_command_aborted_if_busy(self):
-        states = list(BotStatus._NAMES_TO_VALUES.values())
-        states.remove(BotStatus.IDLE)
-        for status in states:
-            for command in (Command(CommandType.MOVE, 10), Command(CommandType.ROTATE, 1.5), Command(CommandType.AIM, -1.5)):
-                yield self._command_abort_if_busy_test, status, command
-
     def test_game_started_after_fourth_bot(self):
         # One from setup, and another three here
-        for i in range(PLAYER_COUNT-1):
+        for i in range(PLAYER_COUNT - 1):
             assert_that(self.server.started(), equal_to(False))
             self.server._handle_bot_registration(Registration(ClientType.BOT, Id("bot", 1)))
         assert_that(self.server.started(), equal_to(True))
@@ -180,7 +189,7 @@ class TestStartedGame(Shared):
         self.world.number_of_live_bots = PLAYER_COUNT
 
     def test_world_updated_once_per_loop(self):
-        self.server.clock  = MagicMock()
+        self.server.clock = MagicMock()
         self.server.clock.tick.return_value = 30
         self.server._run_once()
         self.world.update.assert_called_once_with(30)
@@ -202,10 +211,5 @@ class TestStartedGame(Shared):
 
     def test_new_bots_are_refused_when_game_started(self):
         self.server._handle_bot_registration(Registration(ClientType.BOT, Id("bot", 1)))
-        self.registration_channel.send.assert_called_with(RegistrationReply(RegistrationResult.FAILURE, GameInfo(self.world.arena)))
-
-
-if __name__ == "__main__":
-    import nose
-    nose.main()
-
+        self.registration_channel.send.assert_called_with(
+            RegistrationReply(RegistrationResult.FAILURE, GameInfo(self.world.arena)))
