@@ -62,7 +62,6 @@ setup(
     tests_require=[
         "pytest",
         "mock",
-        "PyHamcrest",
     ],
     setup_requires=["pytest-runner"],
 

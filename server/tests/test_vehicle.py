@@ -1,18 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
-from itertools import chain
 from random import uniform
 
 import pytest
-from mock import create_autospec
-from hamcrest import assert_that, equal_to, less_than, greater_than, instance_of, close_to, is_not, empty
 from euclid import Point2, Vector2
+from mock import create_autospec
+
 from ibidem.codetanks.domain.constants import TANK_RADIUS, BULLET_RADIUS, MAX_HEALTH, BULLET_DAMAGE
 from ibidem.codetanks.domain.ttypes import Tank, Id, Point, BotStatus, Bullet, Arena, ScanResult, Death, Event
 from ibidem.codetanks.server.commands import Idle
 from ibidem.codetanks.server.vehicle import Armour, Missile
 from ibidem.codetanks.server.world import World
-
 
 DELTA = 0.000001
 
@@ -59,49 +57,49 @@ class Shared(object):
 
 class TestVehicle(Shared):
     def test_armour_properties_reflect_tank(self):
-        assert_that(self.armour.position.x, equal_to(self.tank.position.x))
-        assert_that(self.armour.position.y, equal_to(self.tank.position.y))
-        assert_that(self.armour.direction.x, equal_to(self.tank.direction.x))
-        assert_that(self.armour.direction.y, equal_to(self.tank.direction.y))
-        assert_that(self.armour.turret.x, equal_to(self.tank.turret.x))
-        assert_that(self.armour.turret.y, equal_to(self.tank.turret.y))
-        assert_that(self.armour.status, equal_to(self.tank.status))
-        assert_that(self.armour.health, equal_to(self.tank.health))
+        assert self.armour.position.x == self.tank.position.x
+        assert self.armour.position.y == self.tank.position.y
+        assert self.armour.direction.x == self.tank.direction.x
+        assert self.armour.direction.y == self.tank.direction.y
+        assert self.armour.turret.x == self.tank.turret.x
+        assert self.armour.turret.y == self.tank.turret.y
+        assert self.armour.status == self.tank.status
+        assert self.armour.health == self.tank.health
 
     def test_missilie_properties_reflect_bullet(self):
-        assert_that(self.missile.position.x,  equal_to(self.bullet.position.x))
-        assert_that(self.missile.position.y,  equal_to(self.bullet.position.y))
-        assert_that(self.missile.direction.x, equal_to(self.bullet.direction.x))
-        assert_that(self.missile.direction.y, equal_to(self.bullet.direction.y))
+        assert self.missile.position.x == self.bullet.position.x
+        assert self.missile.position.y == self.bullet.position.y
+        assert self.missile.direction.x == self.bullet.direction.x
+        assert self.missile.direction.y == self.bullet.direction.y
 
     def test_setting_position_is_applied_to_entity(self):
         new_position = Point2(20, 40)
         for vehicle, entity in (self.armour, self.tank), (self.missile, self.bullet):
             vehicle.position = new_position
-            assert_that(entity.position.x, equal_to(new_position.x))
-            assert_that(entity.position.y, equal_to(new_position.y))
+            assert entity.position.x == new_position.x
+            assert entity.position.y == new_position.y
 
     def test_setting_direction_is_applied_to_entity(self):
         new_direction = Point2(1, -1)
         for vehicle, entity in (self.armour, self.tank), (self.missile, self.bullet):
             vehicle.direction = new_direction
-            assert_that(entity.direction.x, equal_to(new_direction.x))
-            assert_that(entity.direction.y, equal_to(new_direction.y))
+            assert entity.direction.x == new_direction.x
+            assert entity.direction.y == new_direction.y
 
     def test_setting_turret_is_applied_to_entity(self):
         new_turret = Point2(1, -1)
         self.armour.turret = new_turret
-        assert_that(self.tank.turret.x, equal_to(new_turret.x))
-        assert_that(self.tank.turret.y, equal_to(new_turret.y))
+        assert self.tank.turret.x == new_turret.x
+        assert self.tank.turret.y == new_turret.y
 
     def test_setting_status_is_applied_to_entity(self):
         status = BotStatus.MOVING
         self.armour.status = status
-        assert_that(self.tank.status, equal_to(status))
+        assert self.tank.status == status
 
     def test_inflicting_damage_is_applied_to_tank(self):
         self.armour.inflict(BULLET_DAMAGE, self.armour)
-        assert_that(self.tank.health, equal_to(MAX_HEALTH - BULLET_DAMAGE))
+        assert self.tank.health == MAX_HEALTH - BULLET_DAMAGE
 
 
 class TestMove(Shared):
@@ -109,24 +107,24 @@ class TestMove(Shared):
         distance = 10
         target_x = self.initial_x + distance
         self.armour.move(distance)
-        assert_that(self.armour.status, equal_to(BotStatus.MOVING))
-        assert_that(self.armour.position.x, equal_to(self.initial_x))
-        assert_that(self.armour.position.y, equal_to(self.initial_y))
+        assert self.armour.status == BotStatus.MOVING
+        assert self.armour.position.x == self.initial_x
+        assert self.armour.position.y == self.initial_y
         while self.armour.position.x < target_x:
-            assert_that(self.armour.status, equal_to(BotStatus.MOVING))
-            assert_that(self.armour.position.x, less_than(target_x))
+            assert self.armour.status == BotStatus.MOVING
+            assert self.armour.position.x < target_x
             self.armour.update(random_ticks())
-            assert_that(self.armour.position.x, greater_than(self.initial_x))
-        assert_that(self.armour._command, instance_of(Idle))
-        assert_that(self.armour.position.x, equal_to(target_x))
-        assert_that(self.armour.position.y, equal_to(self.initial_y))
+            assert self.armour.position.x > self.initial_x
+        assert isinstance(self.armour._command, Idle)
+        assert self.armour.position.x == target_x
+        assert self.armour.position.y == self.initial_y
 
     def test_move_backwards_is_illegal(self):
         self.armour.move(-10)
         self.armour.update(random_ticks())
-        assert_that(self.armour._command, instance_of(Idle))
-        assert_that(self.armour.position.x, equal_to(self.initial_x))
-        assert_that(self.armour.position.y, equal_to(self.initial_y))
+        assert isinstance(self.armour._command, Idle)
+        assert self.armour.position.x == self.initial_x
+        assert self.armour.position.y == self.initial_y
 
     def test_world_is_checked_for_valid_position(self):
         self.armour.move(1)
@@ -140,12 +138,12 @@ class TestMove(Shared):
     def test_vehicle_is_not_moved_if_new_position_invalid(self):
         self.world.is_collision.return_value = True
         self.missile.update(random_ticks())
-        assert_that(self.missile.position.x, equal_to(self.initial_x))
-        assert_that(self.missile.position.y, equal_to(self.initial_y))
+        assert self.missile.position.x == self.initial_x
+        assert self.missile.position.y == self.initial_y
         self.armour.move(100)
         self.armour.update(random_ticks())
-        assert_that(self.armour.position.x, equal_to(self.initial_x))
-        assert_that(self.armour.position.y, equal_to(self.initial_y))
+        assert self.armour.position.x == self.initial_x
+        assert self.armour.position.y == self.initial_y
 
     def test_missile_disappears_when_hitting_boundary(self):
         self.world.is_collision.return_value = True
@@ -160,7 +158,7 @@ class TestMove(Shared):
     def test_missile_inflicts_damage_when_hitting_other_tank(self):
         self.world.is_collision.return_value = self.other
         self.missile.update(random_ticks())
-        assert_that(self.other.health, equal_to(MAX_HEALTH - BULLET_DAMAGE))
+        assert self.other.health == MAX_HEALTH - BULLET_DAMAGE
 
 
 class RotateAndAim(Shared):
@@ -178,9 +176,9 @@ class RotateAndAim(Shared):
 
     def _assert_starting_state(self):
         expected_status = self._get_starting_status()
-        assert_that(self.armour.status, equal_to(expected_status), "Starting status")
+        assert self.armour.status == expected_status
         expected_vector = self._get_starting_vector()
-        assert_that_vector_matches(self._get_actual_vector(), expected_vector, equal_to(0.0), "Starting vectors")
+        assert angle_difference(self._get_actual_vector(), expected_vector) == pytest.approx(0.0)
 
     def _get_starting_status(self):
         raise NotImplementedError
@@ -193,8 +191,8 @@ class RotateAndAim(Shared):
 
     def _assert_pre_update(self, expected_vector):
         expected_status = self._get_pre_update_status()
-        assert_that(self.armour.status, equal_to(expected_status), "Pre-update status")
-        assert_that_vector_matches(self._get_actual_vector(), expected_vector, is_not(equal_to(0.0)), "Pre-update vectors")
+        assert self.armour.status == expected_status
+        assert angle_difference(self._get_actual_vector(), expected_vector) != pytest.approx(0.0)
 
     def _get_pre_update_status(self):
         raise NotImplementedError
@@ -203,11 +201,11 @@ class RotateAndAim(Shared):
         raise NotImplementedError
 
     def _assert_post_update(self, angle, target_vector):
-        assert_that_vector_matches(self._get_actual_vector(), target_vector, less_than(abs(angle)), "Post-update vectors")
+        assert angle_difference(self._get_actual_vector(), target_vector) < abs(angle)
 
     def _assert_ending_state(self, target_vector):
-        assert_that(self.armour._command, instance_of(Idle))
-        assert_that_vector_matches(self._get_actual_vector(), target_vector, close_to(0.0, DELTA), "Ending vectors")
+        assert isinstance(self.armour._command, Idle)
+        assert angle_difference(self._get_actual_vector(), target_vector) == pytest.approx(0.0)
 
 
 class TestRotate(RotateAndAim):
@@ -225,7 +223,7 @@ class TestRotate(RotateAndAim):
 
     def _continue(self, target_vector):
         angle = self.armour.direction.angle(target_vector)
-        return not close_to(0.0, DELTA)._matches(angle)
+        return angle != pytest.approx(0.0)
 
     def _act(self, angle):
         self.armour.rotate(angle)
@@ -253,14 +251,14 @@ class TestAim(RotateAndAim):
 
     def _continue(self, target_vector):
         angle = self.armour.turret.angle(target_vector)
-        return not close_to(0.0, DELTA)._matches(angle)
+        return angle != pytest.approx(0.0)
 
     def _act(self, angle):
         self.armour.aim(angle)
 
     @pytest.mark.parametrize("angle, target_vector", (
-        pytest.param(90, Vector2(0, -1), id="anti-clockwise"),
-        pytest.param(-90, Vector2(0, 1), id="clockwise"),
+            pytest.param(90, Vector2(0, -1), id="anti-clockwise"),
+            pytest.param(-90, Vector2(0, 1), id="clockwise"),
     ))
     def test_aim(self, angle, target_vector):
         self._test("", angle, target_vector)
@@ -284,15 +282,15 @@ class TestScan(Shared):
     def test_scan_above_90_degrees_is_ignored(self):
         self.armour.scan(91)
         self.armour.update(random_ticks())
-        assert_that(self.world.scan.call_args_list, empty())
+        self.world.scan.assert_not_called()
 
 
 class TestCollide(Shared):
-    @pytest.fixture(params=(2*TANK_RADIUS, (2*TANK_RADIUS-1), TANK_RADIUS, 1))
+    @pytest.fixture(params=(2 * TANK_RADIUS, (2 * TANK_RADIUS - 1), TANK_RADIUS, 1))
     def armour_modifier(self, request):
         return request.param
 
-    @pytest.fixture(params=(2*BULLET_RADIUS, (2*BULLET_RADIUS-1), BULLET_RADIUS, 1))
+    @pytest.fixture(params=(2 * BULLET_RADIUS, (2 * BULLET_RADIUS - 1), BULLET_RADIUS, 1))
     def missile_modifier(self, request):
         return request.param
 
@@ -321,39 +319,47 @@ class TestCollide(Shared):
         assert self.armour.collide(other)
 
     @pytest.mark.parametrize("offset_vector, other_func", (
-        pytest.param(Vector2(2*TANK_RADIUS+1, 0), lambda s, x, y: Armour(s._create_tank(1, Point(x, y)), s.world),
-                     id="armour_to_the_right"),
-        pytest.param(Vector2(-2*TANK_RADIUS+1, 0), lambda s, x, y: Armour(s._create_tank(1, Point(x, y)), s.world),
-                     id="armour_to_the_left"),
-        pytest.param(Vector2(0, 2*TANK_RADIUS+1), lambda s, x, y: Armour(s._create_tank(1, Point(x, y)), s.world),
-                     id="armour_above"),
-        pytest.param(Vector2(0, -2*TANK_RADIUS+1), lambda s, x, y: Armour(s._create_tank(1, Point(x, y)), s.world),
-                     id="armour_below"),
-        pytest.param(Vector2(2*BULLET_RADIUS+1, 0), lambda s, x, y: Missile(s._create_bullet(1, Point(x, y)), s.world,
-                                                                            None), id="missile_to_the_right"),
-        pytest.param(Vector2(-2*BULLET_RADIUS+1, 0), lambda s, x, y: Missile(s._create_bullet(1, Point(x, y)), s.world,
-                                                                             None), id="missile_to_the_left"),
-        pytest.param(Vector2(0, 2*BULLET_RADIUS+1), lambda s, x, y: Missile(s._create_bullet(1, Point(x, y)), s.world,
-                                                                            None), id="missile_above"),
-        pytest.param(Vector2(0, -2*BULLET_RADIUS+1), lambda s, x, y: Missile(s._create_bullet(1, Point(x, y)), s.world,
-                                                                             None), id="missile_below"),
+            pytest.param(Vector2(2 * TANK_RADIUS + 1, 0),
+                         lambda s, x, y: Armour(s._create_tank(1, Point(x, y)), s.world),
+                         id="armour_to_the_right"),
+            pytest.param(Vector2(-2 * TANK_RADIUS + 1, 0),
+                         lambda s, x, y: Armour(s._create_tank(1, Point(x, y)), s.world),
+                         id="armour_to_the_left"),
+            pytest.param(Vector2(0, 2 * TANK_RADIUS + 1),
+                         lambda s, x, y: Armour(s._create_tank(1, Point(x, y)), s.world),
+                         id="armour_above"),
+            pytest.param(Vector2(0, -2 * TANK_RADIUS + 1),
+                         lambda s, x, y: Armour(s._create_tank(1, Point(x, y)), s.world),
+                         id="armour_below"),
+            pytest.param(Vector2(2 * BULLET_RADIUS + 1, 0),
+                         lambda s, x, y: Missile(s._create_bullet(1, Point(x, y)), s.world,
+                                                 None), id="missile_to_the_right"),
+            pytest.param(Vector2(-2 * BULLET_RADIUS + 1, 0),
+                         lambda s, x, y: Missile(s._create_bullet(1, Point(x, y)), s.world,
+                                                 None), id="missile_to_the_left"),
+            pytest.param(Vector2(0, 2 * BULLET_RADIUS + 1),
+                         lambda s, x, y: Missile(s._create_bullet(1, Point(x, y)), s.world,
+                                                 None), id="missile_above"),
+            pytest.param(Vector2(0, -2 * BULLET_RADIUS + 1),
+                         lambda s, x, y: Missile(s._create_bullet(1, Point(x, y)), s.world,
+                                                 None), id="missile_below"),
     ))
     def test_non_overlap_is_accepted(self, offset_vector, other_func):
         other = other_func(self, offset_vector.x, offset_vector.y)
         assert not self.armour.collide(other)
 
     def test_vehicle_does_not_collide_with_self(self):
-        assert_that(self.armour.collide(self.armour), equal_to(False))
-        assert_that(self.missile.collide(self.missile), equal_to(False))
+        assert not self.armour.collide(self.armour)
+        assert not self.missile.collide(self.missile)
 
     def test_missile_does_not_collide_with_parent(self):
         self.missile.position = self.armour.position
-        assert_that(self.missile.collide(self.armour), equal_to(False))
+        assert not self.missile.collide(self.armour)
 
     def test_missile_does_not_collide_with_dead_tank(self):
         self.other.status = BotStatus.DEAD
         self.missile.position = self.other.position
-        assert_that(self.missile.collide(self.other), equal_to(False))
+        assert not self.missile.collide(self.other)
 
 
 class TestDeath(Shared):
@@ -365,16 +371,16 @@ class TestDeath(Shared):
     def test_death_is_not_sent_while_alive(self):
         self.tank.health = 10
         self.armour.inflict(5, self.armour)
-        assert_that(self.world.add_event.call_args_list, empty())
+        self.world.add_event.assert_not_called()
 
     def test_state_is_set_to_dead_after_death(self):
         self.tank.health = 5
         self.armour.inflict(5, self.armour)
-        assert_that(self.armour.status, equal_to(BotStatus.DEAD))
+        assert self.armour.status == BotStatus.DEAD
 
 
-def assert_that_vector_matches(actual, expected, matcher, reason=""):
-    assert_that(actual.angle(expected), matcher, reason)
+def angle_difference(a, b):
+    return a.angle(b)
 
 
 def random_ticks():

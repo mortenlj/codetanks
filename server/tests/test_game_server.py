@@ -3,7 +3,6 @@
 from datetime import datetime, timedelta
 
 import pytest
-from hamcrest import assert_that, equal_to, not_none, empty, close_to
 from mock import create_autospec, MagicMock, PropertyMock
 
 from ibidem.codetanks.domain.constants import PLAYER_COUNT
@@ -70,10 +69,10 @@ class TestBotRegistration(RegistrationSetup):
     def test_registering_bots_are_associated_with_channels(self):
         self.server._run_once()
         bot = self.server._bots[0]
-        assert_that(bot, not_none())
-        assert_that(bot.event_channel, not_none())
-        assert_that(bot.cmd_channel, not_none())
-        assert_that(bot.tank_id, equal_to(0))
+        assert bot is not None
+        assert bot.event_channel is not None
+        assert bot.cmd_channel is not None
+        assert bot.tank_id == 0
 
     def test_registering_bots_get_dedicated_channel_urls_and_game_info(self):
         self.server._run_once()
@@ -158,27 +157,27 @@ class TestGame(Shared):
             Command(CommandType.ROTATE, 1.5),
             Command(CommandType.AIM, -1.5)
     ))
-    def test_command_abort_if_busy_test(self, command_abort_if_busy_states, command):
+    def test_command_abort_if_busy(self, command_abort_if_busy_states, command):
         self.bot._tank.status = command_abort_if_busy_states
         self.send_on_mock_channel(self.bot.cmd_channel, command)
         self.server._run_once()
-        assert_that(getattr(self.bot._tank, CommandType._VALUES_TO_NAMES[command.type]).called, equal_to(False))
+        getattr(self.bot._tank, CommandType._VALUES_TO_NAMES[command.type]).assert_not_called()
         self.bot.cmd_channel.send.assert_called_once_with(CommandReply(CommandResult.BUSY))
 
     def test_game_started_after_fourth_bot(self):
         # One from setup, and another three here
         for i in range(PLAYER_COUNT - 1):
-            assert_that(self.server.started(), equal_to(False))
+            assert not self.server.started()
             self.server._handle_bot_registration(Registration(ClientType.BOT, Id("bot", 1)))
-        assert_that(self.server.started(), equal_to(True))
+        assert self.server.started()
 
     def test_update_not_called_before_game_started(self):
         self.server._run_once()
-        assert_that(self.world.update.call_args_list, empty())
+        self.world.update.assert_not_called()
 
     def test_game_does_not_end_when_only_one_bot_registered(self):
         self.world.number_of_live_bots = 1
-        assert_that(self.server.finished(), equal_to(False))
+        assert not self.server.finished()
 
 
 class TestStartedGame(Shared):
@@ -196,18 +195,18 @@ class TestStartedGame(Shared):
 
     def test_game_ends_when_only_one_bot_left(self):
         self.world.number_of_live_bots = 1
-        assert_that(self.server.finished(), equal_to(True))
+        assert self.server.finished()
 
     def test_game_ends_when_all_bots_are_dead(self):
         self.world.number_of_live_bots = 0
-        assert_that(self.server.finished(), equal_to(True))
+        assert self.server.finished()
 
     def test_loop_ends_after_victory_delay_when_finished(self):
         self.world.number_of_live_bots = 1
         start = datetime.now()
         self.server.run()
         end = datetime.now()
-        assert_that((end - start).total_seconds(), close_to(self.victory_delay.total_seconds(), 0.1))
+        assert (end - start).total_seconds() == pytest.approx(self.victory_delay.total_seconds(), abs=0.1)
 
     def test_new_bots_are_refused_when_game_started(self):
         self.server._handle_bot_registration(Registration(ClientType.BOT, Id("bot", 1)))
