@@ -3,6 +3,7 @@
 from itertools import chain
 from random import uniform
 
+import pytest
 from mock import create_autospec
 from hamcrest import assert_that, equal_to, less_than, greater_than, instance_of, close_to, is_not, empty
 from euclid import Point2, Vector2
@@ -229,9 +230,12 @@ class TestRotate(RotateAndAim):
     def _act(self, angle):
         self.armour.rotate(angle)
 
-    def test_rotation(self):
-        yield self._test, "anti-clockwise", 90, Vector2(0, 1)
-        yield self._test, "clockwise", -90, Vector2(0, -1)
+    @pytest.mark.parametrize("angle, target_vector", (
+            pytest.param(90, Vector2(0, 1), id="anti-clockwise"),
+            pytest.param(-90, Vector2(0, -1), id="clockwise"),
+    ))
+    def test_rotation(self, angle, target_vector):
+        self._test("", angle, target_vector)
 
 
 class TestAim(RotateAndAim):
@@ -254,9 +258,12 @@ class TestAim(RotateAndAim):
     def _act(self, angle):
         self.armour.aim(angle)
 
-    def test_aim(self):
-        yield self._test, "anti-clockwise", 90, Vector2(0, -1)
-        yield self._test, "clockwise", -90, Vector2(0, 1)
+    @pytest.mark.parametrize("angle, target_vector", (
+        pytest.param(90, Vector2(0, -1), id="anti-clockwise"),
+        pytest.param(-90, Vector2(0, 1), id="clockwise"),
+    ))
+    def test_aim(self, angle, target_vector):
+        self._test("", angle, target_vector)
 
 
 class TestFire(Shared):
@@ -281,42 +288,59 @@ class TestScan(Shared):
 
 
 class TestCollide(Shared):
-    def _collide_test(self, other, result):
-        assert_that(self.armour.collide(other), equal_to(result))
+    @pytest.fixture(params=(2*TANK_RADIUS, (2*TANK_RADIUS-1), TANK_RADIUS, 1))
+    def armour_modifier(self, request):
+        return request.param
 
-    def _point_generator(self, modifier):
-        yield Point(self.initial_x - modifier, self.initial_y)
-        yield Point(self.initial_x + modifier, self.initial_y)
-        yield Point(self.initial_x, self.initial_y - modifier)
-        yield Point(self.initial_x, self.initial_y + modifier)
+    @pytest.fixture(params=(2*BULLET_RADIUS, (2*BULLET_RADIUS-1), BULLET_RADIUS, 1))
+    def missile_modifier(self, request):
+        return request.param
 
-    def test_armour_overlap_with_armour_is_detected(self):
-        modifiers = (2*TANK_RADIUS, (2*TANK_RADIUS-1), TANK_RADIUS, 1)
-        for modifier in modifiers:
-            for pos in self._point_generator(modifier):
-                yield self._collide_test, Armour(self._create_tank(1, pos), self.world), True
-        yield self._collide_test, Armour(self._create_tank(1, Point(self.initial_x, self.initial_y)), self.world), True
+    @pytest.mark.parametrize("x_func, y_func", (
+            pytest.param(lambda s, m: s.initial_x - m, lambda s, m: s.initial_y, id="left_of"),
+            pytest.param(lambda s, m: s.initial_x + m, lambda s, m: s.initial_y, id="right_of"),
+            pytest.param(lambda s, m: s.initial_x, lambda s, m: s.initial_y - m, id="below"),
+            pytest.param(lambda s, m: s.initial_x, lambda s, m: s.initial_y + m, id="above"),
+            pytest.param(lambda s, m: s.initial_x, lambda s, m: s.initial_y, id="centered"),
+    ))
+    def test_armour_overlap_with_armour_is_detected(self, x_func, y_func, armour_modifier):
+        point = Point(x_func(self, armour_modifier), y_func(self, armour_modifier))
+        other = Armour(self._create_tank(1, point), self.world)
+        assert self.armour.collide(other)
 
-    def test_armour_overlap_with_missile_is_detected(self):
-        modifiers = (2*BULLET_RADIUS, (2*BULLET_RADIUS-1), BULLET_RADIUS, 1)
-        for modifier in modifiers:
-            for pos in self._point_generator(modifier):
-                yield self._collide_test, Missile(self._create_bullet(0, pos), self.world, None), True
-            yield self._collide_test, Missile(self._create_bullet(0, Point(self.initial_x, self.initial_y)), self.world, None), True
+    @pytest.mark.parametrize("x_func, y_func", (
+            pytest.param(lambda s, m: s.initial_x - m, lambda s, m: s.initial_y, id="left_of"),
+            pytest.param(lambda s, m: s.initial_x + m, lambda s, m: s.initial_y, id="right_of"),
+            pytest.param(lambda s, m: s.initial_x, lambda s, m: s.initial_y - m, id="below"),
+            pytest.param(lambda s, m: s.initial_x, lambda s, m: s.initial_y + m, id="above"),
+            pytest.param(lambda s, m: s.initial_x, lambda s, m: s.initial_y, id="centered"),
+    ))
+    def test_armour_overlap_with_missile_is_detected(self, x_func, y_func, missile_modifier):
+        point = Point(x_func(self, missile_modifier), y_func(self, missile_modifier))
+        other = Missile(self._create_bullet(0, point), self.world, None)
+        assert self.armour.collide(other)
 
-    def test_armour_non_overlap_is_accepted(self):
-        abs_modifiers = (2*TANK_RADIUS+1, 3*TANK_RADIUS)
-        modifiers = list(chain(abs_modifiers, (-1*m for m in abs_modifiers)))
-        for x in (self.initial_x + modifier for modifier in modifiers):
-            for y in (self.initial_y + modifier for modifier in modifiers):
-                yield self._collide_test, Armour(self._create_tank(1, Point(x, y)), self.world), False
-
-    def test_missile_non_overlap_is_accepted(self):
-        abs_modifiers = (TANK_RADIUS+BULLET_RADIUS+1, TANK_RADIUS+2*BULLET_RADIUS)
-        modifiers = list(chain(abs_modifiers, (-1*m for m in abs_modifiers)))
-        for x in (self.initial_x + modifier for modifier in modifiers):
-            for y in (self.initial_y + modifier for modifier in modifiers):
-                yield self._collide_test, Missile(self._create_bullet(0, Point(x, y)), self.world, None), False
+    @pytest.mark.parametrize("offset_vector, other_func", (
+        pytest.param(Vector2(2*TANK_RADIUS+1, 0), lambda s, x, y: Armour(s._create_tank(1, Point(x, y)), s.world),
+                     id="armour_to_the_right"),
+        pytest.param(Vector2(-2*TANK_RADIUS+1, 0), lambda s, x, y: Armour(s._create_tank(1, Point(x, y)), s.world),
+                     id="armour_to_the_left"),
+        pytest.param(Vector2(0, 2*TANK_RADIUS+1), lambda s, x, y: Armour(s._create_tank(1, Point(x, y)), s.world),
+                     id="armour_above"),
+        pytest.param(Vector2(0, -2*TANK_RADIUS+1), lambda s, x, y: Armour(s._create_tank(1, Point(x, y)), s.world),
+                     id="armour_below"),
+        pytest.param(Vector2(2*BULLET_RADIUS+1, 0), lambda s, x, y: Missile(s._create_bullet(1, Point(x, y)), s.world,
+                                                                            None), id="missile_to_the_right"),
+        pytest.param(Vector2(-2*BULLET_RADIUS+1, 0), lambda s, x, y: Missile(s._create_bullet(1, Point(x, y)), s.world,
+                                                                             None), id="missile_to_the_left"),
+        pytest.param(Vector2(0, 2*BULLET_RADIUS+1), lambda s, x, y: Missile(s._create_bullet(1, Point(x, y)), s.world,
+                                                                            None), id="missile_above"),
+        pytest.param(Vector2(0, -2*BULLET_RADIUS+1), lambda s, x, y: Missile(s._create_bullet(1, Point(x, y)), s.world,
+                                                                             None), id="missile_below"),
+    ))
+    def test_non_overlap_is_accepted(self, offset_vector, other_func):
+        other = other_func(self, offset_vector.x, offset_vector.y)
+        assert not self.armour.collide(other)
 
     def test_vehicle_does_not_collide_with_self(self):
         assert_that(self.armour.collide(self.armour), equal_to(False))
@@ -355,8 +379,3 @@ def assert_that_vector_matches(actual, expected, matcher, reason=""):
 
 def random_ticks():
     return int(uniform(5.0, 15.0))
-
-
-if __name__ == "__main__":
-    import nose
-    nose.main()

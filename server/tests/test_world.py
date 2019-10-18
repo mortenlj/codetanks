@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 
-from random import randint
-import math
 import logging
+import math
+from random import randint
 
+import pytest
 from euclid import Point2, Vector2, Ray2
-from hamcrest import assert_that, is_, equal_to, instance_of, has_key, has_item, close_to, has_length, empty
+from hamcrest import assert_that, is_, equal_to, instance_of, has_key, has_item, close_to
 from mock import create_autospec, patch
+
 from ibidem.codetanks.domain.constants import TANK_RADIUS
 from ibidem.codetanks.domain.ttypes import Arena, Id, Tank, BotStatus, Bullet, ScanResult, Death, Event
-
 from ibidem.codetanks.server.commands import Move
 from ibidem.codetanks.server.vehicle import Armour, Missile
 from ibidem.codetanks.server.world import World
@@ -44,26 +45,54 @@ class TestWorld(Shared):
 
 
 class TestValidPosition(Shared):
-    def _bounds_test(self, vehicle_class, entity, parent, position, is_valid):
+    @pytest.fixture(params=(
+            (Armour, create_autospec(Tank), None),
+            (Missile, create_autospec(Bullet), create_autospec(Armour))
+    ))
+    def vehicle(self, request):
+        return request.param
+
+    def _bounds_test(self, vehicle_class, entity, parent, position, is_outside_bounds):
         if parent:
             vehicle = vehicle_class(entity, self.world, parent)
         else:
             vehicle = vehicle_class(entity, self.world)
         vehicle.position = position
-        assert_that(self.world.is_collision(vehicle), equal_to(is_valid))
+        assert_that(self.world.is_collision(vehicle), equal_to(is_outside_bounds))
 
-    def test_bounds(self):
-        for cls, entity, parent in (Armour, create_autospec(Tank), None), (Missile, create_autospec(Bullet), create_autospec(Armour)):
-            for x in (cls.radius, self.width/2, self.width-cls.radius):
-                for y in (cls.radius, self.height/2, self.height-cls.radius):
-                    yield self._bounds_test, cls, entity, parent, Point2(x, y), False
-                for y in (-cls.radius, -1, 0, 1, self.height-1, self.height, self.height+1, self.height+cls.radius):
-                    yield self._bounds_test, cls, entity, parent, Point2(x, y), True
-            for x in (-cls.radius, -1, 0, 1, self.width-1, self.width, self.width+1, self.width+cls.radius):
-                for y in (-cls.radius, -1, 0, 1, self.height-1, self.height, self.height+1, self.height+cls.radius):
-                    yield self._bounds_test, cls, entity, parent, Point2(x, y), True
-                for y in (cls.radius, self.height/2, self.height-cls.radius):
-                    yield self._bounds_test, cls, entity, parent, Point2(x, y), True
+    @pytest.mark.parametrize("x_func, x_inside", (
+        pytest.param(lambda c, w: c.radius, True, id="x_left_inside"),
+        pytest.param(lambda c, w: w / 2, True, id="x_middle_inside"),
+        pytest.param(lambda c, w: w - c.radius, True, id="x_right_inside"),
+        pytest.param(lambda c, w: -c.radius, False, id="x_right_outside"),
+        pytest.param(lambda c, w: -1, False, id="x_right_just_outside"),
+        pytest.param(lambda c, w: 0, False, id="x_right_on_the_line"),
+        pytest.param(lambda c, w: 1, False, id="x_right_just_inside"),
+        pytest.param(lambda c, w: w - 1, False, id="x_left_just_inside"),
+        pytest.param(lambda c, w: w, False, id="x_left_on_the_line"),
+        pytest.param(lambda c, w: w + 1, False, id="x_left_just_outside"),
+        pytest.param(lambda c, w: w + c.radius, False, id="x_left_outside"),
+    ))
+    @pytest.mark.parametrize("y_func, y_inside", (
+        pytest.param(lambda c, h: c.radius, True, id="y_bottom_inside"),
+        pytest.param(lambda c, h: h / 2, True, id="y_middle_inside"),
+        pytest.param(lambda c, h: h - c.radius, True, id="y_top_inside"),
+        pytest.param(lambda c, h: -c.radius, False, id="y_bottom_outside"),
+        pytest.param(lambda c, h: -1, False, id="y_bottom_just_outside"),
+        pytest.param(lambda c, h: 0, False, id="y_bottom_on_the_line"),
+        pytest.param(lambda c, h: 1, False, id="y_bottom_just_inside"),
+        pytest.param(lambda c, h: h - 1, False, id="y_top_just_inside"),
+        pytest.param(lambda c, h: h, False, id="y_top_on_the_line"),
+        pytest.param(lambda c, h: h + 1, False, id="y_top_just_outside"),
+        pytest.param(lambda c, h: h + c.radius, False, id="y_top_outside"),
+    ))
+    def test_bounds(self, vehicle, x_func, x_inside, y_func, y_inside):
+        cls, entity, parent = vehicle
+        x = x_func(cls, self.width)
+        y = y_func(cls, self.height)
+        inside = x_inside and y_inside
+        position = Point2(x, y)
+        self._bounds_test(cls, entity, parent, position, not inside)
 
     def test_simple_tank_collision(self):
         tank0 = self.world.add_tank(self.bot_id, 0)
@@ -76,20 +105,20 @@ class TestValidPosition(Shared):
 class TestTankCreation(Shared):
     def test_tank_is_placed_inside_arena(self):
         return_values = []
-        return_values.extend([None]*4)
-        for x in -TANK_RADIUS, -1, 0, 1, self.width-1, self.width, self.width+1, self.width+TANK_RADIUS:
-            for y in -TANK_RADIUS, -1, 0, 1, self.height-1, self.height, self.height+1, self.height+TANK_RADIUS:
+        return_values.extend([1] * 4)
+        for x in -TANK_RADIUS, -1, 0, 1, self.width - 1, self.width, self.width + 1, self.width + TANK_RADIUS:
+            for y in -TANK_RADIUS, -1, 0, 1, self.height - 1, self.height, self.height + 1, self.height + TANK_RADIUS:
                 return_values.append(x)
                 return_values.append(y)
-        return_values.append(self.width/2)
-        return_values.append(self.height/2)
+        return_values.append(self.width / 2)
+        return_values.append(self.height / 2)
         with patch("ibidem.codetanks.server.world.randint", side_effect=_MyRandint(return_values)):
             vehicle = self.world.add_tank(self.bot_id, 0)
             tank = vehicle.entity
             assert_that(tank, instance_of(Tank))
             assert_that(self.world.is_collision(vehicle), equal_to(False), "%r has invalid position" % vehicle)
-            assert_that(tank.position.x, equal_to(self.width/2))
-            assert_that(tank.position.y, equal_to(self.height/2))
+            assert_that(tank.position.x, equal_to(self.width / 2))
+            assert_that(tank.position.y, equal_to(self.height / 2))
 
     def test_tank_has_sensible_values(self):
         tank = self.world.add_tank(self.bot_id, 0)
@@ -98,7 +127,7 @@ class TestTankCreation(Shared):
 
     def test_tank_has_valid_direction(self):
         return_values = [0, 0, 1, 0, 0, -1]
-        return_values.extend([None]*10)
+        return_values.extend([None] * 10)
         with patch("ibidem.codetanks.server.world.randint", side_effect=_MyRandint(return_values)):
             vehicle = self.world.add_tank(self.bot_id, 0)
             tank = vehicle.entity
@@ -154,7 +183,22 @@ class TestScanWorld(TankShared):
         self.armour.entity = create_autospec(Tank)
         self.armour.radius = TANK_RADIUS
 
-    def _scan_test(self, position, angle, theta, assert_func_name):
+    @pytest.fixture
+    def scan_params(self, request):
+        func = request.param
+        return getattr(self, func)()
+
+    @pytest.mark.parametrize("scan_params", (
+            "_scan_radius_close",
+            "_scan_radius_close",
+            "_scan_catches_tank_off_center",
+            "_scan_ignores_tank_at_center",
+    ), indirect=True)
+    def test_scan(self, scan_params):
+        position, angle, theta, assert_func_name = scan_params
+        self._test_scan(position, theta, assert_func_name)
+
+    def _test_scan(self, position, theta, assert_func_name):
         self.armour.position = position
         event = self.world.scan(self.ray, theta)
         assert_that(event, instance_of(Event))
@@ -162,48 +206,56 @@ class TestScanWorld(TankShared):
         assert_func(event.scan)
 
     def _assert_found_tank(self, scan_result):
-        assert_that(scan_result.tanks, has_length(1))
-        assert_that(scan_result.tanks[0], equal_to(self.armour.entity))
+        assert scan_result.tanks == [self.armour.entity]
 
     def _assert_no_tanks_found(self, scan_result):
-        assert_that(scan_result.tanks, empty())
+        assert scan_result.tanks == []
 
-    def test_scan(self):
-        base_vector = Vector2(1., 1.)
-        for angle in range(10, 91, 5):
-            theta = (math.pi / 180.) * angle
-            for vector, assert_func_name in (base_vector.rotate(theta/3.)*150, "_assert_found_tank"), \
-                                            (base_vector.rotate(theta/1.)*150, "_assert_no_tanks_found"):
-                position = self.ray.p + vector
-                yield self._scan_test, position, angle, theta, assert_func_name
+    def _scan_radius_close(self):
+        close_position = self.ray.p + Vector2(50., 50.)
+        theta = (math.pi / 2.)
+        return close_position, 90, theta, "_assert_found_tank"
 
-    def test_scan_catches_tank_off_center(self):
+    def _scan_radius_far(self):
+        far_position = self.ray.p + Vector2(250., 250.)
+        theta = (math.pi / 2.)
+        return far_position, 90, theta, "_assert_no_tanks_found"
+
+    def _scan_catches_tank_off_center(self):
         base_vector = Vector2(1., 1.)
         angle = 10
         theta = math.pi / 180. * angle
         position_vector = base_vector.rotate(theta) * 100
         position = self.ray.p + position_vector
-        yield self._scan_test, position, angle, theta, "_assert_found_tank"
+        return position, angle, theta, "_assert_found_tank"
 
-    def test_scan_radius(self):
-        close_position = self.ray.p + Vector2(50., 50.)
-        far_position = self.ray.p + Vector2(250., 250.)
-        theta = (math.pi / 2.)
-        yield self._scan_test, close_position, 90, theta, "_assert_found_tank"
-        yield self._scan_test, far_position, 90, theta, "_assert_no_tanks_found"
+    def _scan_ignores_tank_at_center(self):
+        return self.ray.p, 90, math.pi / 2., "_assert_no_tanks_found"
 
-    def test_scan_ignores_tank_at_center(self):
-        yield self._scan_test, self.ray.p, 90, math.pi / 2., "_assert_no_tanks_found"
+    @pytest.fixture(params=range(10, 91, 5))
+    def angle(self, request):
+        return request.param
 
-    def _radius_test(self, theta, factor):
+    @pytest.mark.parametrize("offset, assert_func_name", (
+            (3., "_assert_found_tank"),
+            (1., "_assert_no_tanks_found"),
+    ))
+    def test_scan_angles(self, angle, offset, assert_func_name):
+        base_vector = Vector2(1., 1.)
+        theta = (math.pi / 180.) * angle
+        vector = base_vector.rotate(theta / offset) * 150
+        position = self.ray.p + vector
+        self._test_scan(position, theta, assert_func_name)
+
+    @pytest.mark.parametrize("theta, factor", (
+            (math.pi, 0.0),
+            (math.pi / 2, 0.5),
+            (math.pi / 3, (2. / 3.)),
+            (0.0, 1.0),
+    ))
+    def test_radius_calculator(self, theta, factor):
         radius = self.world.arena.height * factor
         assert_that(self.world._calculate_scan_radius(theta), close_to(radius, 2.))
-
-    def test_radius_calculator(self):
-        yield self._radius_test, math.pi, 0.0
-        yield self._radius_test, math.pi/2, 0.5
-        yield self._radius_test, math.pi/3, (2./3.)
-        yield self._radius_test, 0.0, 1.0
 
 
 class BulletShared(Shared):
@@ -259,7 +311,3 @@ class _MyRandint(object):
             value = self.return_values.pop(0)
             return randint(*args, **kwargs) if value is None else value
         assert False, "Not enough return values"
-
-if __name__ == "__main__":
-    import nose
-    nose.main()

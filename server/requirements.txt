@@ -1,5 +1,2 @@
-setuptools
-pyzmq
-pinject
-Codetanks-Domain
+-e .
 -e hg+https://bitbucket.org/mortenlj/euclid#egg=euclid-ng

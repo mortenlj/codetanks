@@ -3,6 +3,8 @@
 build/
 dist/
 __pycache__
+.pytest_cache
+.eggs
 
 syntax: glob
 *.iml

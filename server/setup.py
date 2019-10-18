@@ -59,12 +59,12 @@ setup(
     ],
     namespace_packages=["ibidem", "ibidem.codetanks"],
     zip_safe=True,
-    test_suite="nose.collector",
     tests_require=[
-        "nose",
+        "pytest",
         "mock",
         "PyHamcrest",
     ],
+    setup_requires=["pytest-runner"],
 
     # Metadata
     author="Morten Lied Johansen",
