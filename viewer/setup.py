@@ -67,7 +67,7 @@ setup(
     author_email="mortenjo@ifi.uio.no",
     license="LGPL",
     keywords="ibidem codetanks",
-    url="https://bitbucket.org/mortenlj/codetanks",
+    url="https://github.com/mortenlj/codetanks",
 
     # Entry points
     entry_points={

@@ -1,2 +1,2 @@
 -e .
--e hg+https://bitbucket.org/mortenlj/euclid#egg=euclid-ng
+-e git+https://github.com/mortenlj/euclid#egg=euclid-ng

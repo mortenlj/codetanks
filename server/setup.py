@@ -55,7 +55,7 @@ setup(
         "setuptools",
         "pyzmq",
         "pinject",
-        # "-e hg+https://bitbucket.org/mortenlj/euclid#egg=euclid-ng", # TODO: Must be installed using pip?
+        # "-e git+https://github.com/mortenlj/euclid#egg=euclid-ng", # TODO: Must be installed using pip?
     ],
     namespace_packages=["ibidem", "ibidem.codetanks"],
     zip_safe=True,
@@ -70,7 +70,7 @@ setup(
     author_email="mortenjo@ifi.uio.no",
     license="LGPL",
     keywords="ibidem codetanks",
-    url="https://bitbucket.org/mortenlj/codetanks",
+    url="https://github.com/mortenlj/codetanks",
 
     # Entry points
     entry_points={
