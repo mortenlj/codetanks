@@ -55,6 +55,7 @@ setup(
         "setuptools",
         "pyzmq",
         "pinject",
+        "pygame",
         # "-e git+https://github.com/mortenlj/euclid#egg=euclid-ng", # TODO: Must be installed using pip?
     ],
     namespace_packages=["ibidem", "ibidem.codetanks"],
