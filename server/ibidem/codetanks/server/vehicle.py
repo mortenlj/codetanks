@@ -5,10 +5,10 @@ import logging
 import math
 
 from euclid import Point2, Vector2
-from ibidem.codetanks.domain.constants import TANK_SPEED, TANK_RADIUS, BULLET_SPEED, BULLET_RADIUS, BULLET_DAMAGE
+
 from ibidem.codetanks.domain.ttypes import Point, Death, BotStatus, Event
 from ibidem.codetanks.server.commands import Idle, Move, Rotate, Aim, Fire, Scan, Dead
-
+from ibidem.codetanks.server.constants import TANK_SPEED, TANK_RADIUS, BULLET_SPEED, BULLET_RADIUS, BULLET_DAMAGE
 
 LOG = logging.getLogger(__name__)
 

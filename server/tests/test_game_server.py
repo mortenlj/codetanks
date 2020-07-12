@@ -5,11 +5,12 @@ from datetime import datetime, timedelta
 import pytest
 from mock import create_autospec, MagicMock, PropertyMock
 
-from ibidem.codetanks.domain.constants import PLAYER_COUNT
 from ibidem.codetanks.domain.ttypes import Registration, GameData, ClientType, Id, RegistrationReply, Command, \
     CommandType, CommandReply, \
     CommandResult, BotStatus, ScanResult, Tank, Death, GameInfo, RegistrationResult, Event
 from ibidem.codetanks.server.com import Channel
+from ibidem.codetanks.server.constants import PLAYER_COUNT, MAX_HEALTH, BULLET_DAMAGE, TANK_SPEED, ROTATION, \
+    BULLET_SPEED, TANK_RADIUS, BULLET_RADIUS
 from ibidem.codetanks.server.game_server import GameServer
 from ibidem.codetanks.server.world import World
 
@@ -21,7 +22,7 @@ class Shared(object):
         self.viewer_channel = create_autospec(Channel)
 
         def channel_factory(x):
-            mock = create_autospec(Channel(x))
+            mock = create_autospec(Channel, instance=True)
             mock.ready.return_value = False
             return mock
 
@@ -210,5 +211,16 @@ class TestStartedGame(Shared):
 
     def test_new_bots_are_refused_when_game_started(self):
         self.server._handle_bot_registration(Registration(ClientType.BOT, Id("bot", 1)))
+        game_info = GameInfo(
+            self.world.arena,
+            MAX_HEALTH,
+            BULLET_DAMAGE,
+            PLAYER_COUNT,
+            TANK_SPEED,
+            ROTATION,
+            BULLET_SPEED,
+            TANK_RADIUS,
+            BULLET_RADIUS
+        )
         self.registration_channel.send.assert_called_with(
-            RegistrationReply(RegistrationResult.FAILURE, GameInfo(self.world.arena)))
+            RegistrationReply(RegistrationResult.FAILURE, game_info))

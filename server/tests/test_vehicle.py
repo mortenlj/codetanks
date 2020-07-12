@@ -6,9 +6,9 @@ import pytest
 from euclid import Point2, Vector2
 from mock import create_autospec
 
-from ibidem.codetanks.domain.constants import TANK_RADIUS, BULLET_RADIUS, MAX_HEALTH, BULLET_DAMAGE
 from ibidem.codetanks.domain.ttypes import Tank, Id, Point, BotStatus, Bullet, Arena, ScanResult, Death, Event
 from ibidem.codetanks.server.commands import Idle
+from ibidem.codetanks.server.constants import TANK_RADIUS, BULLET_RADIUS, MAX_HEALTH, BULLET_DAMAGE
 from ibidem.codetanks.server.vehicle import Armour, Missile
 from ibidem.codetanks.server.world import World
 
@@ -47,7 +47,9 @@ class Shared(object):
                     self.bot_id,
                     position,
                     to_point(self.initial_direction),
-                    to_point(self.initial_turret))
+                    to_point(self.initial_turret),
+                    MAX_HEALTH,
+                    BotStatus.IDLE)
 
     def _create_bullet(self, bullet_id=0, position=None):
         if position is None:

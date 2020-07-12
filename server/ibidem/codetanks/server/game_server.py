@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
-from datetime import datetime
 import logging
+from datetime import datetime
 
 import pygame
-from ibidem.codetanks.domain.constants import PLAYER_COUNT
-from ibidem.codetanks.domain.ttypes import GameInfo, RegistrationReply, ClientType, RegistrationResult, Event
 
+from ibidem.codetanks.domain.ttypes import GameInfo, RegistrationReply, ClientType, RegistrationResult, Event
 from ibidem.codetanks.server.bot import Bot
 from ibidem.codetanks.server.com import ChannelType
+from ibidem.codetanks.server.constants import PLAYER_COUNT, MAX_HEALTH, BULLET_DAMAGE, TANK_SPEED, ROTATION, \
+    BULLET_SPEED, TANK_RADIUS, BULLET_RADIUS
 
 LOG = logging.getLogger(__name__)
 
@@ -93,7 +94,17 @@ class GameServer(object):
             self.start()
 
     def build_game_info(self):
-        return GameInfo(self._world.arena)
+        return GameInfo(
+            self._world.arena,
+            MAX_HEALTH,
+            BULLET_DAMAGE,
+            PLAYER_COUNT,
+            TANK_SPEED,
+            ROTATION,
+            BULLET_SPEED,
+            TANK_RADIUS,
+            BULLET_RADIUS
+        )
 
 
 if __name__ == "__main__":

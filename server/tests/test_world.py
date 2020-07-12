@@ -9,9 +9,9 @@ import pytest
 from euclid import Point2, Vector2, Ray2
 from mock import create_autospec, patch
 
-from ibidem.codetanks.domain.constants import TANK_RADIUS
 from ibidem.codetanks.domain.ttypes import Arena, Id, Tank, BotStatus, Bullet, ScanResult, Death, Event
 from ibidem.codetanks.server.commands import Move
+from ibidem.codetanks.server.constants import TANK_RADIUS
 from ibidem.codetanks.server.vehicle import Armour, Missile
 from ibidem.codetanks.server.world import World
 

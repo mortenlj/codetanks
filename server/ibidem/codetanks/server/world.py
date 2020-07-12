@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 
-from random import randint
-import math
 import logging
+import math
 from collections import defaultdict
+from random import randint
 
 from euclid import LineSegment2, Circle
-from ibidem.codetanks.domain.ttypes import GameData, Arena, Tank, Point, Bullet, ScanResult, BotStatus, Event
 
+from ibidem.codetanks.domain.ttypes import GameData, Arena, Tank, Point, Bullet, ScanResult, BotStatus, Event
+from ibidem.codetanks.server.constants import MAX_HEALTH
 from ibidem.codetanks.server.debug_util import ScanPlot
 from ibidem.codetanks.server.vehicle import Armour, Missile
 
@@ -32,7 +33,9 @@ class World(object):
             bot_id,
             None,
             self._select_random_direction(),
-            self._select_random_direction()
+            self._select_random_direction(),
+            MAX_HEALTH,
+            BotStatus.IDLE
         ), self)
         self._set_valid_position(armour)
         self._tanks.append(armour)

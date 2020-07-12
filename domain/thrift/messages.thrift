@@ -1,15 +1,6 @@
 namespace py ibidem.codetanks.domain
 namespace java ibidem.codetanks.domain
 
-const byte MAX_HEALTH = 100;
-const byte BULLET_DAMAGE = 5;
-const byte PLAYER_COUNT = 4;
-const double TANK_SPEED = 0.1;
-const double ROTATION = 0.005;
-const double BULLET_SPEED = 0.2;
-const double TANK_RADIUS = 16.0;
-const double BULLET_RADIUS = 2.0
-
 enum ClientType {
     VIEWER,
     BOT
@@ -47,6 +38,14 @@ struct Arena {
 
 struct GameInfo {
     1: required Arena arena;
+    2: required byte max_health;
+    3: required byte bullet_damage;
+    4: required byte player_count;
+    5: required double tank_speed;
+    6: required double rotation;
+    7: required double bullet_speed;
+    8: required double tank_radius;
+    9: required double bullet_radius;
 }
 
 struct RegistrationReply {
@@ -74,8 +73,8 @@ struct Tank {
     3: required Point position;
     4: required Point direction;
     5: required Point turret;
-    6: required byte health = MAX_HEALTH;
-    7: required BotStatus status = BotStatus.IDLE;
+    6: required byte health;
+    7: required BotStatus status;
 }
 
 struct GameData {
