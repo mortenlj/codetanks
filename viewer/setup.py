@@ -57,7 +57,9 @@ setup(
     },
     include_package_data=True,
     install_requires=[
-        "pygame"
+        "pyzmq",
+        "pygame",
+        "thrift==0.9.1",
     ],
     namespace_packages=["ibidem", "ibidem.codetanks"],
     zip_safe=True,
