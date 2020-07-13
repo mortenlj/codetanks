@@ -32,6 +32,7 @@ class ServerProxy(object):
         self._update_socket.set(zmq.SUBSCRIBE, "")
         arena = reply.game_info.arena
         self.arena = pygame.Rect(0, 0, arena.width, arena.height)
+        self.player_count = reply.game_info.player_count
         event_url = reply.event_url
         print "Subscribing to %s" % event_url
         self._update_socket.connect(event_url)

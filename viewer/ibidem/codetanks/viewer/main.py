@@ -3,7 +3,6 @@
 
 import pygame
 
-from ibidem.codetanks.domain.constants import PLAYER_COUNT
 from ibidem.codetanks.viewer.server_proxy import ServerProxy
 from ibidem.codetanks.viewer.widgets import Arena, TankInfo
 
@@ -38,8 +37,8 @@ def initialize_main():
     return arena, screen, server
 
 
-def draw_tank_info_widgets(arena, screen, tank_infos):
-    for i in range(PLAYER_COUNT):
+def draw_tank_info_widgets(arena, screen, tank_infos, player_count):
+    for i in range(player_count):
         if i in tank_infos:
             tank_info = tank_infos[i]
             y = 80 * i + 16
@@ -80,7 +79,7 @@ def main():
         entities, tank_infos = update(server, tank_infos)
 
         draw_entities(arena, entities)
-        draw_tank_info_widgets(arena, screen, tank_infos)
+        draw_tank_info_widgets(arena, screen, tank_infos, server.player_count)
         draw_arena(arena, screen)
 
         pygame.display.flip()
