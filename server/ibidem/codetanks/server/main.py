@@ -46,9 +46,10 @@ def main():
     if args.debug:
         loglevel = logging.DEBUG
     logging.basicConfig(level=loglevel)
-    obj_graph = pinject.new_object_graph(binding_specs=[ObjectGraph(args.port, args.debug)])
+    obj_graph = pinject.new_object_graph(modules=None, binding_specs=[ObjectGraph(args.port, args.debug)])
     game_server = obj_graph.provide(GameServer)
     game_server.run()
+
 
 if __name__ == "__main__":
     main()
