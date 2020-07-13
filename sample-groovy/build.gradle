@@ -25,6 +25,9 @@ apply plugin: 'org.jruyi.thrift'
 group 'ibidem.codetanks'
 version = '0.1-SNAPSHOT'
 
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
 dependencies {
     compile (
             'org.codehaus.groovy:groovy-all:2.3.6',
@@ -50,7 +53,7 @@ sourceSets {
 compileThrift {
     sourceDir '../domain/thrift'
     outputDir generatedSourcesRoot
-    thriftExecutable 'thrift-0.9.1'
+    thriftExecutable '/usr/local/opt/thrift@0.9/bin/thrift'
 
     generator 'java', 'beans,hashcode'
 }
