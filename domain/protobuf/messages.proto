@@ -1,0 +1,131 @@
+syntax = "proto3";
+
+package ibidem.codetanks.domain;
+
+enum ClientType {
+    VIEWER = 0;
+    BOT = 1;
+}
+
+enum BotStatus {
+    IDLE = 0;
+    MOVING = 1;
+    ROTATING = 2;
+    AIMING = 3;
+    FIRING = 4;
+    SCANNING = 5;
+    DEAD = 6;
+}
+
+enum RegistrationResult {
+    SUCCESS = 0;
+    FAILURE = 1;
+}
+
+message Id {
+    string name = 1;
+    int32 version = 2;
+}
+
+message Registration {
+    ClientType client_type = 1;
+    Id id = 2;
+}
+
+message Arena {
+    int32 width = 1;
+    int32 height = 2;
+}
+
+message GameInfo {
+    Arena arena = 1;
+    bytes max_health = 2;
+    bytes bullet_damage = 3;
+    bytes player_count = 4;
+    double tank_speed = 5;
+    double rotation = 6;
+    double bullet_speed = 7;
+    double tank_radius = 8;
+    double bullet_radius = 9;
+}
+
+message RegistrationReply {
+    RegistrationResult result = 1;
+    GameInfo game_info = 2;
+    string event_url = 3;
+    string cmd_url = 4;
+    int32 id = 5;
+}
+
+message Point {
+    double x = 1;
+    double y = 2;
+}
+
+message Bullet {
+    int32 id = 1;
+    Point position = 2;
+    Point direction = 3;
+}
+
+message Tank {
+    int32 id = 1;
+    Id bot_id = 2;
+    Point position = 3;
+    Point direction = 4;
+    Point turret = 5;
+    int32 health = 6;
+    BotStatus status = 7;
+}
+
+message GameData {
+    repeated Bullet bullets = 1;
+    repeated Tank tanks = 2;
+}
+
+// ******
+// Events
+// ******
+
+message ScanResult {
+    repeated Tank tanks = 1;
+}
+
+message Death {
+    Tank victim = 1;
+    Tank perpetrator = 2;
+}
+
+message Event {
+    oneof event {
+        ScanResult scan = 1;
+        Death death = 2;
+    }
+}
+
+// ********
+// Commands
+// ********
+
+enum CommandResult {
+    BUSY = 0;
+    OK = 1;
+}
+
+message CommandReply {
+    CommandResult result = 1;
+    ScanResult scan = 2;
+}
+
+enum CommandType {
+    MOVE = 0;
+    ROTATE = 1;
+    AIM = 2;
+    FIRE = 3;
+    SCAN = 4;
+}
+
+message Command {
+    CommandType type = 1;
+    int32 value = 2;
+}
