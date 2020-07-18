@@ -38,9 +38,9 @@ struct Arena {
 
 struct GameInfo {
     1: required Arena arena;
-    2: required byte max_health;
-    3: required byte bullet_damage;
-    4: required byte player_count;
+    2: required i8 max_health;
+    3: required i8 bullet_damage;
+    4: required i8 player_count;
     5: required double tank_speed;
     6: required double rotation;
     7: required double bullet_speed;
@@ -73,7 +73,7 @@ struct Tank {
     3: required Point position;
     4: required Point direction;
     5: required Point turret;
-    6: required byte health;
+    6: required i8 health;
     7: required BotStatus status;
 }
 

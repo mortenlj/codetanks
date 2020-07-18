@@ -39,7 +39,7 @@ class ThriftBuild(Command):
         source = os.path.join(os.path.dirname(__file__), "..", "domain", "thrift", "messages.thrift")
         self.debug_print("Compiling thrift source %r" % source)
         subprocess.check_call(
-            [self.find_thrift(), "-verbose", "-out", ".", "--gen", "py:new_style,utf8strings,slots", source])
+            [self.find_thrift(), "-verbose", "-out", ".", "--gen", "py:slots", source])
 
 
 setup(
@@ -56,7 +56,7 @@ setup(
         "pyzmq",
         "pinject",
         "pygame",
-        "thrift==0.9.1",
+        "thrift==0.13.0",
         # "-e git+https://github.com/mortenlj/euclid#egg=euclid-ng", # TODO: Must be installed using pip?
     ],
     namespace_packages=["ibidem", "ibidem.codetanks"],
