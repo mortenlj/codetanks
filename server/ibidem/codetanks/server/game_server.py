@@ -54,7 +54,7 @@ class GameServer(object):
 
     def _run_once(self):
         received_messages = 0
-        for channel in self._handlers.keys():
+        for channel in list(self._handlers.keys()):
             if channel.ready():
                 self._handlers[channel](channel.recv())
                 received_messages += 1
@@ -64,7 +64,7 @@ class GameServer(object):
         if self.started():
             ticks = self.clock.tick(60)
             self._world.update(ticks)
-        for tank_id, events in self._world.get_events().iteritems():
+        for tank_id, events in self._world.get_events().items():
             bots = self._bots if tank_id is None else (self._bots[tank_id],)
             for event in events:
                 assert isinstance(event, Event), "%r is not an instance of Event" % event

@@ -53,7 +53,7 @@ class CliBot(Cmd):
         zmq_context = zmq.Context.instance()
         reply = self._register(server_url, zmq_context)
         if reply.result == RegistrationResult.FAILURE:
-            print "No room for more bots on server, exiting"
+            print("No room for more bots on server, exiting")
             self.cmdqueue.insert(0, "exit\n")
         else:
             self._init_sockets(reply, zmq_context)
@@ -69,19 +69,19 @@ class CliBot(Cmd):
         self._update_socket = zmq_context.socket(zmq.SUB)
         self._update_socket.set(zmq.SUBSCRIBE, "")
         event_url = reply.event_url
-        print "Subscribing to %s" % event_url
+        print("Subscribing to %s" % event_url)
         self._update_socket.connect(event_url)
         self._cmd_socket = zmq_context.socket(zmq.REQ)
         self._cmd_socket.connect(reply.cmd_url)
-        print "Connecting to %s" % reply.cmd_url
+        print("Connecting to %s" % reply.cmd_url)
 
     def _print_events(self):
         while self._update_socket.poll(10):
-            print deserialize(Event(), self._update_socket.recv())
+            print(deserialize(Event(), self._update_socket.recv()))
 
     def _print_result(self):
         reply = deserialize(CommandReply(), self._cmd_socket.recv())
-        print "OK" if reply.result == CommandResult.OK else "BUSY"
+        print("OK" if reply.result == CommandResult.OK else "BUSY")
         self._print_events()
 
     def emptyline(self):

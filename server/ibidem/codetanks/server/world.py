@@ -44,7 +44,7 @@ class World(object):
     def add_bullet(self, parent):
         position = Point(parent.position.x, parent.position.y)
         direction = Point(parent.turret.x, parent.turret.y)
-        bullet = Missile(Bullet(_bullet_generator.next(), position, direction), self, parent)
+        bullet = Missile(Bullet(next(_bullet_generator), position, direction), self, parent)
         self._bullets.append(bullet)
 
     def remove_bullet(self, missile):

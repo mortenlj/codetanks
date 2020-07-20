@@ -23,7 +23,7 @@ class Plot(object):
     magenta = (1., 0., 1.)
 
     def __init__(self, width, height):
-        self.plot_id = _debug_generator.next()
+        self.plot_id = next(_debug_generator)
         self._surface = SVGSurface("debug_plot-%05d.svg" % self.plot_id, width, height)
         self._ctx = Context(self._surface)
         self._ctx.set_source_rgb(0., 0., 0.)
