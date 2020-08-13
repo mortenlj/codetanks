@@ -114,27 +114,25 @@ class World(object):
         center_vector = ray.v
         target_line = LineSegment2(ray.p, tank.position)
         tank_circle = Circle(tank.position, float(tank.radius))
+        bounds = theta/2.
         if theta == 0.:
             left = right = center_line
         else:
-            left = LineSegment2(ray.p, center_vector.rotate(theta/2.), radius)
-            right = LineSegment2(ray.p, center_vector.rotate(-theta/2.), radius)
+            left = LineSegment2(ray.p, center_vector.rotate(bounds), radius)
+            right = LineSegment2(ray.p, center_vector.rotate(-bounds), radius)
         LOG.debug("Checking if %r is inside sector between %r and %r with radius %r", tank.position, left, right, radius)
         if self._debug:
             ScanPlot(self.arena.width, self.arena.height, left, right, center_line, radius, tank).plot()
+        if target_line.length > radius:
+            LOG.debug("Outside because %r is %r from center, which is more than radius %r", tank.position, target_line.length, radius)
+            return False
         for side in left, right:
             intersect = side.intersect(tank_circle)
             if intersect:
                 LOG.debug("Inside because tank intersects side vector (%r) at %r", side, intersect)
                 return True
-        if target_line.length > radius:
-            LOG.debug("Outside because %r is %r from center, which is more than radius %r", tank.position, target_line.length, radius)
-            return False
-        if not left.v.clockwise(target_line.v):
-            LOG.debug("Outside because %r is not clockwise of left vector (%r)", target_line.v, left)
-            return False
-        if right.v.clockwise(target_line.v):
-            LOG.debug("Outside because %r is clockwise of right vector (%r)", target_line.v, right)
+        if target_line.v.angle(center_line.v) > bounds:
+            LOG.debug("Outside because %r is further from the center line than %r", target_line.v,  bounds)
             return False
         LOG.debug("Inside sector")
         return True

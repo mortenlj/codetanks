@@ -73,17 +73,17 @@ class RotateAndAim(Idle):
                   self.rotation,
                   current,
                   self.target,
-                  self.target.angle(current),
+                  self.target.angle_oriented(current),
                   self.operation)
 
     def _set_rotation(self):
-        self.rotation = -ROTATION if self._get_current().clockwise(self.target) else ROTATION
+        self.rotation = -ROTATION if self._get_current().angle_oriented(self.target) > 0 else ROTATION
 
     def _set_operation(self):
         self.operation = operator.gt if self.rotation > 0.0 else operator.lt
 
     def _reached_target(self, direction):
-        angle = self.target.angle(direction)
+        angle = self.target.angle_oriented(direction)
         LOG.debug("Angle between %r and %r is %r", self.target, direction, angle)
         return self.operation(angle, 0.0)
 

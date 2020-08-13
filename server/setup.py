@@ -56,7 +56,7 @@ setup(
         "pinject",
         "pygame",
         "thrift==0.13.0",
-        # "-e git+https://github.com/mortenlj/euclid#egg=euclid-ng", # TODO: Must be installed using pip?
+        # "euclid3>0.0.1", # TODO: Must be installed using pip?
     ],
     namespace_packages=["ibidem", "ibidem.codetanks"],
     zip_safe=True,
