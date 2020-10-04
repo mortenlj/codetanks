@@ -10,7 +10,6 @@ from euclid import LineSegment2, Circle
 
 from ibidem.codetanks.domain.ttypes import GameData, Arena, Tank, Point, Bullet, ScanResult, BotStatus, Event
 from ibidem.codetanks.server.constants import MAX_HEALTH
-from ibidem.codetanks.server.debug_util import ScanPlot
 from ibidem.codetanks.server.vehicle import Armour, Missile
 
 LOG = logging.getLogger(__name__)
@@ -122,6 +121,7 @@ class World(object):
             right = LineSegment2(ray.p, center_vector.rotate(-bounds), radius)
         LOG.debug("Checking if %r is inside sector between %r and %r with radius %r", tank.position, left, right, radius)
         if self._debug:
+            from ibidem.codetanks.server.debug_util import ScanPlot
             ScanPlot(self.arena.width, self.arena.height, left, right, center_line, radius, tank).plot()
         if target_line.length > radius:
             LOG.debug("Outside because %r is %r from center, which is more than radius %r", tank.position, target_line.length, radius)

@@ -1,15 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
-from functools import wraps
-import shlex
+
 import argparse
 import inspect
+import logging
 from cmd import Cmd
+from functools import wraps
 
+import shlex
 import zmq
-from ibidem.codetanks.domain.ttypes import Registration, ClientType, Id, CommandResult, Command, CommandType, RegistrationResult, \
-    RegistrationReply, Event, CommandReply
 from thrift.TSerialization import serialize, deserialize
+
+from ibidem.codetanks.domain.ttypes import Registration, ClientType, Id, CommandResult, Command, CommandType, \
+    RegistrationResult, \
+    RegistrationReply, Event, CommandReply
+
+LOG = logging.getLogger(__name__)
 
 
 class NoExitArgumentParser(argparse.ArgumentParser):
@@ -33,6 +39,7 @@ def parse_args(func):
         assert None not in defaults, "You can't use None as an example value in %s" % name
         for name, value in zip(args, defaults):
             parser.add_argument(name, type=type(value))
+
     @wraps(func)
     def wrapper(self, line):
         try:
@@ -41,6 +48,7 @@ def parse_args(func):
             return func(self, *call_args)
         except NoExitArgumentParser.InvalidArguments:
             return False
+
     return wrapper
 
 
@@ -53,7 +61,7 @@ class CliBot(Cmd):
         zmq_context = zmq.Context.instance()
         reply = self._register(server_url, zmq_context)
         if reply.result == RegistrationResult.FAILURE:
-            print("No room for more bots on server, exiting")
+            LOG.info("No room for more bots on server, exiting")
             self.cmdqueue.insert(0, "exit\n")
         else:
             self._init_sockets(reply, zmq_context)
@@ -67,21 +75,21 @@ class CliBot(Cmd):
 
     def _init_sockets(self, reply, zmq_context):
         self._update_socket = zmq_context.socket(zmq.SUB)
-        self._update_socket.set(zmq.SUBSCRIBE, "")
+        self._update_socket.set(zmq.SUBSCRIBE, b"")
         event_url = reply.event_url
-        print("Subscribing to %s" % event_url)
+        LOG.info("Subscribing to %s", event_url)
         self._update_socket.connect(event_url)
         self._cmd_socket = zmq_context.socket(zmq.REQ)
         self._cmd_socket.connect(reply.cmd_url)
-        print("Connecting to %s" % reply.cmd_url)
+        LOG.info("Connecting to %s", reply.cmd_url)
 
     def _print_events(self):
         while self._update_socket.poll(10):
-            print(deserialize(Event(), self._update_socket.recv()))
+            LOG.info(deserialize(Event(), self._update_socket.recv()))
 
     def _print_result(self):
         reply = deserialize(CommandReply(), self._cmd_socket.recv())
-        print("OK" if reply.result == CommandResult.OK else "BUSY")
+        LOG.info("OK" if reply.result == CommandResult.OK else "BUSY")
         self._print_events()
 
     def emptyline(self):
@@ -90,6 +98,7 @@ class CliBot(Cmd):
     def do_exit(self, line):
         """Leave the bot-cli. Your bot will be left in whatever state it is in."""
         return True
+
     do_EOF = do_exit
 
     @parse_args
@@ -124,6 +133,7 @@ def main():
     args = parser.parse_args()
     bot = CliBot(args.server_url)
     bot.cmdloop()
+
 
 if __name__ == "__main__":
     main()

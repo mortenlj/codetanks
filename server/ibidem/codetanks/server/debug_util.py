@@ -2,7 +2,6 @@
 # -*- coding: utf-8
 import math
 
-from cairocffi import SVGSurface, Context
 
 
 def _id_generator():
@@ -23,6 +22,7 @@ class Plot(object):
     magenta = (1., 0., 1.)
 
     def __init__(self, width, height):
+        from cairocffi import SVGSurface, Context
         self.plot_id = next(_debug_generator)
         self._surface = SVGSurface("debug_plot-%05d.svg" % self.plot_id, width, height)
         self._ctx = Context(self._surface)

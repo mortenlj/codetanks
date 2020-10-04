@@ -58,8 +58,10 @@ setup(
     include_package_data=True,
     install_requires=[
         "pyzmq",
-        "pygame",
+        "pygame>=2.0.0.dev12",
         "thrift==0.13.0",
+        "fiaas-logging==0.1.1",
+        "six",
     ],
     namespace_packages=["ibidem", "ibidem.codetanks"],
     zip_safe=True,

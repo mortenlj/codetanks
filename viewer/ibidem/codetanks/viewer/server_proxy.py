@@ -1,15 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
-from Queue import Empty
+
+import logging
 import socket
+from queue import Empty
 from uuid import uuid4
 
 import pygame
 import zmq
-
-from ibidem.codetanks.viewer.entities import Tank, Bullet
-from ibidem.codetanks.domain.ttypes import Registration, ClientType, Id, BotStatus, RegistrationReply, Event, GameData
 from thrift.TSerialization import serialize, deserialize
+
+from ibidem.codetanks.domain.ttypes import Registration, ClientType, Id, BotStatus, RegistrationReply, GameData
+from ibidem.codetanks.viewer.entities import Tank, Bullet
+
+LOG = logging.getLogger(__name__)
 
 
 class ServerProxy(object):
@@ -18,6 +22,7 @@ class ServerProxy(object):
     Also responsible for "faking it" if the game server hasn't sent an
     update in time.
     """
+
     def __init__(self, server_url):
         """Initialize a new server proxy
 
@@ -26,15 +31,16 @@ class ServerProxy(object):
         zmq_context = zmq.Context.instance()
         registration_socket = zmq_context.socket(zmq.REQ)
         registration_socket.connect(server_url)
-        registration_socket.send(serialize(Registration(ClientType.VIEWER, Id("viewer:%s:%s" % (socket.gethostname(), uuid4()), 1))))
+        registration_socket.send(
+            serialize(Registration(ClientType.VIEWER, Id("viewer:%s:%s" % (socket.gethostname(), uuid4()), 1))))
         reply = deserialize(RegistrationReply(), registration_socket.recv())
         self._update_socket = zmq_context.socket(zmq.SUB)
-        self._update_socket.set(zmq.SUBSCRIBE, "")
+        self._update_socket.set(zmq.SUBSCRIBE, b"")
         arena = reply.game_info.arena
         self.arena = pygame.Rect(0, 0, arena.width, arena.height)
         self.player_count = reply.game_info.player_count
         event_url = reply.event_url
-        print "Subscribing to %s" % event_url
+        LOG.info("Subscribing to %s", event_url)
         self._update_socket.connect(event_url)
         self.entities = pygame.sprite.LayeredUpdates()
         self.tanks = pygame.sprite.Group()

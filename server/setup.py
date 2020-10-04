@@ -56,6 +56,7 @@ setup(
         "pinject",
         "pygame",
         "thrift==0.13.0",
+        "fiaas-logging==0.1.1",
         # "euclid3>0.0.1", # TODO: Must be installed using pip?
     ],
     namespace_packages=["ibidem", "ibidem.codetanks"],

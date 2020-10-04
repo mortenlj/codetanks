@@ -2,12 +2,15 @@
 # -*- coding: utf-8
 
 import pygame
+import logging
 
 from ibidem.codetanks.viewer.server_proxy import ServerProxy
 from ibidem.codetanks.viewer.widgets import Arena, TankInfo
+from fiaas_logging import init_logging
 
 
 BG_COLOR = 20, 20, 20
+LOG = logging.getLogger(__name__)
 
 
 def initialize_and_display_splash():
@@ -22,6 +25,7 @@ def initialize_and_display_splash():
     textRect.topleft = (x, y)
     screen.blit(text, textRect)
     pygame.display.flip()
+    LOG.info("Display initialized")
 
 
 def initialize_main():
@@ -34,6 +38,7 @@ def initialize_main():
     screen.fill(BG_COLOR)
     arena.draw(screen, (0, 0))
     pygame.display.flip()
+    LOG.info("Arena created")
     return arena, screen, server
 
 
@@ -66,6 +71,7 @@ def update(server, tank_infos):
 
 
 def main():
+    init_logging()
     initialize_and_display_splash()
     arena, screen, server = initialize_main()
     tank_infos = {}
@@ -73,11 +79,11 @@ def main():
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                LOG.info("Time to go! Bye, Bye!")
                 pygame.quit()
                 return
 
         entities, tank_infos = update(server, tank_infos)
-
         draw_entities(arena, entities)
         draw_tank_info_widgets(arena, screen, tank_infos, server.player_count)
         draw_arena(arena, screen)

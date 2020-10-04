@@ -64,7 +64,7 @@ class TankInfo(object):
         self._draw_gradient(health_bar, end_x)
 
     def _draw_health_number(self):
-        health = self.font.render(unicode(self.tank.health), True, self.foreground_color, self.background_color)
+        health = self.font.render(str(self.tank.health), True, self.foreground_color, self.background_color)
         self.surface.blit(health, (136, 32))
 
     def _draw_tank(self):

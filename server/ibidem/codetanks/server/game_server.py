@@ -72,7 +72,7 @@ class GameServer(object):
                     bot.event_channel.send(event)
 
     def _handle_registration(self, registration):
-        LOG.debug("GameServer received registration: %r", registration)
+        LOG.info("GameServer received registration: %r", registration)
         if registration.client_type == ClientType.BOT:
             self._handle_bot_registration(registration)
         else:
