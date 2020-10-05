@@ -26,7 +26,7 @@ class Bot(object):
             LOG.debug("Calling %s(%s) for bot %r", name, ", ".join(repr(x) for x in params), self)
             func = getattr(self._tank, name)
             func(*params)
-            self.cmd_channel.send(CommandReply(CommandResult.OK))
+            self.cmd_channel.send(CommandReply(CommandResult.ACCEPTED))
         LOG.debug("Status for %r after command is %r", self, self._tank.status)
 
     def __repr__(self):

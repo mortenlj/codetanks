@@ -86,6 +86,12 @@ struct GameData {
 // Events
 // ******
 
+enum CommandResult {
+    BUSY,
+    COMPLETED,
+    ACCEPTED
+}
+
 struct ScanResult {
     1: required list<Tank> tanks = [];
 }
@@ -98,20 +104,15 @@ struct Death {
 union Event {
     1: ScanResult scan;
     2: Death death;
+    3: CommandResult result;
 }
 
 // ********
 // Commands
 // ********
 
-enum CommandResult {
-    BUSY,
-    OK
-}
-
 struct CommandReply {
     1: required CommandResult result;
-    2: optional ScanResult scan;
 }
 
 enum CommandType {

@@ -6,7 +6,7 @@ import math
 
 from euclid import Point2, Vector2
 
-from ibidem.codetanks.domain.ttypes import Point, Death, BotStatus, Event
+from ibidem.codetanks.domain.ttypes import Point, Death, BotStatus, Event, CommandResult
 from ibidem.codetanks.server.commands import Idle, Move, Rotate, Aim, Fire, Scan, Dead
 from ibidem.codetanks.server.constants import TANK_SPEED, TANK_RADIUS, BULLET_SPEED, BULLET_RADIUS, BULLET_DAMAGE
 
@@ -40,6 +40,11 @@ class Vehicle(object):
         should_end = self._command.update(ticks)
         if should_end:
             self._command = Idle(self)
+            if self.is_tank():
+                self._world.add_event(self.entity.id, Event(result=CommandResult.COMPLETED))
+
+    def is_tank(self):
+        return False
 
     @property
     def position(self):
@@ -106,6 +111,9 @@ class Armour(Vehicle):
         new = self.turret.rotate(theta)
         new.normalize()
         return new
+
+    def is_tank(self):
+        return True
 
     ###################################
     # Commands

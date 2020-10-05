@@ -89,7 +89,7 @@ class CliBot(Cmd):
 
     def _print_result(self):
         reply = deserialize(CommandReply(), self._cmd_socket.recv())
-        LOG.info("OK" if reply.result == CommandResult.OK else "BUSY")
+        LOG.info("ACCEPTED" if reply.result == CommandResult.ACCEPTED else "BUSY")
         self._print_events()
 
     def emptyline(self):
@@ -128,9 +128,11 @@ class CliBot(Cmd):
 
 
 def main():
+    import sys
     parser = argparse.ArgumentParser()
     parser.add_argument("server_url")
     args = parser.parse_args()
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     bot = CliBot(args.server_url)
     bot.cmdloop()
 
