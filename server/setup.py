@@ -12,37 +12,6 @@ from datetime import datetime
 from setuptools import setup
 
 
-class ThriftBuild(Command):
-    description = "Compile thrift sources"
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def find_thrift(self):
-        if 'THRIFT' in os.environ and os.path.exists(os.environ['THRIFT']):
-            thrift = os.environ['THRIFT']
-        else:
-            thrift = find_executable('thrift')
-
-        if thrift is None:
-            sys.stderr.write('thrift not found. Is thrift-compiler installed? \n'
-                             'Alternatively, you can point the THRIFT environment variable at a local version.')
-            sys.exit(1)
-        self.debug_print("Thrift compiler found: %s" % thrift)
-        return thrift
-
-    def run(self):
-        self.announce("Generating thrift code")
-        source = os.path.join(os.path.dirname(__file__), "..", "domain", "thrift", "messages.thrift")
-        self.debug_print("Compiling thrift source %r" % source)
-        subprocess.check_call(
-            [self.find_thrift(), "-verbose", "-out", ".", "--gen", "py:slots", source])
-
-
 class ProtoBuild(Command):
     description = "Compile protobuf sources"
     user_options = []
@@ -104,8 +73,8 @@ setup(
         "pyzmq",
         "pinject",
         "pygame",
-        "thrift==0.13.0",
         "fiaas-logging==0.1.1",
+        "protobuf==3.13.0",
         # "euclid3>0.0.1", # TODO: Must be installed using pip?
     ],
     namespace_packages=["ibidem", "ibidem.codetanks"],
@@ -131,7 +100,6 @@ setup(
         ],
     },
     cmdclass={
-        "build_thrift": ThriftBuild,
         "build_proto": ProtoBuild,
     }
 )

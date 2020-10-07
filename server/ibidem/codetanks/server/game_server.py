@@ -5,7 +5,7 @@ from datetime import datetime
 
 import pygame
 
-from ibidem.codetanks.domain.ttypes import GameInfo, RegistrationReply, ClientType, RegistrationResult, Event
+from ibidem.codetanks.domain.messages_pb2 import GameInfo, RegistrationReply, ClientType, RegistrationResult, Event
 from ibidem.codetanks.server.bot import Bot
 from ibidem.codetanks.server.com import ChannelType
 from ibidem.codetanks.server.constants import PLAYER_COUNT, MAX_HEALTH, BULLET_DAMAGE, TANK_SPEED, ROTATION, \
@@ -76,11 +76,18 @@ class GameServer(object):
         if registration.client_type == ClientType.BOT:
             self._handle_bot_registration(registration)
         else:
-            self._registration_channel.send(RegistrationReply(RegistrationResult.SUCCESS, self.build_game_info(), self._viewer_channel.url))
+            self._registration_channel.send(RegistrationReply(
+                result=RegistrationResult.SUCCESS,
+                game_info=self.build_game_info(),
+                event_url=self._viewer_channel.url
+            ))
 
     def _handle_bot_registration(self, registration):
         if self.started():
-            self._registration_channel.send(RegistrationReply(RegistrationResult.FAILURE, self.build_game_info()))
+            self._registration_channel.send(RegistrationReply(
+                result=RegistrationResult.FAILURE,
+                game_info=self.build_game_info()
+            ))
             return
         event_channel = self._channel_factory(ChannelType.PUBLISH)
         cmd_channel = self._channel_factory(ChannelType.REPLY)
@@ -89,21 +96,28 @@ class GameServer(object):
         bot = Bot(registration.id, tank_id, event_channel, cmd_channel, tank)
         self._bots.append(bot)
         self._handlers[bot.cmd_channel] = bot.handle_command
-        self._registration_channel.send(RegistrationReply(RegistrationResult.SUCCESS, self.build_game_info(), event_channel.url, cmd_channel.url, tank_id))
+        self._registration_channel.send(
+            RegistrationReply(
+                result=RegistrationResult.SUCCESS,
+                game_info=self.build_game_info(),
+                event_url=event_channel.url,
+                cmd_url=cmd_channel.url,
+                id=tank_id
+            ))
         if len(self._bots) == PLAYER_COUNT:
             self.start()
 
     def build_game_info(self):
         return GameInfo(
-            self._world.arena,
-            MAX_HEALTH,
-            BULLET_DAMAGE,
-            PLAYER_COUNT,
-            TANK_SPEED,
-            ROTATION,
-            BULLET_SPEED,
-            TANK_RADIUS,
-            BULLET_RADIUS
+            arena=self._world.arena,
+            max_health=MAX_HEALTH,
+            bullet_damage=BULLET_DAMAGE,
+            player_count=PLAYER_COUNT,
+            tank_speed=TANK_SPEED,
+            rotation=ROTATION,
+            bullet_speed=BULLET_SPEED,
+            tank_radius=TANK_RADIUS,
+            bullet_radius=BULLET_RADIUS
         )
 
 

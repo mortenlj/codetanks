@@ -9,7 +9,7 @@ import pytest
 from euclid import Point2, Vector2, Ray2
 from mock import create_autospec, patch
 
-from ibidem.codetanks.domain.ttypes import Arena, Id, Tank, BotStatus, Bullet, ScanResult, Death, Event
+from ibidem.codetanks.domain.messages_pb2 import Arena, Id, Tank, BotStatus, Bullet, ScanResult, Death, Event, Point
 from ibidem.codetanks.server.commands import Move
 from ibidem.codetanks.server.constants import TANK_RADIUS
 from ibidem.codetanks.server.vehicle import Armour, Missile
@@ -22,7 +22,7 @@ DELTA = 0.000001
 class Shared(object):
     width = 500
     height = 500
-    bot_id = Id("bot", 1)
+    bot_id = Id(name="bot", version=1)
 
     def setup(self):
         self.world = World(self.width, self.height, False)
@@ -39,24 +39,25 @@ class TestWorld(Shared):
         assert self.world.arena.height == self.height
 
     def test_gamedata_is_reflected_in_attributes(self):
-        assert self.world.bullets == self.world.gamedata.bullets
-        assert self.world.tanks == self.world.gamedata.tanks
+        assert self.world.bullets == list(self.world.gamedata.bullets)
+        assert self.world.tanks == list(self.world.gamedata.tanks)
 
 
 class TestValidPosition(Shared):
     @pytest.fixture(params=(
-            (Armour, create_autospec(Tank), None),
-            (Missile, create_autospec(Bullet), create_autospec(Armour))
+            (Armour, Tank(), None),
+            (Missile, Bullet(), create_autospec(Armour))
     ))
     def vehicle(self, request):
         return request.param
 
     def _bounds_test(self, vehicle_class, entity, parent, position, is_outside_bounds):
+        entity.position.CopyFrom(Point(x=position.x, y=position.y))
+        entity.direction.CopyFrom(Point(x=1, y=1))
         if parent:
             vehicle = vehicle_class(entity, self.world, parent)
         else:
             vehicle = vehicle_class(entity, self.world)
-        vehicle.position = position
         assert self.world.is_collision(vehicle) is is_outside_bounds
 
     @pytest.mark.parametrize("x_func, x_inside", (
@@ -160,14 +161,14 @@ class TestTankMovement(TankShared):
 
 class TestTankEvents(TankShared):
     def test_events_gathered(self):
-        event = Event(scan=ScanResult([]))
+        event = Event(scan=ScanResult(tanks=[]))
         self.world.add_event(self.tank_id, event)
         event_map = self.world.get_events()
         assert self.tank_id in event_map.keys()
         assert event in event_map[self.tank_id]
 
     def test_events_to_none_are_gathered(self):
-        event = Event(death=Death(create_autospec(Tank), create_autospec(Tank)))
+        event = Event(death=Death(victim=Tank(), perpetrator=Tank()))
         self.world.add_event(None, event)
         event_map = self.world.get_events()
         assert None in event_map.keys()
@@ -179,7 +180,7 @@ class TestScanWorld(TankShared):
 
     def setup(self):
         super(TestScanWorld, self).setup()
-        self.armour.entity = create_autospec(Tank)
+        self.armour.entity = Tank()
         self.armour.radius = TANK_RADIUS
 
     @pytest.fixture
@@ -205,10 +206,10 @@ class TestScanWorld(TankShared):
         assert_func(event.scan)
 
     def _assert_found_tank(self, scan_result):
-        assert scan_result.tanks == [self.armour.entity]
+        assert list(scan_result.tanks) == [self.armour.entity]
 
     def _assert_no_tanks_found(self, scan_result):
-        assert scan_result.tanks == []
+        assert list(scan_result.tanks) == []
 
     def _scan_radius_close(self):
         close_position = self.ray.p + Vector2(50., 50.)

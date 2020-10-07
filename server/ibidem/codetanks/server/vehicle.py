@@ -6,7 +6,7 @@ import math
 
 from euclid import Point2, Vector2
 
-from ibidem.codetanks.domain.ttypes import Point, Death, BotStatus, Event, CommandResult
+from ibidem.codetanks.domain.messages_pb2 import Point, Death, BotStatus, Event, CommandResult
 from ibidem.codetanks.server.commands import Idle, Move, Rotate, Aim, Fire, Scan, Dead
 from ibidem.codetanks.server.constants import TANK_SPEED, TANK_RADIUS, BULLET_SPEED, BULLET_RADIUS, BULLET_DAMAGE
 
@@ -52,7 +52,7 @@ class Vehicle(object):
 
     @position.setter
     def position(self, value):
-        self.entity.position = Point(value.x, value.y)
+        self.entity.position.CopyFrom(Point(x=value.x, y=value.y))
 
     @property
     def direction(self):
@@ -61,7 +61,7 @@ class Vehicle(object):
     @direction.setter
     def direction(self, value):
         value.normalize()
-        self.entity.direction = Point(value.x, value.y)
+        self.entity.direction.CopyFrom(Point(x=value.x, y=value.y))
 
 
 class Armour(Vehicle):
@@ -74,7 +74,7 @@ class Armour(Vehicle):
     @turret.setter
     def turret(self, value):
         value.normalize()
-        self.entity.turret = Point(value.x, value.y)
+        self.entity.turret.CopyFrom(Point(x=value.x, y=value.y))
 
     @property
     def status(self):
@@ -96,8 +96,8 @@ class Armour(Vehicle):
         self.entity.health -= damage
         LOG.debug("%r has received %d in damage from %r", self, damage, perpetrator)
         if self.health <= 0:
-            self._world.add_event(None, Event(death=Death(self.entity, perpetrator.entity)))
             self._command = Dead(self)
+            self._world.add_event(None, Event(death=Death(victim=self.entity, perpetrator=perpetrator.entity)))
 
     def is_collision(self):
         return self._world.is_collision(self)

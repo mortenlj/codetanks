@@ -39,9 +39,9 @@ message Arena {
 
 message GameInfo {
     Arena arena = 1;
-    bytes max_health = 2;
-    bytes bullet_damage = 3;
-    bytes player_count = 4;
+    int32 max_health = 2;
+    int32 bullet_damage = 3;
+    int32 player_count = 4;
     double tank_speed = 5;
     double rotation = 6;
     double bullet_speed = 7;
@@ -87,6 +87,12 @@ message GameData {
 // Events
 // ******
 
+enum CommandResult {
+    BUSY = 0;
+    COMPLETED = 1;
+    ACCEPTED = 2;
+}
+
 message ScanResult {
     repeated Tank tanks = 1;
 }
@@ -100,6 +106,7 @@ message Event {
     oneof event {
         ScanResult scan = 1;
         Death death = 2;
+        CommandResult result = 3;
     }
 }
 
@@ -107,14 +114,8 @@ message Event {
 // Commands
 // ********
 
-enum CommandResult {
-    BUSY = 0;
-    OK = 1;
-}
-
 message CommandReply {
     CommandResult result = 1;
-    ScanResult scan = 2;
 }
 
 enum CommandType {
@@ -127,5 +128,7 @@ enum CommandType {
 
 message Command {
     CommandType type = 1;
-    int32 value = 2;
+    oneof optional_value {
+        int32 value = 2;
+    }
 }

@@ -4,16 +4,16 @@
 import argparse
 import inspect
 import logging
+import shlex
 from cmd import Cmd
 from functools import wraps
 
-import shlex
 import zmq
-from thrift.TSerialization import serialize, deserialize
 
-from ibidem.codetanks.domain.ttypes import Registration, ClientType, Id, CommandResult, Command, CommandType, \
+from ibidem.codetanks.domain.messages_pb2 import Registration, ClientType, Id, CommandResult, Command, CommandType, \
     RegistrationResult, \
     RegistrationReply, Event, CommandReply
+from ibidem.codetanks.server.com import serialize, deserialize
 
 LOG = logging.getLogger(__name__)
 
@@ -69,8 +69,8 @@ class CliBot(Cmd):
     def _register(self, server_url, zmq_context):
         registration_socket = zmq_context.socket(zmq.REQ)
         registration_socket.connect(server_url)
-        registration_socket.send(serialize(Registration(ClientType.BOT, Id("clibot", 1))))
-        reply = deserialize(RegistrationReply(), registration_socket.recv())
+        registration_socket.send(serialize(Registration(client_type=ClientType.BOT, id=Id(name="clibot", version=1))))
+        reply = deserialize(RegistrationReply, registration_socket.recv())
         return reply
 
     def _init_sockets(self, reply, zmq_context):
@@ -85,10 +85,10 @@ class CliBot(Cmd):
 
     def _print_events(self):
         while self._update_socket.poll(10):
-            LOG.info(deserialize(Event(), self._update_socket.recv()))
+            LOG.info(deserialize(Event, self._update_socket.recv()))
 
     def _print_result(self):
-        reply = deserialize(CommandReply(), self._cmd_socket.recv())
+        reply = deserialize(CommandReply, self._cmd_socket.recv())
         LOG.info("ACCEPTED" if reply.result == CommandResult.ACCEPTED else "BUSY")
         self._print_events()
 
@@ -103,27 +103,27 @@ class CliBot(Cmd):
 
     @parse_args
     def do_move(self, distance=10):
-        self._cmd_socket.send(serialize(Command(CommandType.MOVE, distance)))
+        self._cmd_socket.send(serialize(Command(type=CommandType.MOVE, value=distance)))
         self._print_result()
 
     @parse_args
     def do_rotate(self, angle=10):
-        self._cmd_socket.send(serialize(Command(CommandType.ROTATE, angle)))
+        self._cmd_socket.send(serialize(Command(type=CommandType.ROTATE, value=angle)))
         self._print_result()
 
     @parse_args
     def do_aim(self, angle=10):
-        self._cmd_socket.send(serialize(Command(CommandType.AIM, angle)))
+        self._cmd_socket.send(serialize(Command(type=CommandType.AIM, value=angle)))
         self._print_result()
 
     @parse_args
     def do_fire(self):
-        self._cmd_socket.send(serialize(Command(CommandType.FIRE)))
+        self._cmd_socket.send(serialize(Command(type=CommandType.FIRE)))
         self._print_result()
 
     @parse_args
     def do_scan(self, angle=10):
-        self._cmd_socket.send(serialize(Command(CommandType.SCAN, angle)))
+        self._cmd_socket.send(serialize(Command(type=CommandType.SCAN, value=angle)))
         self._print_result()
 
 

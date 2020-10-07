@@ -3,7 +3,7 @@
 
 import logging
 
-from ibidem.codetanks.domain.ttypes import CommandResult, CommandReply, BotStatus, CommandType
+from ibidem.codetanks.domain.messages_pb2 import CommandResult, CommandReply, BotStatus, CommandType
 
 LOG = logging.getLogger(__name__)
 
@@ -19,14 +19,14 @@ class Bot(object):
         LOG.debug("Handling command %r for bot %r", command, self)
         LOG.debug("Current status for %r is %r", self, self._tank.status)
         if self._tank.status != BotStatus.IDLE:
-            self.cmd_channel.send(CommandReply(CommandResult.BUSY))
+            self.cmd_channel.send(CommandReply(result=CommandResult.BUSY))
         else:
-            name = CommandType._VALUES_TO_NAMES[command.type].lower()
-            params = () if command.value is None else (command.value,)
+            name = CommandType.Name(command.type).lower()
+            params = (command.value,) if command.HasField("value") else ()
             LOG.debug("Calling %s(%s) for bot %r", name, ", ".join(repr(x) for x in params), self)
             func = getattr(self._tank, name)
             func(*params)
-            self.cmd_channel.send(CommandReply(CommandResult.ACCEPTED))
+            self.cmd_channel.send(CommandReply(result=CommandResult.ACCEPTED))
         LOG.debug("Status for %r after command is %r", self, self._tank.status)
 
     def __repr__(self):
