@@ -4,7 +4,7 @@
 import pkg_resources
 import pygame
 
-from ibidem.codetanks.domain.ttypes import BotStatus
+from ibidem.codetanks.domain.messages_pb2 import BotStatus
 from ibidem.codetanks.viewer.vec2d import vec2d
 
 
