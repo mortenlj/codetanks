@@ -1,20 +1,20 @@
 package ibidem.codetanks.sample.groovy
+
+import com.google.protobuf.Descriptors
+import com.google.protobuf.Message
 import groovy.util.logging.Log4j2
-import ibidem.codetanks.domain.ClientType
-import ibidem.codetanks.domain.Command
-import ibidem.codetanks.domain.CommandReply
-import ibidem.codetanks.domain.CommandType
-import ibidem.codetanks.domain.Event
-import ibidem.codetanks.domain.GameInfo
-import ibidem.codetanks.domain.Id
-import ibidem.codetanks.domain.Registration
-import ibidem.codetanks.domain.RegistrationReply
-import ibidem.codetanks.domain.RegistrationResult
-import org.apache.thrift.TBase
-import org.apache.thrift.protocol.TBinaryProtocol
-import org.apache.thrift.protocol.TProtocol
-import org.apache.thrift.transport.TIOStreamTransport
-import org.apache.thrift.transport.TMemoryInputTransport
+import ibidem.codetanks.domain.Messages
+import ibidem.codetanks.domain.Messages.ClientType
+import ibidem.codetanks.domain.Messages.Command
+import ibidem.codetanks.domain.Messages.CommandReply
+import ibidem.codetanks.domain.Messages.CommandResult
+import ibidem.codetanks.domain.Messages.CommandType
+import ibidem.codetanks.domain.Messages.Event
+import ibidem.codetanks.domain.Messages.GameInfo
+import ibidem.codetanks.domain.Messages.Id
+import ibidem.codetanks.domain.Messages.Registration
+import ibidem.codetanks.domain.Messages.RegistrationReply
+import ibidem.codetanks.domain.Messages.RegistrationResult
 import org.zeromq.ZMQ
 
 @Log4j2
@@ -22,56 +22,56 @@ class Tank {
     private final RANDOM = new Random()
 
     ZMQ.Context ctx
-    ZMQ.Socket cmd
-    ZMQ.Socket event
+    ZMQ.Socket cmdSocket
+    ZMQ.Socket eventSocket
     GameInfo gameInfo
     int myId
     boolean isAlive = true
+    boolean ready = true
 
     Tank(def serverUrl) {
         ctx = ZMQ.context(1)
         register(serverUrl)
     }
 
-    static def serialize(TBase value) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream()
-        TIOStreamTransport transport = new TIOStreamTransport(baos)
-        TProtocol protocol = new TBinaryProtocol.Factory().getProtocol(transport)
-        value.write(protocol)
-        baos.toByteArray()
+    static def serialize(Message value) {
+        value.toByteArray()
     }
 
-    static <T extends TBase> T deserialize(byte[] bytes, T instance) {
-        TMemoryInputTransport transport = new TMemoryInputTransport(bytes);
-        TProtocol protocol = new TBinaryProtocol.Factory().getProtocol(transport)
-        instance.read(protocol)
-        instance
+    static <T extends Message> T deserialize(byte[] bytes, Closure<T> parse) {
+        parse(bytes)
     }
 
     def register(def serverUrl) {
         log.info("Registering at $serverUrl")
         def regSocket = ctx.socket(ZMQ.REQ)
         regSocket.connect(serverUrl)
-        def registration = new Registration(ClientType.BOT, new Id('Randomizer', 1 as short))
+        def registration = Registration.newBuilder()
+                .setClientType(ClientType.BOT)
+                .setId(Id.newBuilder()
+                        .setName('Randomizer')
+                        .setVersion(1)
+                        .build())
+                .build()
         def bytes = serialize(registration)
         regSocket.send(bytes, 0)
-        RegistrationReply reply = deserialize(regSocket.recv(), new RegistrationReply())
+        RegistrationReply reply = deserialize(regSocket.recv(), RegistrationReply.&parseFrom)
         if (reply.result == RegistrationResult.FAILURE) {
             throw new IllegalStateException("Unable to register for game")
         }
         initSockets(reply)
-        gameInfo = reply.game_info
+        gameInfo = reply.gameInfo
         myId = reply.id
     }
 
     private initSockets(RegistrationReply reply) {
-        log.info("Subscribing to ${reply.event_url}")
-        event = ctx.socket(ZMQ.SUB)
-        event.subscribe(ZMQ.SUBSCRIPTION_ALL)
-        event.connect(reply.event_url)
-        log.info("Connecting to ${reply.cmd_url}")
-        cmd = ctx.socket(ZMQ.REQ)
-        cmd.connect(reply.cmd_url)
+        log.info("Subscribing to ${reply.eventUrl}")
+        eventSocket = ctx.socket(ZMQ.SUB)
+        eventSocket.subscribe(ZMQ.SUBSCRIPTION_ALL)
+        eventSocket.connect(reply.eventUrl)
+        log.info("Connecting to ${reply.cmdUrl}")
+        cmdSocket = ctx.socket(ZMQ.REQ)
+        cmdSocket.connect(reply.cmdUrl)
     }
 
     def run() {
@@ -79,30 +79,41 @@ class Tank {
             def delay = (1 + this.RANDOM.nextInt(10)) * 50
             log.info("Sleeping for $delay ms")
             sleep(delay)
-            runSingle()
+            if (ready) {
+                runSingle()
+            }
             handleEvents()
         }
     }
 
     def handleEvents() {
-        def bytes = event.recv(ZMQ.NOBLOCK)
+        def bytes = eventSocket.recv(ZMQ.NOBLOCK)
         while (bytes != null) {
-            Event event = deserialize(bytes, new Event())
-            if (event.isSetDeath()) {
-                if (event.death.victim.id == myId) {
-                    isAlive = false;
-                }
+            Event event = deserialize(bytes, Event.&parseFrom)
+            switch (event.getEventCase()) {
+                case Event.EventCase.DEATH:
+                    if (event.death.victim.id == myId) {
+                        isAlive = false;
+                    }
+                    break
+                case Event.EventCase.RESULT:
+                    def cmdResult = event.getResult()
+                    if (cmdResult == CommandResult.COMPLETED) {
+                        ready = true
+                    }
+                    break
             }
             log.info(event.toString())
-            bytes = this.event.recv(ZMQ.NOBLOCK)
+            bytes = eventSocket.recv(ZMQ.NOBLOCK)
         }
     }
 
     def runSingle() {
-        def nextCmdType = CommandType.values()[this.RANDOM.nextInt(CommandType.values().size())]
+        def values = CommandType.getDescriptor().getValues()
+        def nextCmdType = CommandType.forNumber(values[this.RANDOM.nextInt(values.size())].number)
         def nextCmdName = nextCmdType.name()
         log.info("Next cmd is $nextCmdName")
-        def nextCmd = new Command(nextCmdType)
+        def nextCmd = Command.newBuilder().setType(nextCmdType)
         switch (nextCmdType) {
             case CommandType.MOVE:
                 nextCmd.setValue(this.RANDOM.nextInt(gameInfo.arena.height) as short)
@@ -122,9 +133,12 @@ class Tank {
                 throw new IllegalStateException("Picked non-existing command: $nextCmdType")
         }
         log.info("Sending cmd: $nextCmd")
-        cmd.send(serialize(nextCmd))
+        cmdSocket.send(serialize(nextCmd.build()))
         log.info("Waiting for reply")
-        CommandReply reply = deserialize(cmd.recv(), new CommandReply())
+        CommandReply reply = deserialize(cmdSocket.recv(), CommandReply.&parseFrom)
+        if (reply.getResult() == CommandResult.ACCEPTED) {
+            ready = false
+        }
         log.info(reply.toString())
     }
 }

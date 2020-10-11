@@ -3,7 +3,7 @@
 
 from mock import patch
 
-from ibidem.codetanks.domain.ttypes import Command, CommandType, Registration, ClientType, Id
+from ibidem.codetanks.domain.messages_pb2 import Command, CommandType, Registration, ClientType, Id
 from ibidem.codetanks.server.com import Channel, ChannelType
 
 
@@ -32,7 +32,7 @@ class TestChannel(object):
              patch.object(Channel, "_bind_socket", _test_bind):
             req_socket = Channel(ChannelType.REQUEST, 1)
             rep_socket = Channel(ChannelType.REPLY, 0)
-            value = Command(CommandType.FIRE)
+            value = Command(type=CommandType.FIRE)
             req_socket.send(value)
             assert rep_socket.recv() == value
 
@@ -42,6 +42,6 @@ class TestChannel(object):
              patch.object(Channel, "_bind_socket", _test_bind):
             req_socket = Channel(ChannelType.REQUEST, 1)
             rep_socket = Channel(ChannelType.REPLY, 0, Registration)
-            value = Registration(ClientType.VIEWER, Id("test", 1))
+            value = Registration(client_type=ClientType.VIEWER, id=Id(name="test", version=1))
             req_socket.send(value)
             assert rep_socket.recv() == value

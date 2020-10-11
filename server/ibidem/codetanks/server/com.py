@@ -4,9 +4,8 @@
 from socket import gethostname
 from collections import namedtuple
 
-from ibidem.codetanks.domain.ttypes import CommandReply, Command, Event
+from ibidem.codetanks.domain.messages_pb2 import CommandReply, Command, Event
 import zmq
-from thrift.TSerialization import serialize, deserialize
 
 
 class ChannelType(object):
@@ -53,6 +52,15 @@ class Channel(object):
     def send(self, value):
         data = serialize(value)
         self.zmq_socket.send(data, copy=False)
+
+
+def serialize(value):
+    return value.SerializeToString()
+
+
+def deserialize(cls, buffer):
+    return cls.FromString(buffer)
+
 
 if __name__ == "__main__":
     pass

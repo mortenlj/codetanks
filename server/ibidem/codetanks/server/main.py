@@ -5,7 +5,7 @@ import argparse
 from datetime import timedelta
 import logging
 
-from ibidem.codetanks.domain.ttypes import Registration
+from ibidem.codetanks.domain.messages_pb2 import Registration
 import pinject
 from ibidem.codetanks.server.com import Channel, ChannelType
 from ibidem.codetanks.server.game_server import GameServer

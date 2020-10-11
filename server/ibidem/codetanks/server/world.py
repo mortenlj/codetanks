@@ -8,7 +8,7 @@ from random import randint
 
 from euclid import LineSegment2, Circle
 
-from ibidem.codetanks.domain.ttypes import GameData, Arena, Tank, Point, Bullet, ScanResult, BotStatus, Event
+from ibidem.codetanks.domain.messages_pb2 import GameData, Arena, Tank, Point, Bullet, ScanResult, BotStatus, Event
 from ibidem.codetanks.server.constants import MAX_HEALTH
 from ibidem.codetanks.server.vehicle import Armour, Missile
 
@@ -20,7 +20,7 @@ class World(object):
 
     def __init__(self, world_width, world_height, debug):
         LOG.debug("Creating world %dx%d (debug: %r)", world_width, world_height, debug)
-        self.arena = Arena(world_width, world_height)
+        self.arena = Arena(width=world_width, height=world_height)
         self._bullets = []
         self._tanks = []
         self._events = defaultdict(list)
@@ -28,22 +28,22 @@ class World(object):
 
     def add_tank(self, bot_id, tank_id):
         armour = Armour(Tank(
-            tank_id,
-            bot_id,
-            None,
-            self._select_random_direction(),
-            self._select_random_direction(),
-            MAX_HEALTH,
-            BotStatus.IDLE
+            id=tank_id,
+            bot_id=bot_id,
+            position=None,
+            direction=self._select_random_direction(),
+            turret=self._select_random_direction(),
+            health=MAX_HEALTH,
+            status=BotStatus.IDLE
         ), self)
         self._set_valid_position(armour)
         self._tanks.append(armour)
         return armour
 
     def add_bullet(self, parent):
-        position = Point(parent.position.x, parent.position.y)
-        direction = Point(parent.turret.x, parent.turret.y)
-        bullet = Missile(Bullet(next(_bullet_generator), position, direction), self, parent)
+        position = Point(x=parent.position.x, y=parent.position.y)
+        direction = Point(x=parent.turret.x, y=parent.turret.y)
+        bullet = Missile(Bullet(id=next(_bullet_generator), position=position, direction=direction), self, parent)
         self._bullets.append(bullet)
 
     def remove_bullet(self, missile):
@@ -51,7 +51,7 @@ class World(object):
 
     @property
     def gamedata(self):
-        return GameData(self.bullets, self.tanks)
+        return GameData(bullets=self.bullets, tanks=self.tanks)
 
     @property
     def tanks(self):
@@ -76,16 +76,16 @@ class World(object):
         return False
 
     def _set_valid_position(self, armour):
-        armour.position = Point(randint(0, self.arena.width), randint(0, self.arena.height))
+        armour.position = Point(x=randint(0, self.arena.width), y=randint(0, self.arena.height))
         while self.is_collision(armour):
-            armour.position = Point(randint(0, self.arena.width), randint(0, self.arena.height))
+            armour.position = Point(x=randint(0, self.arena.width), y=randint(0, self.arena.height))
 
     def _select_random_direction(self):
         x = randint(-1, 1)
         y = randint(-1, 1)
         while x == y == 0:
             y = randint(-1, 1)
-        return Point(x, y)
+        return Point(x=x, y=y)
 
     def update(self, ticks):
         for tank in self._tanks:
@@ -102,7 +102,7 @@ class World(object):
                 continue
             if self._is_hit(ray, theta, tank):
                 hits.append(tank.entity)
-        return Event(scan=ScanResult(hits))
+        return Event(scan=ScanResult(tanks=hits))
 
     def _calculate_scan_radius(self, theta):
         return max(math.pi - theta, 0.0) * (self.arena.height * 0.318)

@@ -4,9 +4,10 @@ from random import uniform
 
 import pytest
 from euclid import Point2, Vector2
-from mock import create_autospec
+from mock import create_autospec, call
 
-from ibidem.codetanks.domain.ttypes import Tank, Id, Point, BotStatus, Bullet, Arena, ScanResult, Death, Event
+from ibidem.codetanks.domain.messages_pb2 import Tank, Id, Point, BotStatus, Bullet, Arena, ScanResult, Death, Event, \
+    CommandResult
 from ibidem.codetanks.server.commands import Idle
 from ibidem.codetanks.server.constants import TANK_RADIUS, BULLET_RADIUS, MAX_HEALTH, BULLET_DAMAGE
 from ibidem.codetanks.server.vehicle import Armour, Missile
@@ -16,11 +17,11 @@ DELTA = 0.000001
 
 
 def to_point(p):
-    return Point(p.x, p.y)
+    return Point(x=p.x, y=p.y)
 
 
 class Shared(object):
-    bot_id = Id("bot", 1)
+    bot_id = Id(name="bot", version=1)
     initial_x = 30
     initial_y = 50
     initial_direction = Point2(1, 0)
@@ -29,12 +30,12 @@ class Shared(object):
     @classmethod
     def setup_class(cls):
         cls.world = create_autospec(World)
-        cls.world.arena = Arena(500, 500)
+        cls.world.arena = Arena(width=500, height=500)
 
     def setup(self):
         self.tank = self._create_tank()
         self.armour = Armour(self.tank, self.world)
-        self.other = Armour(self._create_tank(1, Point(250, 250)), self.world)
+        self.other = Armour(self._create_tank(1, Point(x=250, y=250)), self.world)
         self.bullet = self._create_bullet()
         self.missile = Missile(self.bullet, self.world, self.armour)
         self.world.is_collision.return_value = False
@@ -42,19 +43,25 @@ class Shared(object):
 
     def _create_tank(self, tank_id=0, position=None):
         if position is None:
-            position = Point(self.initial_x, self.initial_y)
-        return Tank(tank_id,
-                    self.bot_id,
-                    position,
-                    to_point(self.initial_direction),
-                    to_point(self.initial_turret),
-                    MAX_HEALTH,
-                    BotStatus.IDLE)
+            position = Point(x=self.initial_x, y=self.initial_y)
+        return Tank(
+            id=tank_id,
+            bot_id=self.bot_id,
+            position=position,
+            direction=to_point(self.initial_direction),
+            turret=to_point(self.initial_turret),
+            health=MAX_HEALTH,
+            status=BotStatus.IDLE
+        )
 
     def _create_bullet(self, bullet_id=0, position=None):
         if position is None:
-            position = Point(self.initial_x, self.initial_y)
-        return Bullet(bullet_id, position, to_point(self.initial_direction))
+            position = Point(x=self.initial_x, y=self.initial_y)
+        return Bullet(
+            id=bullet_id,
+            position=position,
+            direction=to_point(self.initial_direction)
+        )
 
 
 class TestVehicle(Shared):
@@ -275,11 +282,15 @@ class TestFire(Shared):
 
 class TestScan(Shared):
     def test_scan(self):
-        scan_result = Event(scan=ScanResult([]))
+        scan_result = Event(scan=ScanResult(tanks=[]))
         self.world.scan.return_value = scan_result
         self.armour.scan(10)
         self.armour.update(random_ticks())
-        self.world.add_event.assert_called_with(self.armour.tank_id, scan_result)
+        expected_calls = [
+            call(self.armour.tank_id, scan_result),
+            call(self.armour.tank_id, Event(result=CommandResult.COMPLETED))
+        ]
+        assert self.world.add_event.call_args_list == expected_calls
 
     def test_scan_above_90_degrees_is_ignored(self):
         self.armour.scan(91)
@@ -304,7 +315,7 @@ class TestCollide(Shared):
             pytest.param(lambda s, m: s.initial_x, lambda s, m: s.initial_y, id="centered"),
     ))
     def test_armour_overlap_with_armour_is_detected(self, x_func, y_func, armour_modifier):
-        point = Point(x_func(self, armour_modifier), y_func(self, armour_modifier))
+        point = Point(x=x_func(self, armour_modifier), y=y_func(self, armour_modifier))
         other = Armour(self._create_tank(1, point), self.world)
         assert self.armour.collide(other)
 
@@ -316,34 +327,34 @@ class TestCollide(Shared):
             pytest.param(lambda s, m: s.initial_x, lambda s, m: s.initial_y, id="centered"),
     ))
     def test_armour_overlap_with_missile_is_detected(self, x_func, y_func, missile_modifier):
-        point = Point(x_func(self, missile_modifier), y_func(self, missile_modifier))
+        point = Point(x=x_func(self, missile_modifier), y=y_func(self, missile_modifier))
         other = Missile(self._create_bullet(0, point), self.world, None)
         assert self.armour.collide(other)
 
     @pytest.mark.parametrize("offset_vector, other_func", (
             pytest.param(Vector2(2 * TANK_RADIUS + 1, 0),
-                         lambda s, x, y: Armour(s._create_tank(1, Point(x, y)), s.world),
+                         lambda s, x, y: Armour(s._create_tank(1, Point(x=x, y=y)), s.world),
                          id="armour_to_the_right"),
             pytest.param(Vector2(-2 * TANK_RADIUS + 1, 0),
-                         lambda s, x, y: Armour(s._create_tank(1, Point(x, y)), s.world),
+                         lambda s, x, y: Armour(s._create_tank(1, Point(x=x, y=y)), s.world),
                          id="armour_to_the_left"),
             pytest.param(Vector2(0, 2 * TANK_RADIUS + 1),
-                         lambda s, x, y: Armour(s._create_tank(1, Point(x, y)), s.world),
+                         lambda s, x, y: Armour(s._create_tank(1, Point(x=x, y=y)), s.world),
                          id="armour_above"),
             pytest.param(Vector2(0, -2 * TANK_RADIUS + 1),
-                         lambda s, x, y: Armour(s._create_tank(1, Point(x, y)), s.world),
+                         lambda s, x, y: Armour(s._create_tank(1, Point(x=x, y=y)), s.world),
                          id="armour_below"),
             pytest.param(Vector2(2 * BULLET_RADIUS + 1, 0),
-                         lambda s, x, y: Missile(s._create_bullet(1, Point(x, y)), s.world,
+                         lambda s, x, y: Missile(s._create_bullet(1, Point(x=x, y=y)), s.world,
                                                  None), id="missile_to_the_right"),
             pytest.param(Vector2(-2 * BULLET_RADIUS + 1, 0),
-                         lambda s, x, y: Missile(s._create_bullet(1, Point(x, y)), s.world,
+                         lambda s, x, y: Missile(s._create_bullet(1, Point(x=x, y=y)), s.world,
                                                  None), id="missile_to_the_left"),
             pytest.param(Vector2(0, 2 * BULLET_RADIUS + 1),
-                         lambda s, x, y: Missile(s._create_bullet(1, Point(x, y)), s.world,
+                         lambda s, x, y: Missile(s._create_bullet(1, Point(x=x, y=y)), s.world,
                                                  None), id="missile_above"),
             pytest.param(Vector2(0, -2 * BULLET_RADIUS + 1),
-                         lambda s, x, y: Missile(s._create_bullet(1, Point(x, y)), s.world,
+                         lambda s, x, y: Missile(s._create_bullet(1, Point(x=x, y=y)), s.world,
                                                  None), id="missile_below"),
     ))
     def test_non_overlap_is_accepted(self, offset_vector, other_func):
@@ -368,7 +379,7 @@ class TestDeath(Shared):
     def test_health_goes_to_zero(self):
         self.tank.health = 5
         self.armour.inflict(5, self.armour)
-        self.world.add_event.assert_called_with(None, Event(death=Death(self.tank, self.tank)))
+        self.world.add_event.assert_called_with(None, Event(death=Death(victim=self.tank, perpetrator=self.tank)))
 
     def test_death_is_not_sent_while_alive(self):
         self.tank.health = 10
