@@ -4,35 +4,26 @@ load("@rules_python//python:defs.bzl", "py_library")
 load("@rules_python//experimental/python:wheel.bzl", "py_package", "py_wheel")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 
-proto_library(
-    name = "messages_proto",
-    srcs = ["protobuf/messages.proto"],
-)
-
-python_proto_library(
-    name = "messages_python_proto",
-    deps = [":messages_proto"],
-)
-
 copy_file(
-    name="python_messages_files",
-    src=":messages_python_proto",
+    name="python_messages_file",
+    src="//domain/protobuf:python_messages_proto",
     out="ibidem/codetanks/domain/messages_pb2.py",
 )
 
 filegroup(
-    name = "python_domain_files",
+    name = "python_helper_files",
     srcs = glob([
-        "python/**/__init__.py",
+        "ibidem/**/__init__.py",
     ]),
 )
 
 py_library(
     name = "python",
     srcs = [
-        ":python_domain_files",
-        ":python_messages_files",
+        ":python_helper_files",
+        ":python_messages_file",
     ],
+    visibility = ["//visibility:public"]
 )
 
 py_package(
@@ -47,8 +38,4 @@ py_wheel(
     distribution = "codetanks-domain",
     version = "0.0.1",
     deps = [":python_pkg"],
-    strip_path_prefixes=[
-        "domain/python",
-        "domain",
-    ],
 )
