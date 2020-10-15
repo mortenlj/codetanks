@@ -11,3 +11,8 @@ python_proto_library(
     name = "python_messages_proto",
     deps = [":messages_proto"],
 )
+
+java_proto_library(
+    name = "java_messages_proto",
+    deps = [":messages_proto"],
+)
