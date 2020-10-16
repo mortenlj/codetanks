@@ -1,5 +1,4 @@
 load("@build_stack_rules_proto//python:python_proto_library.bzl", "python_proto_library")
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@rules_python//python:defs.bzl", "py_library")
 load("@rules_python//experimental/python:wheel.bzl", "py_package", "py_wheel")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
@@ -18,7 +17,7 @@ filegroup(
 )
 
 py_library(
-    name = "python",
+    name = "messages",
     srcs = [
         ":python_helper_files",
         ":python_messages_file",
@@ -29,7 +28,7 @@ py_library(
 py_package(
     name = "python_pkg",
     deps = [
-        ":python",
+        ":messages",
     ],
 )
 
