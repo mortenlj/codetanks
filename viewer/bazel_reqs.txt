@@ -1,0 +1,5 @@
+pyzmq==19.0.2
+pygame==2.0.0.dev12
+fiaas-logging==0.1.1
+six==1.15.0
+protobuf==3.13.0

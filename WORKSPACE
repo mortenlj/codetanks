@@ -4,16 +4,51 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 # python
 http_archive(
     name = "rules_python",
-    sha256 = "ddb2e1298684defde2f5e466d96e572119f30f9e2a901a7a81474fd4fa9f6d52",
-    strip_prefix = "rules_python-dd7f9c5f01bafbfea08c44092b6b0c8fc8fcb77f",
-    urls = [
-        "https://github.com/bazelbuild/rules_python/archive/dd7f9c5f01bafbfea08c44092b6b0c8fc8fcb77f.zip",
-    ],
+    url = "https://github.com/bazelbuild/rules_python/releases/download/0.1.0/rules_python-0.1.0.tar.gz",
+    sha256 = "b6d46438523a3ec0f3cead544190ee13223a52f6a6765a29eae7b7cc24cc83a0",
 )
-load("@rules_python//python:pip.bzl", "pip_import", "pip_repositories")
-pip_repositories()
+load("@rules_python//python:pip.bzl", "pip_install")
 load("@rules_python//python:repositories.bzl", "py_repositories")
 py_repositories()
+
+# Stand alone Python interpreter
+
+PYTHON_VERSION = "3.8.3"
+PYTHON_SHA256 = "dfab5ec723c218082fe3d5d7ae17ecbdebffa9a1aea4d64aa3a2ecdd2e795864"
+
+# Special logic for building python interpreter with OpenSSL from homebrew.
+# See https://devguide.python.org/setup/#macos-and-os-x
+_py_configure = """
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    ./configure --prefix=$(pwd)/bazel_install --with-openssl=$(brew --prefix openssl)
+else
+    ./configure --prefix=$(pwd)/bazel_install
+fi
+"""
+
+http_archive(
+    name = "python_interpreter",
+    urls = ["https://www.python.org/ftp/python/%s/Python-%s.tar.xz" % (PYTHON_VERSION, PYTHON_VERSION)],
+    sha256 = PYTHON_SHA256,
+    strip_prefix = "Python-%s" % PYTHON_VERSION,
+    patch_cmds = [
+        "mkdir $(pwd)/bazel_install",
+        _py_configure,
+        "make",
+        "make install",
+        "ln -s bazel_install/bin/python3 python_bin",
+    ],
+    build_file_content = """
+exports_files(["python_bin"])
+filegroup(
+    name = "files",
+    srcs = glob(["bazel_install/**"], exclude = ["**/* *"]),
+    visibility = ["//visibility:public"],
+)
+""",
+)
+
+register_toolchains("//:py3_toolchain")
 
 # protobuf
 http_archive(
@@ -26,13 +61,17 @@ http_archive(
 load("@build_stack_rules_proto//python:deps.bzl", "python_proto_library")
 python_proto_library()
 
-pip_import(
+pip_install(
     name = "protobuf_py_deps",
     requirements = "@build_stack_rules_proto//python/requirements:protobuf.txt",
+    python_interpreter_target = "@python_interpreter//:python_bin",
 )
 
-load("@protobuf_py_deps//:requirements.bzl", protobuf_pip_install = "pip_install")
-protobuf_pip_install()
+pip_install(
+    name = "viewer_py_deps",
+    requirements = "//viewer:bazel_reqs.txt",
+    python_interpreter_target = "@python_interpreter//:python_bin",
+)
 
 # skylib
 http_archive(
