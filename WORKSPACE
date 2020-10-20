@@ -73,6 +73,18 @@ pip_install(
     python_interpreter_target = "@python_interpreter//:python_bin",
 )
 
+pip_install(
+    name = "server_py_deps",
+    requirements = "//server:bazel_reqs.txt",
+    python_interpreter_target = "@python_interpreter//:python_bin",
+)
+
+pip_install(
+    name = "server_test_deps",
+    requirements = "//server:bazel_test_reqs.txt",
+    python_interpreter_target = "@python_interpreter//:python_bin",
+)
+
 # skylib
 http_archive(
     name = "bazel_skylib",

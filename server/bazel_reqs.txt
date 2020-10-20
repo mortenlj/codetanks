@@ -1,0 +1,6 @@
+pinject==0.14.1
+pyzmq==19.0.2
+pygame==2.0.0.dev12
+fiaas-logging==0.1.1
+protobuf==3.13.0
+-e git+https://github.com/euclid3/euclid3.git#egg=euclid3
