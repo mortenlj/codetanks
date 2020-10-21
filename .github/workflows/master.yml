@@ -6,7 +6,8 @@ on:
 
 env:
   BAZELISK_VERSION: v1.1.0
-  BAZELISK_PATH: "/home/runner/bazel"
+  BAZELISK_PATH: "/home/runner/bazelisk"
+  BAZEL: "/home/runner/bazelisk/bazel"
 
 jobs:
   build:
@@ -29,14 +30,15 @@ jobs:
       - name: Install bazelisk
         if: steps.get-bazelisk.outputs.cache-hit != 'true'
         run: |
-          curl -LO "https://github.com/bazelbuild/bazelisk/releases/download/${{ env.BAZELISK_VERSION }}/bazelisk-linux-amd64"
-          mv bazelisk-linux-amd64 "${{ env.BAZELISK_PATH }}"
-          chmod +x "${{ env.BAZELISK_PATH }}"
-
-      - name: Test
-        run: |
-          "${{ env.BAZELISK_PATH }}" test --test_output all //...
+          curl -LO "https://github.com/bazelbuild/bazelisk/releases/download/${BAZELISK_VERSION}/bazelisk-linux-amd64"
+          mkdir -p "${BAZELISK_PATH}"
+          mv bazelisk-linux-amd64 "${BAZEL}"
+          chmod +x "${BAZEL}"
 
       - name: Build
         run: |
-          "${{ env.BAZELISK_PATH }}" build //...
+          "${BAZEL}" build //...
+
+      - name: Test
+        run: |
+          "${BAZEL}" test --test_output all //...
