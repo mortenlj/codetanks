@@ -11,9 +11,8 @@ A tank can shoot at other tanks and move around. Last tank standing wins.
 Building
 --------
 
-```
-# Build everything
-bazel build //...
-# Test everything
-bazel test --test_output all //...
-```
+    # Build everything
+    bazel build //...
+
+    # Test everything
+    bazel test --test_output all //...
