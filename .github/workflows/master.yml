@@ -25,7 +25,7 @@ jobs:
 
       - name: Get Bazelisk
         id: get-bazelisk
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: "${{ env.BAZELISK_PATH }}"
           key: bazelisk-${{ env.BAZELISK_VERSION }}
