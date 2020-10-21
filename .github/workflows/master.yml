@@ -35,7 +35,7 @@ jobs:
 
       - name: Test
         run: |
-          "${{ env.BAZELISK_PATH }}" --test_output all test //...
+          "${{ env.BAZELISK_PATH }}" test --test_output all //...
 
       - name: Build
         run: |
