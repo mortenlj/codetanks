@@ -14,7 +14,7 @@ from ibidem.codetanks.server.vehicle import Armour, Missile
 from ibidem.codetanks.server.world import World
 
 DELTA = 0.000001
-
+TICKS = 5
 
 def to_point(p):
     return Point(x=p.x, y=p.y)
@@ -122,7 +122,7 @@ class TestMove(Shared):
         while self.armour.position.x < target_x:
             assert self.armour.status == BotStatus.MOVING
             assert self.armour.position.x < target_x
-            self.armour.update(random_ticks())
+            self.armour.update(TICKS)
             assert self.armour.position.x > self.initial_x
         assert isinstance(self.armour._command, Idle)
         assert self.armour.position.x == target_x
@@ -130,7 +130,7 @@ class TestMove(Shared):
 
     def test_move_backwards_is_illegal(self):
         self.armour.move(-10)
-        self.armour.update(random_ticks())
+        self.armour.update(TICKS)
         assert isinstance(self.armour._command, Idle)
         assert self.armour.position.x == self.initial_x
         assert self.armour.position.y == self.initial_y
@@ -141,32 +141,32 @@ class TestMove(Shared):
         self.world.is_collision.assert_called_once_with(self.armour)
 
     def test_world_is_checked_for_valid_position_for_missile(self):
-        self.missile.update(random_ticks())
+        self.missile.update(TICKS)
         self.world.is_collision.assert_called_once_with(self.missile)
 
     def test_vehicle_is_not_moved_if_new_position_invalid(self):
         self.world.is_collision.return_value = True
-        self.missile.update(random_ticks())
+        self.missile.update(TICKS)
         assert self.missile.position.x == self.initial_x
         assert self.missile.position.y == self.initial_y
         self.armour.move(100)
-        self.armour.update(random_ticks())
+        self.armour.update(TICKS)
         assert self.armour.position.x == self.initial_x
         assert self.armour.position.y == self.initial_y
 
     def test_missile_disappears_when_hitting_boundary(self):
         self.world.is_collision.return_value = True
-        self.missile.update(random_ticks())
+        self.missile.update(TICKS)
         self.world.remove_bullet.assert_called_with(self.missile)
 
     def test_missile_disappears_when_hitting_other_tank(self):
         self.world.is_collision.return_value = self.other
-        self.missile.update(random_ticks())
+        self.missile.update(TICKS)
         self.world.remove_bullet.assert_called_with(self.missile)
 
     def test_missile_inflicts_damage_when_hitting_other_tank(self):
         self.world.is_collision.return_value = self.other
-        self.missile.update(random_ticks())
+        self.missile.update(TICKS)
         assert self.other.health == MAX_HEALTH - BULLET_DAMAGE
 
 
@@ -174,11 +174,14 @@ class RotateAndAim(Shared):
     def _test(self, desc, angle, target_vector):
         self._act(angle)
         self._assert_starting_state()
+        count = 0
         while self._continue(target_vector):
             self._assert_pre_update(target_vector)
-            self.armour.update(random_ticks())
+            self.armour.update(TICKS)
+            count += 1
             self._assert_post_update(angle, target_vector)
         self._assert_ending_state(target_vector)
+        assert count > 1
 
     def _act(self, angle):
         raise NotImplementedError
@@ -276,7 +279,7 @@ class TestAim(RotateAndAim):
 class TestFire(Shared):
     def test_fire(self):
         self.armour.fire()
-        self.armour.update(random_ticks())
+        self.armour.update(TICKS)
         self.world.add_bullet.assert_called_with(self.armour)
 
 
@@ -285,7 +288,7 @@ class TestScan(Shared):
         scan_result = Event(scan=ScanResult(tanks=[]))
         self.world.scan.return_value = scan_result
         self.armour.scan(10)
-        self.armour.update(random_ticks())
+        self.armour.update(TICKS)
         expected_calls = [
             call(self.armour.tank_id, scan_result),
             call(self.armour.tank_id, Event(result=CommandResult.COMPLETED))
@@ -294,7 +297,7 @@ class TestScan(Shared):
 
     def test_scan_above_90_degrees_is_ignored(self):
         self.armour.scan(91)
-        self.armour.update(random_ticks())
+        self.armour.update(TICKS)
         self.world.scan.assert_not_called()
 
 
@@ -394,7 +397,3 @@ class TestDeath(Shared):
 
 def angle_difference(a, b):
     return a.angle(b)
-
-
-def random_ticks():
-    return int(uniform(5.0, 15.0))

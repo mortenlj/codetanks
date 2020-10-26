@@ -77,7 +77,7 @@ class RotateAndAim(Idle):
                   self.operation)
 
     def _set_rotation(self):
-        self.rotation = -ROTATION if self._get_current().angle_oriented(self.target) > 0 else ROTATION
+        self.rotation = -ROTATION if self._get_current().angle_oriented(self.target) < 0 else ROTATION
 
     def _set_operation(self):
         self.operation = operator.gt if self.rotation > 0.0 else operator.lt
