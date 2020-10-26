@@ -5,6 +5,7 @@ groovy_binary(
     name = "Randomizer",
     srcs = glob(["src/main/groovy/**/*.groovy"]),
     main_class = "ibidem.codetanks.sample.groovy.Randomizer",
+    args = ["tcp://localhost:13337"],
     resources = glob(["src/main/resources/**"]),
     deps = [
          "//domain/java:messages",

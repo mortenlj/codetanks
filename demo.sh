@@ -2,20 +2,22 @@
 
 export TERM=xterm
 
-codetanks > /tmp/server.log 2>&1 &
+bazel build //sample-groovy:Randomizer_deploy.jar
+bazel build //... --output_groups=python_zip_file
+
+python bazel-bin/server/codetanks-server.zip > /tmp/server.log 2>&1 &
 server_pid=$!
 sleep 10
-pushd sample-groovy
-./gradlew runRandomizer > /tmp/randomizer1.log 2>&1 &
+java -jar bazel-bin/sample-groovy/Randomizer_deploy.jar tcp://localhost:13337 > /tmp/randomizer1.log 2>&1 &
 bot_1_pid=$!
-./gradlew runRandomizer > /tmp/randomizer2.log 2>&1 &
+java -jar bazel-bin/sample-groovy/Randomizer_deploy.jar tcp://localhost:13337 > /tmp/randomizer2.log 2>&1 &
 bot_2_pid=$!
-./gradlew runRandomizer > /tmp/randomizer3.log 2>&1 &
+java -jar bazel-bin/sample-groovy/Randomizer_deploy.jar tcp://localhost:13337 > /tmp/randomizer3.log 2>&1 &
 bot_3_pid=$!
 sleep 1
-codetanks-viewer tcp://localhost:13337 &
+python bazel-bin/viewer/codetanks-viewer.zip tcp://localhost:13337 &
 viewer_pid=$!
-codetanks_bot tcp://localhost:13337
+python bazel-bin/server/codetanks-bot.zip tcp://localhost:13337
 
 for p in ${server_pid} ${viewer_pid} ${bot_1_pid} ${bot_2_pid} ${bot_3_pid}; do
   kill ${p}

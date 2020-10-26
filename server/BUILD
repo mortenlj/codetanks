@@ -27,6 +27,7 @@ py_binary(
 py_binary(
     name = "codetanks-bot",
     main = "ibidem/codetanks/server/cli_bot.py",
+    args = ["tcp://localhost:13337"],
     srcs = [":server_files"],
     deps = [":server_lib"],
 )
