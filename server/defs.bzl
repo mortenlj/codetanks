@@ -13,4 +13,5 @@ def generate_test_rules():
             deps = [":codetanks-server"] + all_requirements,
             main = ":tests/run.py",
             args = [native.package_name(), ts],
+            size = "small",
         )
