@@ -1,0 +1,25 @@
+FROM python:3
+WORKDIR /code
+RUN pip install --upgrade wheel pip setuptools
+
+build:
+    COPY ../domain+python/* ./
+    COPY requirements.txt ./
+    COPY setup.py ./
+    COPY ibidem ibidem
+    RUN pip wheel -r requirements.txt --wheel-dir=wheels
+    SAVE ARTIFACT wheels /wheels
+    SAVE ARTIFACT ./ /src
+
+test:
+    FROM +build
+    RUN pip install pytest mock # TODO: Use install extras
+    RUN pip install --no-index --find-links=wheels -r requirements.txt
+    COPY tests tests
+    RUN pytest
+
+docker:
+    FROM +build
+    RUN pip install --no-index --find-links=wheels -r requirements.txt
+    ENTRYPOINT ["codetanks"]
+    SAVE IMAGE mortenlj/codetanks-server:latest
