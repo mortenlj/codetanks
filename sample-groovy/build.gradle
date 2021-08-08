@@ -12,15 +12,16 @@ buildscript {
     }
     dependencies {
         classpath 'com.tkruse.gradle:gradle-groovysh-plugin:1.0.5'
-        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.13'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:6.1.0'
     }
 }
 
 apply plugin: 'groovy'
 apply plugin: 'maven'
 apply plugin: 'java'
+apply plugin: 'application'
 apply plugin: 'com.github.tkruse.groovysh'
-apply plugin: 'com.google.protobuf'
+apply plugin: 'com.github.johnrengelman.shadow'
 
 group 'ibidem.codetanks'
 version = '0.1-SNAPSHOT'
@@ -41,18 +42,15 @@ dependencies {
 
 sourceSets {
     main {
-        proto {
-            srcDir '../domain/protobuf'
-        }
         java {
             srcDir 'build/generated/source/proto/main/java'
         }
     }
 }
 
-task runRandomizer(dependsOn: 'classes', type: JavaExec) {
-    main = 'ibidem.codetanks.sample.groovy.Randomizer'
-    classpath = sourceSets.main.runtimeClasspath
+mainClassName = 'ibidem.codetanks.sample.groovy.Randomizer'
+
+runShadow {
     args = ['tcp://localhost:13337']
 }
 

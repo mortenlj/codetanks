@@ -1,18 +1,25 @@
-domain:
-    FROM namely/protoc:latest
-    WORKDIR /code
-    COPY domain domain
-    RUN mkdir -p gen/python/ibidem/codetanks/domain && touch gen/python/ibidem/codetanks/domain/__init__.py
-    RUN protoc domain/protobuf/messages.proto --proto_path domain/protobuf \
-        --python_out gen/python/ibidem/codetanks/domain
-    SAVE ARTIFACT gen/python /python AS LOCAL build/python
+FROM openjdk:15-jdk-alpine
+WORKDIR /sample-groovy
 
-server:
-    FROM python:3
-    WORKDIR /code
-    RUN pip install --upgrade wheel pip setuptools
-    COPY server/requirements.txt ./
-    RUN pip wheel -r requirements.txt --wheel-dir=wheels
-    COPY server server
-    SAVE ARTIFACT server /src
-    SAVE ARTIFACT wheels /wheels
+deps:
+    ENV GRADLE_OPTS="-Dorg.gradle.daemon=false"
+    COPY build.gradle ./
+    COPY gradlew gradlew
+    COPY gradle gradle
+    RUN ./gradlew assemble
+
+test:
+    FROM +deps
+    COPY ../domain+java/java/* build/generated/source/proto/main/java
+    COPY src src
+    RUN ./gradlew test
+
+build:
+    FROM +test
+    RUN ./gradlew shadowJar
+    SAVE ARTIFACT build/libs/sample-groovy-0.1-SNAPSHOT-all.jar /jar
+
+docker:
+    COPY +build/jar ./sample-groovy.jar
+    ENTRYPOINT ["java", "-jar", "sample-groovy.jar"]
+    SAVE IMAGE mortenlj/codetanks-sample-groovy:latest

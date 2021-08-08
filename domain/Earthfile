@@ -7,3 +7,13 @@ python:
     RUN protoc messages.proto \
         --python_out gen/python/ibidem/codetanks/domain
     SAVE ARTIFACT gen/python /python
+
+java:
+    RUN mkdir -p gen/java
+    RUN protoc messages.proto \
+        --java_out gen/java
+    SAVE ARTIFACT gen/java /java
+
+all:
+    BUILD +python
+    BUILD +java
