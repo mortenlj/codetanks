@@ -1,14 +1,19 @@
 FROM namely/protoc:latest
 WORKDIR /code
-COPY protobuf ./
+
+src:
+    COPY protobuf ./
+    SAVE ARTIFACT ./ /src
 
 python:
+    COPY +src/src ./
     RUN mkdir -p gen/python/ibidem/codetanks/domain && touch gen/python/ibidem/codetanks/domain/__init__.py
     RUN protoc messages.proto \
         --python_out gen/python/ibidem/codetanks/domain
     SAVE ARTIFACT gen/python /python
 
 java:
+    COPY +src/src ./
     RUN mkdir -p gen/java
     RUN protoc messages.proto \
         --java_out gen/java
