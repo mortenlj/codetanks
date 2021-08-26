@@ -12,4 +12,4 @@ for i in $(seq 1 3); do
 done
 docker run --label codetanks=cli --net=host --rm -ti --entrypoint codetanks_bot mortenlj/codetanks-server tcp://localhost:13337
 
-docker container list --filter label=codetanks --quiet | xargs docker container stop
+docker container list --filter label=codetanks --quiet | xargs --no-run-if-empty docker container stop
