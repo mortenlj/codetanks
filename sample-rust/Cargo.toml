@@ -1,0 +1,17 @@
+[package]
+name = "sample-rust"
+version = "0.1.0"
+authors = ["Morten Lied Johansen <mortenjo@ifi.uio.no>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+prost = "0.8"
+# Only necessary if using Protobuf well-known types:
+prost-types = "0.8"
+zeromq = "0.2.0"
+tokio = "1.10.1"
+
+[build-dependencies]
+prost-build = { version = "0.8" }

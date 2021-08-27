@@ -1,6 +1,7 @@
 ^sample-groovy/.gradle
 .idea
 build/
+target/
 dist/
 out/
 __pycache__
