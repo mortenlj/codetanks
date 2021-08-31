@@ -4,6 +4,7 @@ build/
 target/
 dist/
 out/
+lib/
 __pycache__
 .pytest_cache
 .eggs
