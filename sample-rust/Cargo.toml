@@ -8,10 +8,9 @@ edition = "2018"
 
 [dependencies]
 prost = "0.8"
-# Only necessary if using Protobuf well-known types:
-prost-types = "0.8"
+bytes = "1"
 zeromq = "0.2.0"
-tokio = "1.10.1"
+tokio = { version = "1", features = ["full"] }
 
 [build-dependencies]
 prost-build = { version = "0.8" }

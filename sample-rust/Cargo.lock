@@ -789,9 +789,9 @@ dependencies = [
 name = "sample-rust"
 version = "0.1.0"
 dependencies = [
+ "bytes 1.1.0",
  "prost",
  "prost-build",
- "prost-types",
  "tokio",
  "zeromq",
 ]
