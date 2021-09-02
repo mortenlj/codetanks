@@ -4,10 +4,6 @@ WORKDIR /sample-rust
 install-chef:
    RUN cargo install --debug cargo-chef
 
-prepare-local:
-    COPY ../domain+src/src/* target/proto/
-    SAVE ARTIFACT target/proto/* AS LOCAL target/proto/
-
 prepare-cache:
     FROM +install-chef
     COPY --dir src Cargo.lock Cargo.toml build.rs .
@@ -24,8 +20,9 @@ build-cache:
     SAVE ARTIFACT $CARGO_HOME cargo_home
 
 build:
+    ENV PROTOBUF_SRC=src/protobuf/
     COPY --dir src Cargo.lock Cargo.toml build.rs .
-    COPY ../domain+src/src/* target/proto/
+    COPY ../domain+src/src/* $PROTOBUF_SRC
     COPY +build-cache/target target
     COPY +build-cache/cargo_home $CARGO_HOME
     RUN cargo build --release --bin sample-rust
