@@ -2,9 +2,9 @@
 
 export TERM=xterm
 
-earthly +all
+./earthlyw +all
 
-docker run --label codetanks=server --net=host --rm --detach mortenlj/codetanks-server
+./earthlyw ./server/+launch
 sleep 10
 docker run --label codetanks=viewer --net=host -e DISPLAY -v ~/.Xauthority:/root/.Xauthority --rm --detach mortenlj/codetanks-viewer tcp://localhost:13337
 for i in $(seq 1 3); do

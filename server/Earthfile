@@ -30,3 +30,10 @@ docker:
 
     SAVE IMAGE ${BASEIMAGE}-server:${IMAGE_TAG}
     SAVE IMAGE ${BASEIMAGE}-server:latest
+
+    SAVE ARTIFACT requirements.txt /hack # Hack to force launch dependency resolution
+
+launch:
+    LOCALLY
+    COPY +docker/hack /tmp/
+    RUN docker run --label codetanks=server --net=host --rm $image_name:latest
