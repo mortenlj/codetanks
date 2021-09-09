@@ -789,9 +789,11 @@ dependencies = [
 name = "sample-rust"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "bytes 1.1.0",
  "prost",
  "prost-build",
+ "thiserror",
  "tokio",
  "zeromq",
 ]
