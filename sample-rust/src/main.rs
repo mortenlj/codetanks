@@ -16,11 +16,8 @@ pub async fn main() -> Result<()> {
     }
 
     let server_url = server_url.unwrap();
-    let repl = comms::register(server_url).await;
+    let repl = comms::register(server_url).await?;
 
-    if repl.is_err() {
-        return Err(anyhow!("Unable to register for game"));
-    }
 
     dbg!(repl);
 

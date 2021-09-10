@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, anyhow};
+use anyhow::{anyhow, Context, Result};
 use bytes::Bytes;
 use prost::{DecodeError, Message};
 use thiserror::Error;
@@ -42,7 +42,7 @@ pub async fn register(server_url: &String) -> Result<RegistrationReply, anyhow::
         .context("Failed to decode registration reply")?;
 
     if repl.result() == RegistrationResult::Failure {
-        return Err(anyhow!(CommsError::RegistrationFailure))
+        return Err(anyhow!(CommsError::RegistrationFailure));
     }
 
     Ok(repl)
