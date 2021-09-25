@@ -3,8 +3,7 @@ use bytes::Bytes;
 use thiserror::Error;
 use zeromq::{BlockingRecv, BlockingSend, ReqSocket, Socket, SubSocket, ZmqMessage};
 
-use crate::domain::{ClientType, Command, CommandReply, Id, Registration, RegistrationReply, RegistrationResult};
-use crate::domain::Event;
+use crate::domain::{ClientType, Command, CommandReply, CommandResult, Id, Registration, RegistrationReply, RegistrationResult, Event};
 
 #[derive(Error, Debug)]
 pub enum CommsError {
@@ -38,12 +37,13 @@ impl Commander {
         Ok(commander)
     }
 
-    pub async fn command(&mut self, command: Command) -> Result<Event> {
+    pub async fn command(&mut self, command: Command) -> Result<()> {
         dbg!("Sending command {}", &command);
 
         self.cmd_socket
             .send(zmq_encode(command))
-            .await;
+            .await
+            .context("Failed to send command")?;
         let repl: CommandReply = self.cmd_socket
             .recv()
             .await
@@ -51,9 +51,12 @@ impl Commander {
             .context("Failed to receive command reply")?
             .context("Failed to decode command reply")?;
 
-        dbg!(repl);
+        if repl.result() == CommandResult::Busy {
+            return Err(anyhow!("Server busy"))
+        } else if repl.result() == CommandResult::Accepted {
+            println!("Command accepted");
+        }
 
-        Ok(Event::default())
         // TODO: Don't return unless the command has completed
         // loop {
         //     let event: Event = self.event_socket
@@ -62,10 +65,15 @@ impl Commander {
         //         .map(zmq_decode)
         //         .context("Failed to receive event")?
         //         .context("Failed to decode event")?;
-        //     dbg!(event);
-        //     break;
+        //     dbg!(&event);
+        //     match event.event {
+        //         Some(e) => {
+        //             dbg!(e);
+        //         }
+        //         None => break
+        //     }
         // }
-        // Err(anyhow!("not done yet"))
+        Ok(())
     }
 }
 
