@@ -27,7 +27,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Build and possibly push
       env:
-        EARTHLY_PUSH: "${{ github.ref == 'refs/heads/main' }}"
+        EARTHLY_PUSH: "${{ github.ref == 'refs/heads/master' }}"
       run: |
         ./earthlyw --ci --remote-cache=${cache_image} +all --IMAGE_TAG="${IMAGE_TAG}" --BASEIMAGE="${BASEIMAGE}"
     outputs:
