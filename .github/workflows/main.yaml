@@ -1,0 +1,34 @@
+name: Build and test
+
+on:
+  push:
+
+env:
+  BASEIMAGE: ghcr.io/${{ github.repository }}
+  cache_image: ghcr.io/${{ github.repository }}/cache:cache
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: "Set image version"
+      id: set-image-tag
+      run: |
+        export IMAGE_TAG="$(date +%Y%m%d%H%M%S)-$(git describe --always --dirty --exclude '*')"
+        echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+        echo "::set-output name=image::${BASEIMAGE}:${IMAGE_TAG}"
+    - name: Login to GitHub Packages Docker Registry
+      uses: docker/login-action@v1
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Build and possibly push
+      env:
+        EARTHLY_PUSH: "${{ github.ref == 'refs/heads/main' }}"
+      run: |
+        ./earthlyw --ci --remote-cache=${cache_image} +all --IMAGE_TAG="${IMAGE_TAG}" --BASEIMAGE="${BASEIMAGE}"
+    outputs:
+      image: "${{ steps.set-image-tag.outputs.image }}"

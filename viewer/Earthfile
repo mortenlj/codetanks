@@ -15,4 +15,11 @@ docker:
     FROM +build
     RUN pip install --no-index --find-links=wheels -r requirements.txt
     ENTRYPOINT ["codetanks-viewer"]
-    SAVE IMAGE mortenlj/codetanks-viewer:latest
+
+    ARG EARTHLY_GIT_SHORT_HASH
+    ARG IMAGE_TAG=$EARTHLY_GIT_SHORT_HASH
+    ARG EARTHLY_GIT_PROJECT_NAME
+    ARG BASEIMAGE=ghcr.io/$EARTHLY_GIT_PROJECT_NAME
+
+    SAVE IMAGE ${BASEIMAGE}-viewer:${IMAGE_TAG}
+    SAVE IMAGE ${BASEIMAGE}-viewer:latest

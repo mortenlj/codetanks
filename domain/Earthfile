@@ -1,4 +1,4 @@
-FROM namely/protoc:latest
+FROM namely/protoc:1.37_2
 WORKDIR /code
 
 src:
