@@ -32,4 +32,11 @@ docker:
     FROM debian:buster-slim
     COPY +build/sample-rust sample-rust
     ENTRYPOINT ["./sample-rust"]
-    SAVE IMAGE mortenlj/codetanks-sample-rust:latest
+
+    ARG EARTHLY_GIT_SHORT_HASH
+    ARG IMAGE_TAG=$EARTHLY_GIT_SHORT_HASH
+    ARG EARTHLY_GIT_PROJECT_NAME
+    ARG BASEIMAGE=ghcr.io/$EARTHLY_GIT_PROJECT_NAME
+
+    SAVE IMAGE ${BASEIMAGE}-sample-rust:${IMAGE_TAG}
+    SAVE IMAGE ${BASEIMAGE}-sample-rust:latest
