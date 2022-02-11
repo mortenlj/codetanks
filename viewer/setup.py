@@ -78,7 +78,7 @@ setup(
         "pygame>=2.0.0.dev12",
         "fiaas-logging==0.1.1",
         "six",
-        "protobuf==3.13.0",
+        "protobuf==3.15.0",
     ],
     namespace_packages=["ibidem", "ibidem.codetanks"],
     zip_safe=True,
