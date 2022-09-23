@@ -74,7 +74,7 @@ setup(
         "pinject",
         "pygame",
         "fiaas-logging==0.1.1",
-        "protobuf==3.15.0",
+        "protobuf==3.18.3",
         # "euclid3>0.0.1", # TODO: Must be installed using pip?
     ],
     namespace_packages=["ibidem", "ibidem.codetanks"],
