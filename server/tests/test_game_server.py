@@ -213,6 +213,7 @@ class TestStartedGame(Shared):
 
     def test_loop_ends_after_victory_delay_when_finished(self):
         self.world.number_of_live_bots = 1
+        self.world.get_live_bots.return_value = [Tank()]
         start = datetime.now()
         self.server.run()
         end = datetime.now()

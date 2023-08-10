@@ -5,7 +5,7 @@ from datetime import datetime
 
 import pygame
 
-from ibidem.codetanks.domain.messages_pb2 import GameInfo, RegistrationReply, ClientType, RegistrationResult, Event
+from ibidem.codetanks.domain.messages_pb2 import GameInfo, RegistrationReply, ClientType, RegistrationResult, Event, GameStarted, GameOver
 from ibidem.codetanks.server.bot import Bot
 from ibidem.codetanks.server.com import ChannelType
 from ibidem.codetanks.server.constants import PLAYER_COUNT, MAX_HEALTH, BULLET_DAMAGE, TANK_SPEED, ROTATION, \
@@ -34,6 +34,10 @@ class GameServer(object):
         self._victory_delay = victory_delay
 
     def start(self):
+        game_started = Event(game_started=GameStarted(game_info=self.build_game_info()))
+        for bot in self._bots:
+            bot.event_channel.send(game_started)
+        self._viewer_channel.send(game_started)
         self.clock = pygame.time.Clock()
 
     def started(self):
@@ -49,6 +53,11 @@ class GameServer(object):
             self._run_once()
         LOG.info("Game finished, allowing %d seconds for victory celebrations", self._victory_delay.seconds)
         start = datetime.now()
+        winner = self._world.get_live_bots()[-1]
+        game_over = Event(game_over=GameOver(winner=winner))
+        for bot in self._bots:
+            bot.event_channel.send(game_over)
+        self._viewer_channel.send(game_over)
         while (datetime.now() - start) < self._victory_delay:
             self._run_once()
 

@@ -13,6 +13,10 @@ build:
     SAVE ARTIFACT wheels /wheels
     SAVE ARTIFACT ./ /src
 
+protobuf:
+    COPY ../domain+python/* ./
+    SAVE ARTIFACT ./ibidem/codetanks/domain AS LOCAL ./ibidem/codetanks/domain
+
 test:
     FROM +build
     RUN pip install pytest mock # TODO: Use install extras

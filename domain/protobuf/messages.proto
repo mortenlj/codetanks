@@ -102,11 +102,21 @@ message Death {
     Tank perpetrator = 2;
 }
 
+message GameStarted {
+    GameInfo game_info = 1;
+}
+
+message GameOver {
+    Tank winner = 1;
+}
+
 message Event {
     oneof event {
         ScanResult scan = 1;
         Death death = 2;
         CommandResult result = 3;
+        GameStarted game_started = 4;
+        GameOver game_over = 5;
     }
 }
 

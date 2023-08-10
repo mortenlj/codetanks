@@ -65,6 +65,9 @@ class World(object):
     def number_of_live_bots(self):
         return len([w for w in self._tanks if w.status != BotStatus.DEAD])
 
+    def get_live_bots(self):
+        return [w for w in self._tanks if w.status != BotStatus.DEAD]
+
     def is_collision(self, vehicle):
         position = vehicle.position
         for attr, upper_bound in ((position.x, self.arena.width), (position.y, self.arena.height)):
