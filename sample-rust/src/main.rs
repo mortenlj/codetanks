@@ -1,25 +1,29 @@
-use std::env;
-
 use anyhow::{anyhow, Result};
-use tokio::signal;
 use tokio::time::{Duration, sleep};
+use tracing::{debug, info};
+use tracing::field::debug;
+
+use crate::settings::AppConfig;
 
 use crate::domain::command::OptionalValue;
 
 mod domain;
 mod comms;
+mod settings;
+mod logging;
+
+fn main() -> Result<()> {
+    let config = settings::load_config().map_err(|e| anyhow!(e))?;
+    app(config)?;
+    Ok(())
+}
 
 #[tokio::main]
-pub async fn main() -> Result<()> {
-    let args: Vec<String> = env::args().collect();
-    let server_url = args.get(1);
+async fn app(config: AppConfig) -> Result<()> {
+    logging::init_logging(&config)?;
+    info!("Configuration loaded: {:?}", config);
 
-    if server_url.is_none() {
-        return Err(anyhow!("You must supply a server url"));
-    }
-
-    let server_url = server_url.unwrap();
-    let repl = comms::register(server_url).await?;
+    let repl = comms::register(&config.server_uri).await?;
 
     let mut commander = comms::Commander::new(&repl).await?;
 
@@ -33,6 +37,7 @@ pub async fn main() -> Result<()> {
             }).await {
                 break;
             };
+            debug!("Moving 20 clicks forward");
             sleep(Duration::from_millis(100)).await;
         }
 
@@ -43,6 +48,7 @@ pub async fn main() -> Result<()> {
             }).await {
                 break;
             }
+            debug!("Rotating 10 degrees");
             sleep(Duration::from_millis(100)).await;
         };
 
@@ -53,6 +59,7 @@ pub async fn main() -> Result<()> {
             }).await {
                 break;
             }
+            debug!("Aiming -5 degrees");
             sleep(Duration::from_millis(100)).await;
         }
 
@@ -63,6 +70,7 @@ pub async fn main() -> Result<()> {
             }).await {
                 break;
             }
+            debug!("FIRE!");
             sleep(Duration::from_millis(100)).await;
         }
     }

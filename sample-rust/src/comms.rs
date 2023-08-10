@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Context, Result};
 use bytes::Bytes;
 use thiserror::Error;
+use tracing::{debug, info};
 use zeromq::{BlockingRecv, BlockingSend, ReqSocket, Socket, SubSocket, ZmqMessage};
 
 use crate::domain::{ClientType, Command, CommandReply, CommandResult, Id, Registration, RegistrationReply, RegistrationResult, Event};
@@ -38,7 +39,7 @@ impl Commander {
     }
 
     pub async fn command(&mut self, command: Command) -> Result<()> {
-        dbg!("Sending command {}", &command);
+        debug!("Sending command {:?}", &command);
 
         self.cmd_socket
             .send(zmq_encode(command))
@@ -54,7 +55,7 @@ impl Commander {
         if repl.result() == CommandResult::Busy {
             return Err(anyhow!("Server busy"))
         } else if repl.result() == CommandResult::Accepted {
-            println!("Command accepted");
+            debug!("Command accepted");
         }
 
         // TODO: Don't return unless the command has completed
@@ -78,7 +79,7 @@ impl Commander {
 }
 
 pub async fn register(server_url: &String) -> Result<RegistrationReply> {
-    println!("Registering for {}", server_url);
+    info!("Registering for {}", server_url);
     let mut req_socket = ReqSocket::new();
     req_socket
         .connect(server_url)
