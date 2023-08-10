@@ -27,7 +27,7 @@ async fn app(config: AppConfig) -> Result<()> {
 
     let mut commander = comms::Commander::new(&repl).await?;
 
-    sleep(Duration::from_secs(20)).await;
+    sleep(Duration::from_secs(10)).await;
 
     loop {
         loop {
@@ -35,9 +35,9 @@ async fn app(config: AppConfig) -> Result<()> {
                 r#type: domain::CommandType::Move as i32,
                 optional_value: Some(OptionalValue::Value(20)),
             }).await {
+                info!("Moving 20 clicks forward");
                 break;
             };
-            debug!("Moving 20 clicks forward");
             sleep(Duration::from_millis(100)).await;
         }
 
@@ -46,9 +46,9 @@ async fn app(config: AppConfig) -> Result<()> {
                 r#type: domain::CommandType::Rotate as i32,
                 optional_value: Some(OptionalValue::Value(10)),
             }).await {
+                info!("Rotating 10 degrees");
                 break;
             }
-            debug!("Rotating 10 degrees");
             sleep(Duration::from_millis(100)).await;
         };
 
@@ -57,9 +57,9 @@ async fn app(config: AppConfig) -> Result<()> {
                 r#type: domain::CommandType::Aim as i32,
                 optional_value: Some(OptionalValue::Value(-5)),
             }).await {
+                info!("Aiming -5 degrees");
                 break;
             }
-            debug!("Aiming -5 degrees");
             sleep(Duration::from_millis(100)).await;
         }
 
@@ -68,9 +68,9 @@ async fn app(config: AppConfig) -> Result<()> {
                 r#type: domain::CommandType::Fire as i32,
                 optional_value: None,
             }).await {
+                info!("FIRE!");
                 break;
             }
-            debug!("FIRE!");
             sleep(Duration::from_millis(100)).await;
         }
     }

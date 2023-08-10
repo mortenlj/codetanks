@@ -35,7 +35,6 @@ docker:
 
 launch:
     LOCALLY
-    BUILD +docker
     ARG EARTHLY_GIT_PROJECT_NAME
     ARG BASEIMAGE=ghcr.io/$EARTHLY_GIT_PROJECT_NAME
     RUN docker run --label codetanks=server --net=host --rm ${BASEIMAGE}-server:latest
