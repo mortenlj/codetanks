@@ -1,0 +1,44 @@
+VERSION 0.7
+
+FROM rust:1
+WORKDIR /sample-rust
+
+install-chef:
+   RUN cargo install --debug cargo-chef
+
+prepare-cache:
+    FROM +install-chef
+    COPY --dir src Cargo.lock Cargo.toml build.rs .
+    COPY ../domain+src/src/* target/proto/
+    RUN cargo chef prepare
+    SAVE ARTIFACT recipe.json
+
+# Using cutoff-optimization to ensure cache hit (see examples/cutoff-optimization)
+build-cache:
+    FROM +install-chef
+    COPY +prepare-cache/recipe.json ./
+    RUN cargo chef cook --release
+    SAVE ARTIFACT target
+    SAVE ARTIFACT $CARGO_HOME cargo_home
+
+build:
+    ENV PROTOBUF_SRC=src/protobuf/
+    COPY --dir src Cargo.lock Cargo.toml build.rs .
+    COPY ../domain+src/src/* $PROTOBUF_SRC
+    COPY +build-cache/target target
+    COPY +build-cache/cargo_home $CARGO_HOME
+    RUN cargo build --release --bin sample-rust
+    SAVE ARTIFACT target/release/sample-rust sample-rust
+
+docker:
+    FROM debian:buster-slim
+    COPY +build/sample-rust sample-rust
+    ENTRYPOINT ["./sample-rust"]
+
+    ARG EARTHLY_GIT_SHORT_HASH
+    ARG IMAGE_TAG=$EARTHLY_GIT_SHORT_HASH
+    ARG EARTHLY_GIT_PROJECT_NAME
+    ARG BASEIMAGE=ghcr.io/$EARTHLY_GIT_PROJECT_NAME
+
+    SAVE IMAGE ${BASEIMAGE}-sample-rust:${IMAGE_TAG}
+    SAVE IMAGE ${BASEIMAGE}-sample-rust:latest

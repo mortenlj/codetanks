@@ -1,0 +1,28 @@
+[package]
+name = "sample-rust"
+version = "0.1.0"
+authors = ["Morten Lied Johansen <mortenjo@ifi.uio.no>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+prost = "0.8"
+bytes = "1"
+zeromq = "0.2.0"
+tokio = { version = "1", features = ["full"] }
+anyhow = "1.0"
+thiserror = "1.0"
+schematic = "0.11.2"
+tracing = "0.1.37"
+tracing-subscriber = { version = "0.3.17", features = ["fmt", "json"] }
+serde = { version = "1.0.183", features = ["serde_derive", "derive"] }
+serde_json = "1.0.104"
+
+[build-dependencies]
+prost-build = { version = "0.8" }
+
+[dev-dependencies]
+envtestkit = "1.1.2"
+pretty_assertions = "1.4.0"
+rstest = "0.18.1"
