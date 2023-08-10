@@ -1,3 +1,5 @@
+VERSION 0.7
+
 FROM openjdk:15-jdk-alpine
 WORKDIR /sample-groovy
 
