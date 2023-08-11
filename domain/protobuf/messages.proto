@@ -78,14 +78,14 @@ message Tank {
     BotStatus status = 7;
 }
 
+// ******
+// Events
+// ******
+
 message GameData {
     repeated Bullet bullets = 1;
     repeated Tank tanks = 2;
 }
-
-// ******
-// Events
-// ******
 
 enum CommandResult {
     BUSY = 0;
@@ -117,6 +117,7 @@ message Event {
         CommandResult result = 3;
         GameStarted game_started = 4;
         GameOver game_over = 5;
+        GameData game_data = 6;
     }
 }
 

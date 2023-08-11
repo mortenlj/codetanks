@@ -39,6 +39,7 @@ class GameServer(object):
             bot.event_channel.send(game_started)
         self._viewer_channel.send(game_started)
         self.clock = pygame.time.Clock()
+        LOG.info("Game started!")
 
     def started(self):
         return self.clock is not None
@@ -69,7 +70,7 @@ class GameServer(object):
                 received_messages += 1
         if received_messages > 0:
             LOG.debug("GameServer processed %d messages", received_messages)
-        self._viewer_channel.send(self._world.gamedata)
+        self._viewer_channel.send(Event(game_data=self._world.gamedata))
         if self.started():
             ticks = self.clock.tick(60)
             self._world.update(ticks)

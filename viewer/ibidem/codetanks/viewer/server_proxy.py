@@ -9,7 +9,7 @@ from uuid import uuid4
 import pygame
 import zmq
 
-from ibidem.codetanks.domain.messages_pb2 import Registration, ClientType, Id, BotStatus, RegistrationReply, GameData
+from ibidem.codetanks.domain.messages_pb2 import Registration, ClientType, Id, BotStatus, RegistrationReply, Event
 from ibidem.codetanks.viewer.entities import Tank, Bullet
 
 LOG = logging.getLogger(__name__)
@@ -62,13 +62,16 @@ class ServerProxy(object):
     def _get_server_update(self):
         events = self._update_socket.poll(100)
         if events == zmq.POLLIN:
-            return deserialize(GameData, self._update_socket.recv())
+            return deserialize(Event, self._update_socket.recv())
         raise Empty()
 
     def update(self):
         try:
-            game_data = self._get_server_update()
-            self._update_game_data(game_data)
+            event = self._get_server_update()
+            if event.HasField("game_data"):
+                self._update_game_data(event.game_data)
+            else:
+                LOG.info("Received event: %r", event)
         except Empty:
             pass
         return self.tanks, self.entities

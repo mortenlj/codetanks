@@ -31,6 +31,7 @@ class Shared(object):
 
         self.world = create_autospec(World)
         self.world.arena = Arena()
+        self.world.gamedata = GameData()
         self.victory_delay = timedelta(seconds=1)
         self.server = GameServer(self.registration_channel,
                                  self.viewer_channel,
@@ -115,7 +116,7 @@ class TestGame(Shared):
         game_data = GameData(bullets=[], tanks=[])
         type(self.world).gamedata = PropertyMock(return_value=game_data)
         self.server._run_once()
-        self.viewer_channel.send.assert_called_with(game_data)
+        self.viewer_channel.send.assert_called_with(Event(game_data=game_data))
 
     def test_events_gathered_once_per_loop(self):
         self.world.get_events.return_value = {}
@@ -196,6 +197,7 @@ class TestStartedGame(Shared):
         for i in range(PLAYER_COUNT):
             self.server._handle_bot_registration(Registration(client_type=ClientType.BOT, id=Id(name="bot", version=1)))
         self.world.number_of_live_bots = PLAYER_COUNT
+        self.world.gamedata = GameData()
 
     def test_world_updated_once_per_loop(self):
         self.server.clock = MagicMock()
