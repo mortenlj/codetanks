@@ -119,6 +119,7 @@ message Event {
         GameOver game_over = 5;
         GameData game_data = 6;
     }
+    optional int64 sequence_id = 99;
 }
 
 // ********

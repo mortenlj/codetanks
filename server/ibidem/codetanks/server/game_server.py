@@ -32,9 +32,14 @@ class GameServer(object):
         }
         self._bots = []
         self._victory_delay = victory_delay
+        self._event_sequence_id = 1
+
+    def next_sequence_id(self):
+        self._event_sequence_id += 1
+        return self._event_sequence_id - 1
 
     def start(self):
-        game_started = Event(game_started=GameStarted(game_info=self.build_game_info()))
+        game_started = Event(game_started=GameStarted(game_info=self.build_game_info()), sequence_id=self.next_sequence_id())
         for bot in self._bots:
             bot.event_channel.send(game_started)
         self._viewer_channel.send(game_started)
@@ -55,7 +60,7 @@ class GameServer(object):
         LOG.info("Game finished, allowing %d seconds for victory celebrations", self._victory_delay.seconds)
         start = datetime.now()
         winner = self._world.get_live_bots()[-1]
-        game_over = Event(game_over=GameOver(winner=winner))
+        game_over = Event(game_over=GameOver(winner=winner), sequence_id=self.next_sequence_id())
         for bot in self._bots:
             bot.event_channel.send(game_over)
         self._viewer_channel.send(game_over)
@@ -78,7 +83,9 @@ class GameServer(object):
             bots = self._bots if tank_id is None else (self._bots[tank_id],)
             for event in events:
                 assert isinstance(event, Event), "%r is not an instance of Event" % event
+                event.sequence_id = self.next_sequence_id()
                 for bot in bots:
+                    LOG.info("Publishing event %d to bot %s (%d)", event.sequence_id, bot.bot_id.name, bot.tank_id)
                     bot.event_channel.send(event)
 
     def _handle_registration(self, registration):
