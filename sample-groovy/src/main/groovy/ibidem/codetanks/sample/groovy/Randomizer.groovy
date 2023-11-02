@@ -109,7 +109,13 @@ class Tank {
     }
 
     def runSingle() {
-        def values = CommandType.getDescriptor().getValues()
+        def values = [
+                CommandType.MOVE,
+                CommandType.ROTATE,
+                CommandType.AIM, CommandType.AIM, CommandType.AIM, CommandType.AIM,
+                CommandType.FIRE, CommandType.FIRE, CommandType.FIRE, CommandType.FIRE, CommandType.FIRE, CommandType.FIRE, CommandType.FIRE,
+                CommandType.SCAN
+        ]
         def nextCmdType = CommandType.forNumber(values[this.RANDOM.nextInt(values.size())].number)
         def nextCmdName = nextCmdType.name()
         log.info("Next cmd is $nextCmdName")
