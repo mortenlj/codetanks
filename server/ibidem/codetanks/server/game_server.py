@@ -60,7 +60,7 @@ class GameServer(object):
         LOG.info("Game finished, allowing %d seconds for victory celebrations", self._victory_delay.seconds)
         start = datetime.now()
         winner = self._world.get_live_bots()[-1]
-        game_over = Event(game_over=GameOver(winner=winner), sequence_id=self.next_sequence_id())
+        game_over = Event(game_over=GameOver(winner=winner.entity), sequence_id=self.next_sequence_id())
         for bot in self._bots:
             bot.event_channel.send(game_over)
         self._viewer_channel.send(game_over)

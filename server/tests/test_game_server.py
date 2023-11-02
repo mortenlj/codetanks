@@ -12,6 +12,7 @@ from ibidem.codetanks.server.com import Channel
 from ibidem.codetanks.server.constants import PLAYER_COUNT, MAX_HEALTH, BULLET_DAMAGE, TANK_SPEED, ROTATION, \
     BULLET_SPEED, TANK_RADIUS, BULLET_RADIUS
 from ibidem.codetanks.server.game_server import GameServer
+from ibidem.codetanks.server.vehicle import Armour
 from ibidem.codetanks.server.world import World
 
 
@@ -215,7 +216,7 @@ class TestStartedGame(Shared):
 
     def test_loop_ends_after_victory_delay_when_finished(self):
         self.world.number_of_live_bots = 1
-        self.world.get_live_bots.return_value = [Tank()]
+        self.world.get_live_bots.return_value = [Armour(Tank(), self.world)]
         start = datetime.now()
         self.server.run()
         end = datetime.now()
