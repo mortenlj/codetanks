@@ -1,28 +1,17 @@
-repositories {
-    mavenCentral()
-    mavenLocal()
-}
-
-buildscript {
-    repositories {
-        mavenCentral()
-        mavenLocal()
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
-    }
-    dependencies {
-        classpath 'com.tkruse.gradle:gradle-groovysh-plugin:1.0.5'
-        classpath 'com.github.jengelman.gradle.plugins:shadow:6.1.0'
-    }
+plugins {
+    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("com.github.tkruse.groovysh") version "1.0.8"
 }
 
 apply plugin: 'groovy'
 apply plugin: 'maven-publish'
 apply plugin: 'java'
 apply plugin: 'application'
-apply plugin: 'com.github.tkruse.groovysh'
-apply plugin: 'com.github.johnrengelman.shadow'
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
 
 group 'ibidem.codetanks'
 version = '0.1-SNAPSHOT'
