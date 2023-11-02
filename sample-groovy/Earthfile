@@ -21,6 +21,10 @@ build:
     RUN ./gradlew shadowJar
     SAVE ARTIFACT build/libs/sample-groovy-0.1-SNAPSHOT-all.jar /jar
 
+generate:
+    COPY ../domain+java/java/* build/generated/source/proto/main/java
+    SAVE ARTIFACT build/generated/source/proto/main/java AS LOCAL build/generated/source/proto/main/java
+
 docker:
     COPY +build/jar ./sample-groovy.jar
     ENTRYPOINT ["java", "-jar", "sample-groovy.jar"]
