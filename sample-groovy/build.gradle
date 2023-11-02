@@ -26,7 +26,7 @@ dependencies {
             'org.apache.logging.log4j:log4j-api:2.17.0',
             'org.apache.logging.log4j:log4j-core:2.17.0',
             'org.apache.logging.log4j:log4j-slf4j-impl:2.17.0',
-            'com.google.protobuf:protobuf-java:3.13.0',
+            'com.google.protobuf:protobuf-java:3.24.4',
     )
 }
 
