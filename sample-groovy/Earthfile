@@ -1,6 +1,7 @@
 VERSION 0.7
 
-FROM openjdk:15-jdk-alpine
+#FROM openjdk:15-jdk-alpine
+FROM eclipse-temurin:21-alpine
 WORKDIR /sample-groovy
 
 deps:
