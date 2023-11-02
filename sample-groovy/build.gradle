@@ -1,12 +1,10 @@
 plugins {
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("com.github.tkruse.groovysh") version "1.0.8"
+    id("java")
+    id("groovy")
+    id("application")
 }
-
-apply plugin: 'groovy'
-apply plugin: 'maven-publish'
-apply plugin: 'java'
-apply plugin: 'application'
 
 repositories {
     mavenCentral()
@@ -16,8 +14,10 @@ repositories {
 group 'ibidem.codetanks'
 version = '0.1-SNAPSHOT'
 
-sourceCompatibility = '1.11'
-targetCompatibility = '1.11'
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
 
 dependencies {
     implementation (
@@ -38,7 +38,9 @@ sourceSets {
     }
 }
 
-mainClassName = 'ibidem.codetanks.sample.groovy.Randomizer'
+application {
+    mainClass = 'ibidem.codetanks.sample.groovy.Randomizer'
+}
 
 runShadow {
     args = ['tcp://localhost:13337']
