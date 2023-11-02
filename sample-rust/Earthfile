@@ -1,44 +1,53 @@
 VERSION 0.7
 
-FROM rust:1
-WORKDIR /sample-rust
+FROM busybox
 
-install-chef:
-   RUN cargo install --debug cargo-chef
+prepare:
+    FROM rust:1
+    WORKDIR /sample-rust
+    RUN cargo install cargo-chef
+    RUN apt-get --yes update && apt-get --yes install cmake musl-tools protobuf-compiler
+    RUN rustup target add x86_64-unknown-linux-musl
 
-prepare-cache:
-    FROM +install-chef
+chef-planner:
+    FROM +prepare
     COPY --dir src Cargo.lock Cargo.toml build.rs .
     COPY ../domain+src/src/* target/proto/
-    RUN cargo chef prepare
+    RUN cargo chef prepare --recipe-path recipe.json
     SAVE ARTIFACT recipe.json
 
-# Using cutoff-optimization to ensure cache hit (see examples/cutoff-optimization)
-build-cache:
-    FROM +install-chef
-    COPY +prepare-cache/recipe.json ./
-    RUN cargo chef cook --release
-    SAVE ARTIFACT target
-    SAVE ARTIFACT $CARGO_HOME cargo_home
+chef-cook:
+    FROM +prepare
+    COPY +chef-planner/recipe.json recipe.json
+    RUN cargo chef cook --recipe-path recipe.json --release --target x86_64-unknown-linux-musl
 
 build:
+    FROM +chef-cook
+
     ENV PROTOBUF_SRC=src/protobuf/
     COPY --dir src Cargo.lock Cargo.toml build.rs .
     COPY ../domain+src/src/* $PROTOBUF_SRC
-    COPY +build-cache/target target
-    COPY +build-cache/cargo_home $CARGO_HOME
-    RUN cargo build --release --bin sample-rust
-    SAVE ARTIFACT target/release/sample-rust sample-rust
+    # builtins must be declared
+    ARG EARTHLY_GIT_SHORT_HASH
+    ARG VERSION=$EARTHLY_GIT_SHORT_HASH
+    RUN cargo build --release --target x86_64-unknown-linux-musl
+
+    SAVE ARTIFACT target/x86_64-unknown-linux-musl/release/sample-rust sample-rust
 
 docker:
-    FROM debian:buster-slim
+    FROM cgr.dev/chainguard/static:latest
+
+    WORKDIR /bin
     COPY +build/sample-rust sample-rust
-    ENTRYPOINT ["./sample-rust"]
+
+    ENTRYPOINT ["/bin/sample-rust"]
+
+    # builtins must be declared
+    ARG EARTHLY_GIT_SHORT_HASH
 
     ARG EARTHLY_GIT_SHORT_HASH
     ARG IMAGE_TAG=$EARTHLY_GIT_SHORT_HASH
     ARG EARTHLY_GIT_PROJECT_NAME
     ARG BASEIMAGE=ghcr.io/$EARTHLY_GIT_PROJECT_NAME
 
-    SAVE IMAGE ${BASEIMAGE}-sample-rust:${IMAGE_TAG}
-    SAVE IMAGE ${BASEIMAGE}-sample-rust:latest
+    SAVE IMAGE --push ${BASEIMAGE}-sample-rust:${IMAGE_TAG} ${BASEIMAGE}-sample-rust:latest
