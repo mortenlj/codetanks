@@ -21,7 +21,7 @@ java {
 
 dependencies {
     implementation (
-            'org.codehaus.groovy:groovy-all:2.3.6',
+            'org.apache.groovy:groovy-all:4.0.15',
             'org.zeromq:jeromq:0.3.4',
             'org.apache.logging.log4j:log4j-api:2.17.0',
             'org.apache.logging.log4j:log4j-core:2.17.0',
