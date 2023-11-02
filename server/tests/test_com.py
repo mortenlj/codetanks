@@ -19,7 +19,6 @@ class TestChannel(object):
     hostname = "test.example.com"
     port = 1234
     test_url_scheme = "inproc"
-    test_url_wildcard = "socket"
 
     def test_has_valid_urls(self):
         with patch("ibidem.codetanks.server.com.gethostname", return_value=self.hostname):
@@ -28,7 +27,7 @@ class TestChannel(object):
 
     def test_socket(self):
         with patch.object(Channel, "url_scheme", self.test_url_scheme), \
-             patch.object(Channel, "url_wildcard", self.test_url_wildcard), \
+             patch.object(Channel, "url_wildcard", "test_socket"), \
              patch.object(Channel, "_bind_socket", _test_bind):
             req_socket = Channel(ChannelType.REQUEST, 1)
             rep_socket = Channel(ChannelType.REPLY, 0)
@@ -38,7 +37,7 @@ class TestChannel(object):
 
     def test_socket_with_special_class(self):
         with patch.object(Channel, "url_scheme", self.test_url_scheme), \
-             patch.object(Channel, "url_wildcard", self.test_url_wildcard), \
+             patch.object(Channel, "url_wildcard", "test_socket_with_special_class"), \
              patch.object(Channel, "_bind_socket", _test_bind):
             req_socket = Channel(ChannelType.REQUEST, 1)
             rep_socket = Channel(ChannelType.REPLY, 0, Registration)
