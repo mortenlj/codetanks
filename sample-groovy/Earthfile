@@ -22,7 +22,7 @@ build:
     RUN ./gradlew shadowJar
     SAVE ARTIFACT build/libs/sample-groovy-0.1-SNAPSHOT-all.jar /jar
 
-generate:
+protobuf:
     COPY ../domain+java/java/* build/generated/source/proto/main/java
     SAVE ARTIFACT build/generated/source/proto/main/java AS LOCAL build/generated/source/proto/main/java
 
