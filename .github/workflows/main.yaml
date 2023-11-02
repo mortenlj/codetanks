@@ -20,7 +20,7 @@ jobs:
         echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
         echo "image=${BASEIMAGE}:${IMAGE_TAG}" >> ${GITHUB_OUTPUT}
     - name: Login to GitHub Packages Docker Registry
-      uses: docker/login-action@v1
+      uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
