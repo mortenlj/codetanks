@@ -3,7 +3,7 @@ use thiserror::Error;
 use tracing::{debug, info};
 use zeromq::{ReqSocket, Socket, SocketRecv, SocketSend, SubSocket, ZmqMessage};
 
-use crate::domain::{ClientType, Command, CommandReply, CommandResult, Id, Registration, RegistrationReply, RegistrationResult};
+use crate::domain::{ClientType, Command, CommandReply, CommandResult, Id, Registration, RegistrationReply, RegistrationResult, Event};
 
 #[derive(Error, Debug)]
 pub enum CommsError {
@@ -29,6 +29,9 @@ impl Commander {
             .connect(registration.event_url.as_str())
             .await
             .context("Failed to connect to event socket")?;
+        event_socket.subscribe("")
+            .await
+            .context("Failed to subscribe to event socket")?;
 
         let commander = Commander {
             cmd_socket,
@@ -58,6 +61,14 @@ impl Commander {
         }
 
         Ok(())
+    }
+
+    pub async fn next_event(&mut self) -> Result<Event> {
+        let message = self.event_socket.recv().await;
+        debug!("Received message {:?}", message);
+        let event = message.map(zmq_decode)?;
+        debug!("Decoded event {:?}", event);
+        event
     }
 }
 
