@@ -23,7 +23,6 @@ setup(
         "six",
         "protobuf==3.18.3",
     ],
-    namespace_packages=["ibidem", "ibidem.codetanks"],
     zip_safe=True,
 
     # Metadata

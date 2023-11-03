@@ -21,7 +21,6 @@ setup(
         "protobuf==3.18.3",
         # "euclid3>0.0.1", # TODO: Must be installed using pip?
     ],
-    namespace_packages=["ibidem", "ibidem.codetanks"],
     zip_safe=True,
     tests_require=[
         "pytest",
