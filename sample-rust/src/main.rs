@@ -1,11 +1,9 @@
 use anyhow::{anyhow, Result};
-use tokio::time::{Duration, sleep};
-use tracing::{debug, info};
-use tracing::field::debug;
+use tokio::{select, signal};
+use tracing::{info, warn};
+use crate::domain::event::Event;
 
 use crate::settings::AppConfig;
-
-use crate::domain::command::OptionalValue;
 
 mod domain;
 mod comms;
@@ -27,60 +25,46 @@ async fn app(config: AppConfig) -> Result<()> {
 
     let mut commander = comms::Commander::new(&repl).await?;
 
-    sleep(Duration::from_secs(10)).await;
-
     loop {
-        loop {
-            if let Ok(()) = commander.command(domain::Command {
-                r#type: domain::CommandType::Move as i32,
-                optional_value: Some(OptionalValue::Value(20)),
-            }).await {
-                info!("Moving 20 clicks forward");
-                break;
-            };
-            sleep(Duration::from_millis(100)).await;
-        }
-
-        loop {
-            if let Ok(()) = commander.command(domain::Command {
-                r#type: domain::CommandType::Rotate as i32,
-                optional_value: Some(OptionalValue::Value(10)),
-            }).await {
-                info!("Rotating 10 degrees");
+        select! {
+            Ok(_) = signal::ctrl_c() => {
+                info!("Received quit signal");
                 break;
             }
-            sleep(Duration::from_millis(100)).await;
-        };
-
-        loop {
-            if let Ok(()) = commander.command(domain::Command {
-                r#type: domain::CommandType::Aim as i32,
-                optional_value: Some(OptionalValue::Value(-5)),
-            }).await {
-                info!("Aiming -5 degrees");
-                break;
+            maybe_event = commander.next_event() => {
+                match &maybe_event {
+                    Ok(event) => {
+                        info!("Received event {:?}", event);
+                        if let Some(inner) = &event.event {
+                            info!("Received inner event {:?}", inner);
+                            match inner {
+                                Event::Scan(scan_result) => {
+                                    info!("Scan result: {:?}", scan_result);
+                                },
+                                Event::Death(death) => {
+                                    info!("Death: {:?}", death);
+                                },
+                                Event::Result(command_result) => {
+                                    info!("Command result: {:?}", command_result);
+                                },
+                                Event::GameStarted(game_started) => {
+                                    info!("Game started: {:?}", game_started);
+                                },
+                                Event::GameOver(game_over) => {
+                                    info!("Game over: {:?}", game_over);
+                                },
+                                Event::GameData(game_data) => {
+                                    info!("Game data: {:?}", game_data);
+                                },
+                            }
+                        }
+                    },
+                    Err(e) => {
+                        warn!("Failed to receive event: {:?}", e);
+                    },
+                }
             }
-            sleep(Duration::from_millis(100)).await;
-        }
-
-        loop {
-            if let Ok(()) = commander.command(domain::Command {
-                r#type: domain::CommandType::Fire as i32,
-                optional_value: None,
-            }).await {
-                info!("FIRE!");
-                break;
-            }
-            sleep(Duration::from_millis(100)).await;
         }
     }
-
-    // match signal::ctrl_c().await {
-    //     Ok(()) => {}
-    //     Err(err) => {
-    //         eprintln!("Unable to listen for shutdown signal: {}", err);
-    //         return Err(anyhow!(err));
-    //     }
-    // }
-    // Ok(())
+    Ok(())
 }
