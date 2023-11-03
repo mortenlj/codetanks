@@ -1,10 +1,9 @@
 use anyhow::{anyhow, Context, Result};
-use bytes::Bytes;
 use thiserror::Error;
 use tracing::{debug, info};
-use zeromq::{BlockingRecv, BlockingSend, ReqSocket, Socket, SubSocket, ZmqMessage};
+use zeromq::{ReqSocket, Socket, SocketRecv, SocketSend, SubSocket, ZmqMessage};
 
-use crate::domain::{ClientType, Command, CommandReply, CommandResult, Id, Registration, RegistrationReply, RegistrationResult, Event};
+use crate::domain::{ClientType, Command, CommandReply, CommandResult, Id, Registration, RegistrationReply, RegistrationResult};
 
 #[derive(Error, Debug)]
 pub enum CommsError {
@@ -53,27 +52,11 @@ impl Commander {
             .context("Failed to decode command reply")?;
 
         if repl.result() == CommandResult::Busy {
-            return Err(anyhow!("Server busy"))
+            return Err(anyhow!("Server busy"));
         } else if repl.result() == CommandResult::Accepted {
             debug!("Command accepted");
         }
 
-        // TODO: Don't return unless the command has completed
-        // loop {
-        //     let event: Event = self.event_socket
-        //         .recv()
-        //         .await
-        //         .map(zmq_decode)
-        //         .context("Failed to receive event")?
-        //         .context("Failed to decode event")?;
-        //     dbg!(&event);
-        //     match event.event {
-        //         Some(e) => {
-        //             dbg!(e);
-        //         }
-        //         None => break
-        //     }
-        // }
         Ok(())
     }
 }
@@ -113,9 +96,10 @@ pub async fn register(server_url: &String) -> Result<RegistrationReply> {
     Ok(repl)
 }
 
-fn zmq_decode<T: prost::Message + std::default::Default>(zm: ZmqMessage) -> Result<T> {
-    let vec = zm.data.to_vec();
-    let data = Bytes::from(vec);
+fn zmq_decode<T: prost::Message + Default>(zm: ZmqMessage) -> Result<T> {
+    let vec = zm.into_vec();
+    debug!("Received {} frames of bytes", vec.len());
+    let data = vec.get(0).context("No data in message")?.to_owned();
     return T::decode(data).map_err(|e| anyhow!(e));
 }
 
