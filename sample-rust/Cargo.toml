@@ -17,7 +17,7 @@ schematic = "0.12.7"
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.17", features = ["fmt", "json"] }
 serde = { version = "1.0.190", features = ["serde_derive", "derive"] }
-serde_json = "1.0.104"
+serde_json = "1.0.108"
 
 [build-dependencies]
 prost-build = { version = "0.12.1" }
