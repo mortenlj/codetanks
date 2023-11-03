@@ -85,7 +85,6 @@ class GameServer(object):
                 assert isinstance(event, Event), "%r is not an instance of Event" % event
                 event.sequence_id = self.next_sequence_id()
                 for bot in bots:
-                    LOG.info("Publishing event %d to bot %s (%d)", event.sequence_id, bot.bot_id.name, bot.tank_id)
                     bot.event_channel.send(event)
 
     def _handle_registration(self, registration):
