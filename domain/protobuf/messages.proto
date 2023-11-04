@@ -89,8 +89,7 @@ message GameData {
 
 enum CommandResult {
     BUSY = 0;
-    COMPLETED = 1;
-    ACCEPTED = 2;
+    ACCEPTED = 1;
 }
 
 message ScanResult {
@@ -110,11 +109,15 @@ message GameOver {
     Tank winner = 1;
 }
 
+message CommandCompleted {
+    Tank you = 1;
+}
+
 message Event {
     oneof event {
         ScanResult scan = 1;
         Death death = 2;
-        CommandResult result = 3;
+        CommandCompleted completed = 3;
         GameStarted game_started = 4;
         GameOver game_over = 5;
         GameData game_data = 6;

@@ -96,11 +96,8 @@ class Tank {
                         isAlive = false;
                     }
                     break
-                case Event.EventCase.RESULT:
-                    def cmdResult = event.getResult()
-                    if (cmdResult == CommandResult.COMPLETED) {
-                        ready = true
-                    }
+                case Event.EventCase.COMPLETED:
+                    ready = true
                     break
             }
             log.info(event.toString())

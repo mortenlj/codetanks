@@ -6,7 +6,7 @@ import math
 
 from euclid import Point2, Vector2
 
-from ibidem.codetanks.domain.messages_pb2 import Point, Death, BotStatus, Event, CommandResult
+from ibidem.codetanks.domain.messages_pb2 import Point, Death, BotStatus, Event, CommandResult, CommandCompleted
 from ibidem.codetanks.server.commands import Idle, Move, Rotate, Aim, Fire, Scan, Dead
 from ibidem.codetanks.server.constants import TANK_SPEED, TANK_RADIUS, BULLET_SPEED, BULLET_RADIUS, BULLET_DAMAGE
 
@@ -41,7 +41,7 @@ class Vehicle(object):
         if should_end:
             self._command = Idle(self)
             if self.is_tank():
-                self._world.add_event(self.entity.id, Event(result=CommandResult.COMPLETED))
+                self._world.add_event(self.entity.id, Event(completed=CommandCompleted(you=self.entity)))
 
     def is_tank(self):
         return False

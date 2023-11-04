@@ -6,7 +6,7 @@ from euclid import Point2, Vector2
 from mock import create_autospec, call
 
 from ibidem.codetanks.domain.messages_pb2 import Tank, Id, Point, BotStatus, Bullet, Arena, ScanResult, Death, Event, \
-    CommandResult
+    CommandResult, CommandCompleted
 from ibidem.codetanks.server.commands import Idle
 from ibidem.codetanks.server.constants import TANK_RADIUS, BULLET_RADIUS, MAX_HEALTH, BULLET_DAMAGE
 from ibidem.codetanks.server.vehicle import Armour, Missile
@@ -304,7 +304,7 @@ class TestScan(Shared):
         armour.update(TICKS)
         expected_calls = [
             call(armour.tank_id, scan_result),
-            call(armour.tank_id, Event(result=CommandResult.COMPLETED))
+            call(armour.tank_id, Event(completed=CommandCompleted(you=armour.entity)))
         ]
         assert world.add_event.call_args_list == expected_calls
 
