@@ -7,7 +7,7 @@ from mock import create_autospec, MagicMock, PropertyMock
 
 from ibidem.codetanks.domain.messages_pb2 import Registration, GameData, ClientType, Id, RegistrationReply, Command, \
     CommandType, CommandReply, \
-    CommandResult, BotStatus, ScanResult, Tank, Death, GameInfo, RegistrationResult, Event, Arena
+    CommandResult, BotStatus, ScanResult, Tank, Death, GameInfo, RegistrationResult, Event, Arena, Point
 from ibidem.codetanks.server.com import Channel
 from ibidem.codetanks.server.constants import PLAYER_COUNT, MAX_HEALTH, BULLET_DAMAGE, TANK_SPEED, ROTATION, \
     BULLET_SPEED, TANK_RADIUS, BULLET_RADIUS
@@ -122,7 +122,10 @@ class TestGame:
     @pytest.fixture
     def bot(self, server):
         bot = server._bots[0]
-        bot._tank.status = BotStatus.IDLE
+        bot.tank.status = BotStatus.IDLE
+        bot.tank.position = Point(x=1, y=1)
+        bot.tank.direction = Point(x=1, y=0)
+        bot.tank.turret = Point(x=0, y=1)
         return bot
 
     def test_game_data_sent_once_per_loop(self, server, world, viewer_channel):
@@ -168,9 +171,9 @@ class TestGame:
         send_on_mock_channel(bot.cmd_channel, command)
         server._run_once()
         if param is None:
-            getattr(bot._tank, name).assert_called_once_with()
+            getattr(bot.tank, name).assert_called_once_with()
         else:
-            getattr(bot._tank, name).assert_called_once_with(param)
+            getattr(bot.tank, name).assert_called_once_with(param)
 
     @pytest.fixture(params=(s for s in BotStatus.values() if s != BotStatus.IDLE))
     def command_abort_if_busy_states(self, request):
@@ -182,13 +185,15 @@ class TestGame:
             Command(type=CommandType.AIM, value=-1)
     ))
     def test_command_abort_if_busy(self, server, bot, command_abort_if_busy_states, command):
-        bot._tank.status = command_abort_if_busy_states
+        bot.tank.status = command_abort_if_busy_states
         send_on_mock_channel(bot.cmd_channel, command)
         server._run_once()
-        getattr(bot._tank, CommandType.Name(command.type).lower()).assert_not_called()
+        getattr(bot.tank, CommandType.Name(command.type).lower()).assert_not_called()
         bot.cmd_channel.send.assert_called_once_with(CommandReply(result=CommandResult.BUSY))
 
-    def test_game_started_after_fourth_bot(self, server):
+    def test_game_started_after_fourth_bot(self, server, world, bot):
+        world.add_tank.return_value = Armour(Tank(), world)
+        bot.tank = Armour(Tank(), world)
         # One from fixture, and another three here
         for i in range(PLAYER_COUNT - 1):
             assert not server.started()
@@ -206,7 +211,8 @@ class TestGame:
 
 class TestStartedGame:
     @pytest.fixture
-    def server(self, server):
+    def server(self, server, world):
+        world.add_tank.return_value = Armour(Tank(), world)
         for i in range(PLAYER_COUNT):
             server._handle_bot_registration(Registration(client_type=ClientType.BOT, id=Id(name="bot", version=1)))
         return server

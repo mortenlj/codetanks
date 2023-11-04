@@ -5,7 +5,8 @@ from datetime import datetime
 
 import pygame
 
-from ibidem.codetanks.domain.messages_pb2 import GameInfo, RegistrationReply, ClientType, RegistrationResult, Event, GameStarted, GameOver
+from ibidem.codetanks.domain.messages_pb2 import GameInfo, RegistrationReply, ClientType, RegistrationResult, Event, \
+    GameStarted, GameOver
 from ibidem.codetanks.server.bot import Bot
 from ibidem.codetanks.server.com import ChannelType
 from ibidem.codetanks.server.constants import PLAYER_COUNT, MAX_HEALTH, BULLET_DAMAGE, TANK_SPEED, ROTATION, \
@@ -39,10 +40,12 @@ class GameServer(object):
         return self._event_sequence_id - 1
 
     def start(self):
-        game_started = Event(game_started=GameStarted(game_info=self.build_game_info()), sequence_id=self.next_sequence_id())
+        game_info = self.build_game_info()
+        sequence_id = self.next_sequence_id()
+        self._viewer_channel.send(Event(game_started=GameStarted(game_info=game_info), sequence_id=sequence_id))
         for bot in self._bots:
-            bot.event_channel.send(game_started)
-        self._viewer_channel.send(game_started)
+            event = Event(game_started=GameStarted(game_info=game_info, you=bot.tank.entity), sequence_id=sequence_id)
+            bot.event_channel.send(event)
         self.clock = pygame.time.Clock()
         LOG.info("Game started!")
 

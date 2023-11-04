@@ -103,6 +103,7 @@ message Death {
 
 message GameStarted {
     GameInfo game_info = 1;
+    Tank you = 2;
 }
 
 message GameOver {
