@@ -103,6 +103,10 @@ async fn app(config: AppConfig) -> Result<()> {
                     Ok(event) => {
                         info!("Received event {:?}", event);
                         if let Some(inner) = &event.event {
+                            if let Event::GameOver(game_over) = inner {
+                                info!("Game Over! Winner was {:?}", game_over.winner.to_owned().unwrap());
+                                return Ok(())
+                            }
                             info!("Received inner event {:?} while in state {:?}", inner, current_state);
                             current_state = match current_state {
                                 State::WaitingForGameStart => {

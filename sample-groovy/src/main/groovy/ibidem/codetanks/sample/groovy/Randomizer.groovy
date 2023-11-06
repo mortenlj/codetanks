@@ -93,7 +93,7 @@ class Tank {
             switch (event.getEventCase()) {
                 case Event.EventCase.DEATH:
                     if (event.death.victim.id == myId) {
-                        isAlive = false;
+                        isAlive = false
                     }
                     break
                 case Event.EventCase.SCAN_COMPLETE:
@@ -103,6 +103,9 @@ class Tank {
                 case Event.EventCase.MOVEMENT_COMPLETE:
                     ready = true
                     break
+                case Event.EventCase.GAME_OVER:
+                    isAlive = false
+                    return
             }
             log.info(event.toString())
             bytes = eventSocket.recv(ZMQ.NOBLOCK)
