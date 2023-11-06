@@ -1,6 +1,6 @@
 VERSION 0.7
 
-FROM namely/protoc:1.37_2
+FROM namely/protoc:1.51_2
 WORKDIR /code
 
 src:
