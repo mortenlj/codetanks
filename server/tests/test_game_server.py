@@ -7,7 +7,7 @@ from mock import create_autospec, MagicMock, PropertyMock
 
 from ibidem.codetanks.domain.messages_pb2 import Registration, GameData, ClientType, Id, RegistrationReply, Command, \
     CommandType, CommandReply, \
-    CommandResult, BotStatus, ScanResult, Tank, Death, GameInfo, RegistrationResult, Event, Arena, Point
+    CommandResult, BotStatus, Tank, Death, GameInfo, RegistrationResult, Event, Arena, Point, ScanComplete
 from ibidem.codetanks.server.com import Channel
 from ibidem.codetanks.server.constants import PLAYER_COUNT, MAX_HEALTH, BULLET_DAMAGE, TANK_SPEED, ROTATION, \
     BULLET_SPEED, TANK_RADIUS, BULLET_RADIUS
@@ -140,7 +140,7 @@ class TestGame:
         world.get_events.assert_called_once_with()
 
     def test_events_sent_when_gathered(self, server, world, bot):
-        scan_result = Event(scan=ScanResult(tanks=[]))
+        scan_result = Event(scan_complete=ScanComplete(tanks=[]))
         world.get_events.return_value = {bot.tank_id: [scan_result]}
         server._run_once()
         bot.event_channel.send.assert_called_once_with(scan_result)

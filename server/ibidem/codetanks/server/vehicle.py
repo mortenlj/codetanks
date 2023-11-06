@@ -2,11 +2,11 @@
 # -*- coding: utf-8
 
 import logging
-import math
 
+import math
 from euclid import Point2, Vector2
 
-from ibidem.codetanks.domain.messages_pb2 import Point, Death, BotStatus, Event, CommandResult, CommandCompleted
+from ibidem.codetanks.domain.messages_pb2 import Point, Death, BotStatus, Event
 from ibidem.codetanks.server.commands import Idle, Move, Rotate, Aim, Fire, Scan, Dead
 from ibidem.codetanks.server.constants import TANK_SPEED, TANK_RADIUS, BULLET_SPEED, BULLET_RADIUS, BULLET_DAMAGE
 
@@ -34,14 +34,12 @@ class Vehicle(object):
         xdistance = pos.x - other_pos.x
         ydistance = pos.y - other_pos.y
         squared = xdistance ** 2 + ydistance ** 2
-        return squared <= (other.radius+self.radius) ** 2
+        return squared <= (other.radius + self.radius) ** 2
 
     def update(self, ticks):
-        should_end = self._command.update(ticks)
-        if should_end:
-            self._command = Idle(self)
-            if self.is_tank():
-                self._world.add_event(self.entity.id, Event(completed=CommandCompleted(you=self.entity)))
+        self._command, event = self._command.update(ticks)
+        if event is not None:
+            self._world.add_event(self.entity.id, event)
 
     def is_tank(self):
         return False

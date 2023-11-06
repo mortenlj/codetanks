@@ -6,7 +6,8 @@ import operator
 
 from euclid import Ray2, Circle
 
-from ibidem.codetanks.domain.messages_pb2 import BotStatus
+from ibidem.codetanks.domain.messages_pb2 import BotStatus, MovementComplete, RotationComplete, AimingComplete, \
+    ShotFired, ScanComplete, Event
 from ibidem.codetanks.server.constants import ROTATION
 
 LOG = logging.getLogger(__name__)
@@ -20,7 +21,8 @@ class Idle(object):
         self.vehicle.status = self.status
 
     def update(self, ticks):
-        return False
+        """Performs update and returns command and event"""
+        return self, None
 
 
 class Dead(Idle):
@@ -42,6 +44,12 @@ class Move(Idle):
     def _reached_target_position(self, position):
         return self.target_ray.intersect(Circle(position, 1.0))
 
+    def _completion(self):
+        if self.vehicle.is_tank():
+            return Idle(self.vehicle), Event(movement_complete=MovementComplete(you=self.vehicle.entity))
+        else:
+            return Idle(self.vehicle), None
+
     def update(self, ticks):
         should_end = False
         distance = ticks * self.speed
@@ -53,12 +61,12 @@ class Move(Idle):
         if self.vehicle.is_collision():
             LOG.debug("Aborting move, new position is invalid")
             self.vehicle.position = old_pos
-            return True
+            return self._completion()
         elif self._reached_target_position(new_pos):
             LOG.debug("Reached target %r", self.target_ray)
             self.vehicle.position = self.target_ray.p
-            should_end = True
-        return should_end
+            return self._completion()
+        return self, None
 
 
 class RotateAndAim(Idle):
@@ -96,7 +104,9 @@ class RotateAndAim(Idle):
             new = self.target
             should_end = True
         self._update_vehicle(new)
-        return should_end
+        if should_end:
+            return Idle(self.vehicle), self._completion_event()
+        return self, None
 
     def _calculate(self, theta):
         raise NotImplementedError("This command must be subclassed")
@@ -105,6 +115,9 @@ class RotateAndAim(Idle):
         raise NotImplementedError("This command must be subclassed")
 
     def _get_current(self):
+        raise NotImplementedError("This command must be subclassed")
+
+    def _completion_event(self):
         raise NotImplementedError("This command must be subclassed")
 
 
@@ -120,6 +133,9 @@ class Rotate(RotateAndAim):
     def _get_current(self):
         return self.vehicle.direction
 
+    def _completion_event(self):
+        return Event(rotation_complete=RotationComplete(you=self.vehicle.entity))
+
 
 class Aim(RotateAndAim):
     status = BotStatus.AIMING
@@ -133,6 +149,9 @@ class Aim(RotateAndAim):
     def _get_current(self):
         return self.vehicle.turret
 
+    def _completion_event(self):
+        return Event(aiming_complete=AimingComplete(you=self.vehicle.entity))
+
 
 class Fire(Idle):
     status = BotStatus.FIRING
@@ -143,7 +162,7 @@ class Fire(Idle):
 
     def update(self, ticks):
         self._world.add_bullet(self.vehicle)
-        return True
+        return Idle(self.vehicle), Event(shot_fired=ShotFired(you=self.vehicle.entity))
 
 
 class Scan(Idle):
@@ -156,6 +175,5 @@ class Scan(Idle):
 
     def update(self, ticks):
         scan_ray = Ray2(self.vehicle.position, self.vehicle.turret)
-        result = self._world.scan(scan_ray, self._theta)
-        self._world.add_event(self.vehicle.tank_id, result)
-        return True
+        hits = self._world.scan(scan_ray, self._theta)
+        return Idle(self.vehicle), Event(scan_complete=ScanComplete(tanks=hits, you=self.vehicle.entity))

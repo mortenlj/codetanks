@@ -9,7 +9,7 @@ import pytest
 from euclid import Point2, Vector2, Ray2
 from mock import create_autospec, patch
 
-from ibidem.codetanks.domain.messages_pb2 import Arena, Id, Tank, BotStatus, Bullet, ScanResult, Death, Event, Point
+from ibidem.codetanks.domain.messages_pb2 import Arena, Id, Tank, BotStatus, Bullet, Death, Event, Point, ScanComplete
 from ibidem.codetanks.server.commands import Move
 from ibidem.codetanks.server.constants import TANK_RADIUS
 from ibidem.codetanks.server.vehicle import Armour, Missile
@@ -157,8 +157,8 @@ class TestTank:
         world.update(ticks)
         armour.update.assert_called_with(ticks)
 
-    def test_events_gathered(self, world):
-        event = Event(scan=ScanResult(tanks=[]))
+    def test_events_gathered(self, world, armour):
+        event = Event(scan_complete=ScanComplete(tanks=[], you=armour.entity))
         world.add_event(TANK_ID, event)
         event_map = world.get_events()
         assert TANK_ID in event_map.keys()
@@ -193,16 +193,15 @@ class TestTank:
 
         def _test_scan(self, armour, world, position, theta, assert_func_name):
             armour.position = position
-            event = world.scan(RAY, theta)
-            assert isinstance(event, Event)
+            hits = world.scan(RAY, theta)
             assert_func = getattr(self, assert_func_name)
-            assert_func(armour, event.scan)
+            assert_func(armour, hits)
 
-        def _assert_found_tank(self, armour, scan_result):
-            assert list(scan_result.tanks) == [armour.entity]
+        def _assert_found_tank(self, armour, hits):
+            assert hits == [armour.entity]
 
-        def _assert_no_tanks_found(self, armour, scan_result):
-            assert list(scan_result.tanks) == []
+        def _assert_no_tanks_found(self, armour, hits):
+            assert hits == []
 
         def _scan_radius_close(self):
             close_position = RAY.p + Vector2(50., 50.)

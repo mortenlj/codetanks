@@ -5,8 +5,7 @@ import pytest
 from euclid import Point2, Vector2
 from mock import create_autospec, call
 
-from ibidem.codetanks.domain.messages_pb2 import Tank, Id, Point, BotStatus, Bullet, Arena, ScanResult, Death, Event, \
-    CommandResult, CommandCompleted
+from ibidem.codetanks.domain.messages_pb2 import Tank, Id, Point, BotStatus, Bullet, Arena, Death, Event, ScanComplete
 from ibidem.codetanks.server.commands import Idle
 from ibidem.codetanks.server.constants import TANK_RADIUS, BULLET_RADIUS, MAX_HEALTH, BULLET_DAMAGE
 from ibidem.codetanks.server.vehicle import Armour, Missile
@@ -298,13 +297,12 @@ class TestFire(Shared):
 
 class TestScan(Shared):
     def test_scan(self, world, armour):
-        scan_result = Event(scan=ScanResult(tanks=[]))
-        world.scan.return_value = scan_result
+        scan_result = Event(scan_complete=ScanComplete(tanks=[], you=armour.entity))
+        world.scan.return_value = []
         armour.scan(10)
         armour.update(TICKS)
         expected_calls = [
             call(armour.tank_id, scan_result),
-            call(armour.tank_id, Event(completed=CommandCompleted(you=armour.entity)))
         ]
         assert world.add_event.call_args_list == expected_calls
 
@@ -362,16 +360,16 @@ class TestCollide(Shared):
                          id="armour_below"),
             pytest.param(Vector2(2 * BULLET_RADIUS + 1, 0),
                          lambda s, x, y, w: Missile(s._create_bullet(1, Point(x=x, y=y)), w,
-                                                 None), id="missile_to_the_right"),
+                                                    None), id="missile_to_the_right"),
             pytest.param(Vector2(-2 * BULLET_RADIUS + 1, 0),
                          lambda s, x, y, w: Missile(s._create_bullet(1, Point(x=x, y=y)), w,
-                                                 None), id="missile_to_the_left"),
+                                                    None), id="missile_to_the_left"),
             pytest.param(Vector2(0, 2 * BULLET_RADIUS + 1),
                          lambda s, x, y, w: Missile(s._create_bullet(1, Point(x=x, y=y)), w,
-                                                 None), id="missile_above"),
+                                                    None), id="missile_above"),
             pytest.param(Vector2(0, -2 * BULLET_RADIUS + 1),
                          lambda s, x, y, w: Missile(s._create_bullet(1, Point(x=x, y=y)), w,
-                                                 None), id="missile_below"),
+                                                    None), id="missile_below"),
     ))
     def test_non_overlap_is_accepted(self, offset_vector, other_func, world, armour):
         other = other_func(self, offset_vector.x, offset_vector.y, world)

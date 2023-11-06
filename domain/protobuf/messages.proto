@@ -92,8 +92,25 @@ enum CommandResult {
     ACCEPTED = 1;
 }
 
-message ScanResult {
-    repeated Tank tanks = 1;
+message ScanComplete {
+    Tank you = 1;
+    repeated Tank tanks = 2;
+}
+
+message ShotFired {
+    Tank you = 1;
+}
+
+message AimingComplete {
+    Tank you = 1;
+}
+
+message RotationComplete {
+    Tank you = 1;
+}
+
+message MovementComplete {
+    Tank you = 1;
 }
 
 message Death {
@@ -110,18 +127,17 @@ message GameOver {
     Tank winner = 1;
 }
 
-message CommandCompleted {
-    Tank you = 1;
-}
-
 message Event {
     oneof event {
-        ScanResult scan = 1;
-        Death death = 2;
-        CommandCompleted completed = 3;
-        GameStarted game_started = 4;
-        GameOver game_over = 5;
-        GameData game_data = 6;
+        ScanComplete scan_complete = 1;
+        ShotFired shot_fired = 2;
+        AimingComplete aiming_complete = 3;
+        RotationComplete rotation_complete = 4;
+        MovementComplete movement_complete = 5;
+        Death death = 6;
+        GameStarted game_started = 7;
+        GameOver game_over = 8;
+        GameData game_data = 9;
     }
     optional int64 sequence_id = 99;
 }

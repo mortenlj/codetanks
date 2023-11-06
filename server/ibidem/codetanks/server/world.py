@@ -2,13 +2,13 @@
 # -*- coding: utf-8
 
 import logging
-import math
 from collections import defaultdict
 from random import randint
 
+import math
 from euclid import LineSegment2, Circle
 
-from ibidem.codetanks.domain.messages_pb2 import GameData, Arena, Tank, Point, Bullet, ScanResult, BotStatus, Event
+from ibidem.codetanks.domain.messages_pb2 import GameData, Arena, Tank, Point, Bullet, BotStatus
 from ibidem.codetanks.server.constants import MAX_HEALTH
 from ibidem.codetanks.server.vehicle import Armour, Missile
 
@@ -71,7 +71,7 @@ class World(object):
     def is_collision(self, vehicle):
         position = vehicle.position
         for attr, upper_bound in ((position.x, self.arena.width), (position.y, self.arena.height)):
-            if not vehicle.radius <= attr <= (upper_bound-vehicle.radius):
+            if not vehicle.radius <= attr <= (upper_bound - vehicle.radius):
                 return True
         for tank in self._tanks:
             if vehicle.collide(tank):
@@ -105,7 +105,7 @@ class World(object):
                 continue
             if self._is_hit(ray, theta, tank):
                 hits.append(tank.entity)
-        return Event(scan=ScanResult(tanks=hits))
+        return hits
 
     def _calculate_scan_radius(self, theta):
         return max(math.pi - theta, 0.0) * (self.arena.height * 0.318)
@@ -116,18 +116,20 @@ class World(object):
         center_vector = ray.v
         target_line = LineSegment2(ray.p, tank.position)
         tank_circle = Circle(tank.position, float(tank.radius))
-        bounds = theta/2.
+        bounds = theta / 2.
         if theta == 0.:
             left = right = center_line
         else:
             left = LineSegment2(ray.p, center_vector.rotate(bounds), radius)
             right = LineSegment2(ray.p, center_vector.rotate(-bounds), radius)
-        LOG.debug("Checking if %r is inside sector between %r and %r with radius %r", tank.position, left, right, radius)
+        LOG.debug("Checking if %r is inside sector between %r and %r with radius %r", tank.position, left, right,
+                  radius)
         if self._debug:
             from ibidem.codetanks.server.debug_util import ScanPlot
             ScanPlot(self.arena.width, self.arena.height, left, right, center_line, radius, tank).plot()
         if target_line.length > radius:
-            LOG.debug("Outside because %r is %r from center, which is more than radius %r", tank.position, target_line.length, radius)
+            LOG.debug("Outside because %r is %r from center, which is more than radius %r", tank.position,
+                      target_line.length, radius)
             return False
         for side in left, right:
             intersect = side.intersect(tank_circle)
@@ -135,7 +137,7 @@ class World(object):
                 LOG.debug("Inside because tank intersects side vector (%r) at %r", side, intersect)
                 return True
         if target_line.v.angle(center_line.v) > bounds:
-            LOG.debug("Outside because %r is further from the center line than %r", target_line.v,  bounds)
+            LOG.debug("Outside because %r is further from the center line than %r", target_line.v, bounds)
             return False
         LOG.debug("Inside sector")
         return True
@@ -154,6 +156,7 @@ def _id_generator():
     while True:
         yield i
         i += 1
+
 
 _bullet_generator = _id_generator()
 _debug_generator = _id_generator()
