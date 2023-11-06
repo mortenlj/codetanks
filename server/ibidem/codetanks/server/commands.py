@@ -155,10 +155,10 @@ class Aim(RotateAndAim):
 class Fire(Idle):
     status = BotStatus.FIRING
 
-    def __init__(self, vehicle, world, bullet_speed):
+    def __init__(self, vehicle, world):
         super(Fire, self).__init__(vehicle)
         self._world = world
-        self._delay = bullet_speed * CANNON_RELOAD
+        self._delay = CANNON_RELOAD
         self._fired = False
 
     def update(self, ticks):

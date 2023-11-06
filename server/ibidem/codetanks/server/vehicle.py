@@ -131,7 +131,7 @@ class Armour(Vehicle):
         self._command = Aim(self, theta)
 
     def fire(self):
-        self._command = Fire(self, self._world, BULLET_SPEED)
+        self._command = Fire(self, self._world)
 
     def scan(self, angle):
         if angle > 90:
