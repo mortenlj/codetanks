@@ -191,14 +191,14 @@ class TestGame:
         getattr(bot.tank, CommandType.Name(command.type).lower()).assert_not_called()
         bot.cmd_channel.send.assert_called_once_with(CommandReply(result=CommandResult.BUSY))
 
-    def test_game_started_after_fourth_bot(self, server, world, bot):
+    def test_game_full_after_fourth_bot(self, server, world, bot):
         world.add_tank.return_value = Armour(Tank(), world)
         bot.tank = Armour(Tank(), world)
         # One from fixture, and another three here
         for i in range(PLAYER_COUNT - 1):
             assert not server.started()
             server._handle_bot_registration(Registration(client_type=ClientType.BOT, id=Id(name="bot", version=1)))
-        assert server.started()
+        assert server.game_full()
 
     def test_update_not_called_before_game_started(self, server, world):
         server._run_once()
@@ -243,7 +243,7 @@ class TestStartedGame:
         start = datetime.now()
         server.run()
         end = datetime.now()
-        assert (end - start).total_seconds() == pytest.approx(VICTORY_DELAY.total_seconds(), abs=0.1)
+        assert (end - start).total_seconds() == pytest.approx(VICTORY_DELAY.total_seconds(), abs=0.2)
 
     def test_new_bots_are_refused_when_game_started(self, server, world, registration_channel):
         server._handle_bot_registration(Registration(client_type=ClientType.BOT, id=Id(name="bot", version=1)))

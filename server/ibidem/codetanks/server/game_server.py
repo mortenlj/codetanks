@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 import logging
+import time
 from datetime import datetime
 
 import pygame
@@ -52,12 +53,20 @@ class GameServer(object):
     def started(self):
         return self.clock is not None
 
+    def game_full(self):
+        return len(self._bots) == PLAYER_COUNT
+
     def finished(self):
         live_count = self._world.number_of_live_bots
         return len(self._bots) > 1 >= live_count
 
     def run(self):
         LOG.info("GameServer starting, registration available on %s", self._registration_channel.url)
+        while not self.game_full():
+            self._run_once()
+        LOG.info("Players registered, preparing to start game")
+        time.sleep(0.1)
+        self.start()
         while not self.finished():
             self._run_once()
         LOG.info("Game finished, allowing %d seconds for victory celebrations", self._victory_delay.seconds)
@@ -102,7 +111,7 @@ class GameServer(object):
             ))
 
     def _handle_bot_registration(self, registration):
-        if self.started():
+        if self.game_full():
             self._registration_channel.send(RegistrationReply(
                 result=RegistrationResult.FAILURE,
                 game_info=self.build_game_info()
@@ -115,6 +124,7 @@ class GameServer(object):
         bot = Bot(registration.id, tank_id, event_channel, cmd_channel, tank)
         self._bots.append(bot)
         self._handlers[bot.cmd_channel] = bot.handle_command
+        LOG.info("Bot registered with cmd_url %s and event_url %s", cmd_channel.url, event_channel.url)
         self._registration_channel.send(
             RegistrationReply(
                 result=RegistrationResult.SUCCESS,
@@ -123,8 +133,6 @@ class GameServer(object):
                 cmd_url=cmd_channel.url,
                 id=tank_id
             ))
-        if len(self._bots) == PLAYER_COUNT:
-            self.start()
 
     def build_game_info(self):
         return GameInfo(
