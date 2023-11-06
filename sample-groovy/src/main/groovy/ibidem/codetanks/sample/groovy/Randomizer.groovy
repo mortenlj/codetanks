@@ -96,7 +96,11 @@ class Tank {
                         isAlive = false;
                     }
                     break
-                case Event.EventCase.COMPLETED:
+                case Event.EventCase.SCAN_COMPLETE:
+                case Event.EventCase.SHOT_FIRED:
+                case Event.EventCase.AIMING_COMPLETE:
+                case Event.EventCase.ROTATION_COMPLETE:
+                case Event.EventCase.MOVEMENT_COMPLETE:
                     ready = true
                     break
             }
