@@ -78,10 +78,10 @@ class GameServer(object):
                 received_messages += 1
         if received_messages > 0:
             LOG.debug("GameServer processed %d messages", received_messages)
-        self._viewer_channel.send(Event(game_data=self._world.gamedata))
         if self.started():
             ticks = self.clock.tick(60)
             self._world.update(ticks)
+        self._viewer_channel.send(Event(game_data=self._world.gamedata))
         for tank_id, events in self._world.get_events().items():
             bots = self._bots if tank_id is None else (self._bots[tank_id],)
             for event in events:
