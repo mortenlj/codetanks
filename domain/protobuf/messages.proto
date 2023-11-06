@@ -47,6 +47,7 @@ message GameInfo {
     double bullet_speed = 7;
     double tank_radius = 8;
     double bullet_radius = 9;
+    int32 cannon_reload = 10;
 }
 
 message RegistrationReply {

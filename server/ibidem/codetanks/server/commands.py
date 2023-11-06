@@ -8,7 +8,7 @@ from euclid import Ray2, Circle
 
 from ibidem.codetanks.domain.messages_pb2 import BotStatus, MovementComplete, RotationComplete, AimingComplete, \
     ShotFired, ScanComplete, Event
-from ibidem.codetanks.server.constants import ROTATION
+from ibidem.codetanks.server.constants import ROTATION, CANNON_RELOAD
 
 LOG = logging.getLogger(__name__)
 
@@ -51,7 +51,6 @@ class Move(Idle):
             return Idle(self.vehicle), None
 
     def update(self, ticks):
-        should_end = False
         distance = ticks * self.speed
         LOG.debug("Attempting to move %r", distance)
         old_pos = self.vehicle.position
@@ -156,12 +155,22 @@ class Aim(RotateAndAim):
 class Fire(Idle):
     status = BotStatus.FIRING
 
-    def __init__(self, vehicle, world):
+    def __init__(self, vehicle, world, bullet_speed):
         super(Fire, self).__init__(vehicle)
         self._world = world
+        self._delay = bullet_speed * CANNON_RELOAD
+        self._fired = False
 
     def update(self, ticks):
-        self._world.add_bullet(self.vehicle)
+        if not self._fired:
+            LOG.debug("Shot fired. Remaining delay: %f, ticks: %f", self._delay, ticks)
+            self._world.add_bullet(self.vehicle)
+            self._fired = True
+            return self, None
+        self._delay -= ticks
+        if self._delay > 0:
+            LOG.debug("Reload still in progress. Remaining delay: %f, ticks: %f", self._delay, ticks)
+            return self, None
         return Idle(self.vehicle), Event(shot_fired=ShotFired(you=self.vehicle.entity))
 
 

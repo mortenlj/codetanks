@@ -10,7 +10,7 @@ from ibidem.codetanks.domain.messages_pb2 import GameInfo, RegistrationReply, Cl
 from ibidem.codetanks.server.bot import Bot
 from ibidem.codetanks.server.com import ChannelType
 from ibidem.codetanks.server.constants import PLAYER_COUNT, MAX_HEALTH, BULLET_DAMAGE, TANK_SPEED, ROTATION, \
-    BULLET_SPEED, TANK_RADIUS, BULLET_RADIUS
+    BULLET_SPEED, TANK_RADIUS, BULLET_RADIUS, CANNON_RELOAD
 
 LOG = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ class GameServer(object):
 
     def finished(self):
         live_count = self._world.number_of_live_bots
-        return len(self._bots) > 1 and live_count <= 1
+        return len(self._bots) > 1 >= live_count
 
     def run(self):
         LOG.info("GameServer starting, registration available on %s", self._registration_channel.url)
@@ -136,7 +136,8 @@ class GameServer(object):
             rotation=ROTATION,
             bullet_speed=BULLET_SPEED,
             tank_radius=TANK_RADIUS,
-            bullet_radius=BULLET_RADIUS
+            bullet_radius=BULLET_RADIUS,
+            cannon_reload=CANNON_RELOAD,
         )
 
 

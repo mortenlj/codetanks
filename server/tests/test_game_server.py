@@ -10,7 +10,7 @@ from ibidem.codetanks.domain.messages_pb2 import Registration, GameData, ClientT
     CommandResult, BotStatus, Tank, Death, GameInfo, RegistrationResult, Event, Arena, Point, ScanComplete
 from ibidem.codetanks.server.com import Channel
 from ibidem.codetanks.server.constants import PLAYER_COUNT, MAX_HEALTH, BULLET_DAMAGE, TANK_SPEED, ROTATION, \
-    BULLET_SPEED, TANK_RADIUS, BULLET_RADIUS
+    BULLET_SPEED, TANK_RADIUS, BULLET_RADIUS, CANNON_RELOAD
 from ibidem.codetanks.server.game_server import GameServer
 from ibidem.codetanks.server.vehicle import Armour
 from ibidem.codetanks.server.world import World
@@ -256,7 +256,8 @@ class TestStartedGame:
             rotation=ROTATION,
             bullet_speed=BULLET_SPEED,
             tank_radius=TANK_RADIUS,
-            bullet_radius=BULLET_RADIUS
+            bullet_radius=BULLET_RADIUS,
+            cannon_reload=CANNON_RELOAD,
         )
         registration_channel.send.assert_called_with(
             RegistrationReply(result=RegistrationResult.FAILURE, game_info=game_info))
