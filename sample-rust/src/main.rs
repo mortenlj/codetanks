@@ -207,7 +207,7 @@ async fn app(config: AppConfig) -> Result<()> {
                                 State::Aiming => {
                                     match inner {
                                         Event::AimingComplete(_) => {
-                                            start_searching(&mut commander, 20).await?
+                                            start_searching(&mut commander, 10).await?
                                         }
                                         _ => {
                                             State::Aiming
