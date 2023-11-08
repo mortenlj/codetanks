@@ -4,6 +4,7 @@ use euclid::default::Vector2D;
 use tokio::{select, signal};
 use tracing::{debug, info, warn};
 
+use crate::domain::Tank;
 use crate::domain::command::OptionalValue;
 use crate::domain::event::Event;
 use crate::settings::AppConfig;
@@ -22,9 +23,10 @@ fn main() -> Result<()> {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 struct TargetingSolution {
-    angle: Angle<f64>,
+    aim_angle: Angle<f64>,
+    rotate_angle: Angle<f64>,
     distance: i32,
     shots_remaining: i8,
 }
@@ -33,7 +35,8 @@ impl TargetingSolution {
     fn shoot(self) -> TargetingSolution {
         TargetingSolution {
             distance: self.distance,
-            angle: self.angle,
+            aim_angle: self.aim_angle,
+            rotate_angle: self.rotate_angle,
             shots_remaining: self.shots_remaining - 1
         }
     }
@@ -43,24 +46,12 @@ impl TargetingSolution {
 enum State {
     WaitingForGameStart,
     Searching,
-    SearchingNarrow,
     Firing(TargetingSolution),
     Aiming,
     AimingAtTarget(TargetingSolution),
-    Rotating,
-    RotatingToHunt,
+    Rotating(TargetingSolution),
     Moving,
 }
-
-async fn start_searching(commander: &mut comms::Commander, angle: i32) -> Result<State> {
-    info!("Starting search with angle spread {}", angle);
-    commander.command(domain::Command {
-        r#type: domain::CommandType::Scan as i32,
-        optional_value: Some(OptionalValue::Value(angle)),
-    }).await?;
-    Ok(State::Searching)
-}
-
 
 fn make_vector(point: &Option<domain::Point>) -> Result<Vector2D<f64>> {
     match point {
@@ -73,19 +64,39 @@ fn make_vector(point: &Option<domain::Point>) -> Result<Vector2D<f64>> {
     }
 }
 
-async fn start_aiming_at_target(commander: &mut comms::Commander, target: &domain::Tank, me: &domain::Tank) -> Result<State> {
+
+fn make_targeting_solution(me: &Tank, target: &Tank) -> Result<TargetingSolution> {
     let my_pos = make_vector(&me.position)?;
     let target_pos = make_vector(&target.position)?;
-    let distance_to_target = my_pos.to_point().distance_to(target_pos.to_point()) as i32;
-    let target_angle = my_pos.angle_to(target_pos);
-    let my_aim = make_vector(&me.turret)?;
-    let aim_change = my_aim.angle_from_x_axis() - target_angle;
-    start_aiming_at_angle(commander, aim_change.to_degrees() as i32).await?;
+    let vector_to_target = target_pos - my_pos;
+
+    let my_turret = make_vector(&me.turret)?;
+    let aim_angle = my_turret.angle_to(vector_to_target);
+
+    let my_heading = make_vector(&me.direction)?;
+    let rotate_angle = my_heading.angle_to(vector_to_target);
+
     let targeting_solution = TargetingSolution {
-        angle: target_angle,
-        distance: distance_to_target,
+        aim_angle,
+        rotate_angle,
+        distance: vector_to_target.length() as i32,
         shots_remaining: SHOTS,
     };
+    Ok(targeting_solution)
+}
+
+async fn start_searching(commander: &mut comms::Commander, spread: i32) -> Result<State> {
+    info!("Starting search with angle spread {}", spread);
+    commander.command(domain::Command {
+        r#type: domain::CommandType::Scan as i32,
+        optional_value: Some(OptionalValue::Value(spread)),
+    }).await?;
+    Ok(State::Searching)
+}
+
+async fn start_aiming_at_target(commander: &mut comms::Commander, target: &Tank, me: &Tank) -> Result<State> {
+    let targeting_solution = make_targeting_solution(me, target)?;
+    start_aiming_at_angle(commander, targeting_solution.aim_angle.to_degrees() as i32).await?;
     info!("Developed targeting solution: {:?}", targeting_solution);
     Ok(State::AimingAtTarget(targeting_solution))
 }
@@ -108,13 +119,22 @@ async fn start_firing(commander: &mut comms::Commander, targeting_solution: Targ
         }).await?;
         Ok(State::Firing(targeting_solution.shoot()))
     } else {
-        info!("Move towards target according to targeting solution: {:?}", targeting_solution);
+        info!("Rotate towards target according to targeting solution: {:?}", targeting_solution);
         commander.command(domain::Command {
-            r#type: domain::CommandType::Move as i32,
-            optional_value: Some(OptionalValue::Value(3 * targeting_solution.distance / 4))
+            r#type: domain::CommandType::Rotate as i32,
+            optional_value: Some(OptionalValue::Value(targeting_solution.rotate_angle.to_degrees() as i32))
         }).await?;
-        Ok(State::Moving)
+        Ok(State::Rotating(targeting_solution))
     }
+}
+
+async fn start_moving(commander: &mut comms::Commander, targeting_solution: TargetingSolution) -> Result<State> {
+    info!("Move towards target according to targeting solution: {:?}", targeting_solution);
+    commander.command(domain::Command {
+        r#type: domain::CommandType::Move as i32,
+        optional_value: Some(OptionalValue::Value(targeting_solution.distance * 3/4))
+    }).await?;
+    Ok(State::Moving)
 }
 
 #[tokio::main]
@@ -170,13 +190,6 @@ async fn app(config: AppConfig) -> Result<()> {
                                         },
                                     }
                                 },
-                                State::SearchingNarrow => {
-                                    match inner {
-                                        _ => {
-                                            State::SearchingNarrow
-                                        },
-                                    }
-                                },
                                 State::Firing(targeting_solution) => {
                                     match inner {
                                         Event::ShotFired(_) => {
@@ -207,22 +220,21 @@ async fn app(config: AppConfig) -> Result<()> {
                                         },
                                     }
                                 },
-                                State::Rotating => {
+                                State::Rotating(targeting_solution) => {
                                     match inner {
+                                        Event::RotationComplete(_) => {
+                                            start_moving(&mut commander, targeting_solution).await?
+                                        }
                                         _ => {
-                                            State::Rotating
-                                        },
-                                    }
-                                },
-                                State::RotatingToHunt => {
-                                    match inner {
-                                        _ => {
-                                            State::RotatingToHunt
+                                            State::Rotating(targeting_solution)
                                         },
                                     }
                                 },
                                 State::Moving => {
                                     match inner {
+                                        Event::MovementComplete(_) => {
+                                            start_searching(&mut commander, 40).await?
+                                        }
                                         _ => {
                                             State::Moving
                                         },
@@ -239,4 +251,57 @@ async fn app(config: AppConfig) -> Result<()> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use rstest::*;
+    use pretty_assertions::assert_eq;
+    use assertables::{assert_in_delta, assert_in_delta_as_result};
+
+    use crate::domain::{BotStatus, Id, Point, Tank};
+
+    use super::*;
+
+    #[fixture]
+    fn me() -> Tank {
+        Tank {
+            id: 1,
+            bot_id: Some(Id { name: "me".to_string(), version: 1 }),
+            position: Some(Point { x: 1.0, y: 1.0 }),
+            direction: Some(Point { x: 1.0, y: 0.0 }),
+            turret: Some(Point { x: -1.0, y: 0.0 }),
+            health: 100,
+            status: BotStatus::Idle as i32,
+        }
+    }
+
+    #[rstest]
+    #[case::right(Point {x:2.0, y:1.0}, 180.0, 0.0, 1)]
+    #[case::left(Point {x:0.0, y:1.0}, 0.0, 180.0, 1)]
+    #[case::down(Point {x:1.0, y:2.0}, -90.0, 90.0, 1)]
+    #[case::up(Point {x:1.0, y:0.0}, 90.0, -90.0, 1)]
+    #[case::down_right(Point {x:2.0, y:2.0}, -135.0, 45.0, 1)]
+    fn targeting_solution(me: Tank, #[case] position: Point, #[case] aim_angle: f64, #[case] rotate_angle: f64, #[case] distance: i32) {
+        let target = Tank {
+            id: 2,
+            bot_id: Some(Id { name: "target".to_string(), version: 1}),
+            position: Some(position),
+            direction: Some(Point { x: 0.0, y: 0.0 }),
+            turret: Some(Point { x: 0.0, y: 0.0 }),
+            health: 100,
+            status: BotStatus::Idle as i32,
+        };
+        let solution = make_targeting_solution(&me, &target).unwrap();
+        assert_eq!(solution.distance, distance);
+        assert_in_delta!(solution.aim_angle.to_degrees(), aim_angle, 0.05);
+        assert_in_delta!(solution.rotate_angle.to_degrees(), rotate_angle, 0.05);
+    }
+    #[rstest]
+    fn real_world() {
+        let me = Tank { id: 0, bot_id: Some(Id { name: "Rusty".to_string(), version: 1 }), position: Some(Point {x: 387.78719262470514, y: 483.7131060564801 }), direction: Some(Point { x: 0.8290375725550414, y: 0.5591929034707472 }), turret: Some(Point { x: 0.3907311284892584, y: -0.9205048534524469 }), health: 90, status: BotStatus::Idle as i32 };
+        let target = Tank { id: 2, bot_id: Some(Id { name: "Randomizer".to_string(), version: 1 }), position: Some(Point { x: 482.9819551078393, y: 325.53912985056326 }), direction: Some(Point { x: 0.017452406437283408, y: 0.9998476951563913 }), turret: Some(Point { x: -0.29237170472273505, y: 0.9563047559630361 }), health: 70, status: BotStatus::Idle as i32 };
+        let solution = make_targeting_solution(&me, &target).unwrap();
+        assert_in_delta!(solution.aim_angle.to_degrees(), 0.0, 11.0);
+    }
 }

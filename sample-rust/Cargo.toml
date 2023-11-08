@@ -24,6 +24,7 @@ euclid = "0.22.9"
 prost-build = { version = "0.12.1" }
 
 [dev-dependencies]
+assertables = "7.0.1"
 envtestkit = "1.1.2"
 pretty_assertions = "1.4.0"
 rstest = "0.18.2"
