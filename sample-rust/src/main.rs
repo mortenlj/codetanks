@@ -4,7 +4,7 @@ use euclid::default::Vector2D;
 use tokio::{select, signal};
 use tracing::{debug, info, warn};
 
-use crate::domain::Tank;
+use crate::domain::{BotStatus, Tank};
 use crate::domain::command::OptionalValue;
 use crate::domain::event::Event;
 use crate::settings::AppConfig;
@@ -137,6 +137,11 @@ async fn start_moving(commander: &mut comms::Commander, targeting_solution: Targ
     Ok(State::Moving)
 }
 
+fn select_target(tanks: &Vec<Tank>) -> Option<Tank> {
+    let live_tanks: Vec<Tank> = tanks.iter().map(|t| t.to_owned()).filter(|t| t.status != BotStatus::Dead as i32).collect();
+    live_tanks.first().map(|t| t.to_owned())
+}
+
 #[tokio::main]
 async fn app(config: AppConfig) -> Result<()> {
     logging::init_logging(&config)?;
@@ -178,8 +183,7 @@ async fn app(config: AppConfig) -> Result<()> {
                                     match inner {
                                         Event::ScanComplete(scan_complete) => {
                                             let me = scan_complete.you.to_owned().unwrap();
-                                            if scan_complete.tanks.len() > 0 {
-                                                let target = scan_complete.tanks[0].to_owned();
+                                            if let Some(target) = select_target(&scan_complete.tanks) {
                                                 start_aiming_at_target(&mut commander, &target, &me).await?
                                             } else {
                                                 start_aiming_at_angle(&mut commander, 20).await?
