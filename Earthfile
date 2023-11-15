@@ -5,4 +5,4 @@ all:
     BUILD ./server+docker
     BUILD ./viewer+docker
     BUILD ./sample-groovy+docker
-    BUILD ./sample-rust+docker
+    BUILD ./rusty-hunter+docker

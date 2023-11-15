@@ -1,5 +1,5 @@
 [package]
-name = "sample-rust"
+name = "rusty-hunter"
 version = "0.1.0"
 authors = ["Morten Lied Johansen <mortenjo@ifi.uio.no>"]
 edition = "2018"

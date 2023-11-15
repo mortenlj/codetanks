@@ -15,7 +15,7 @@ sleep 5
 docker run --label codetanks=sample-groovy-1 --name sample-groovy-1 --net=host --rm --detach ghcr.io/mortenlj/codetanks-sample-groovy tcp://localhost:13337
 docker run --label codetanks=sample-groovy-2 --name sample-groovy-2 --net=host --rm --detach ghcr.io/mortenlj/codetanks-sample-groovy tcp://localhost:13337
 docker run --label codetanks=sample-groovy-3 --name sample-groovy-3 --net=host --rm --detach ghcr.io/mortenlj/codetanks-sample-groovy tcp://localhost:13337
-docker run --label codetanks=sample-rust --name sample-rust --net=host --rm --detach -e SAMPLE_RUST__SERVER_URI=tcp://localhost:13337 ghcr.io/mortenlj/codetanks-sample-rust
+docker run --label codetanks=rusty-hunter --name rusty-hunter --net=host --rm --detach -e SAMPLE_RUST__SERVER_URI=tcp://localhost:13337 ghcr.io/mortenlj/codetanks-rusty-hunter
 
 docker attach codetanks_server || true
 
