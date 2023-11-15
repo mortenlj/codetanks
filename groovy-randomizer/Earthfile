@@ -2,7 +2,7 @@ VERSION 0.7
 
 #FROM openjdk:15-jdk-alpine
 FROM eclipse-temurin:21-alpine
-WORKDIR /sample-groovy
+WORKDIR /groovy-randomizer
 
 deps:
     ENV GRADLE_OPTS="-Dorg.gradle.daemon=false"
@@ -20,20 +20,20 @@ test:
 build:
     FROM +test
     RUN ./gradlew shadowJar
-    SAVE ARTIFACT build/libs/sample-groovy-0.1-SNAPSHOT-all.jar /jar
+    SAVE ARTIFACT build/libs/groovy-randomizer-0.1-SNAPSHOT-all.jar /jar
 
 protobuf:
     COPY ../domain+java/java/* build/generated/source/proto/main/java
     SAVE ARTIFACT build/generated/source/proto/main/java AS LOCAL build/generated/source/proto/main/java
 
 docker:
-    COPY +build/jar ./sample-groovy.jar
-    ENTRYPOINT ["java", "-jar", "sample-groovy.jar"]
+    COPY +build/jar ./groovy-randomizer.jar
+    ENTRYPOINT ["java", "-jar", "groovy-randomizer.jar"]
 
     ARG EARTHLY_GIT_SHORT_HASH
     ARG IMAGE_TAG=$EARTHLY_GIT_SHORT_HASH
     ARG EARTHLY_GIT_PROJECT_NAME
     ARG BASEIMAGE=ghcr.io/$EARTHLY_GIT_PROJECT_NAME
 
-    SAVE IMAGE ${BASEIMAGE}-sample-groovy:${IMAGE_TAG}
-    SAVE IMAGE ${BASEIMAGE}-sample-groovy:latest
+    SAVE IMAGE ${BASEIMAGE}-groovy-randomizer:${IMAGE_TAG}
+    SAVE IMAGE ${BASEIMAGE}-groovy-randomizer:latest

@@ -13,7 +13,7 @@ updates:
     schedule:
       interval: "daily"
   - package-ecosystem: "gradle"
-    directory: "/sample-groovy/"
+    directory: "/groovy-randomizer/"
     schedule:
       interval: "daily"
   - package-ecosystem: "cargo"
