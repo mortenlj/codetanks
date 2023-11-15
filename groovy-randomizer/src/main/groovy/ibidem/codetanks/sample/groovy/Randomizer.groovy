@@ -1,9 +1,8 @@
 package ibidem.codetanks.sample.groovy
 
-import com.google.protobuf.Descriptors
+
 import com.google.protobuf.Message
 import groovy.util.logging.Log4j2
-import ibidem.codetanks.domain.Messages
 import ibidem.codetanks.domain.Messages.ClientType
 import ibidem.codetanks.domain.Messages.Command
 import ibidem.codetanks.domain.Messages.CommandReply

@@ -24,7 +24,7 @@ build:
 
 protobuf:
     COPY ../domain+java/java/* build/generated/source/proto/main/java
-    SAVE ARTIFACT build/generated/source/proto/main/java AS LOCAL build/generated/source/proto/main/java
+    SAVE ARTIFACT build/generated/source/proto/main/java AS LOCAL build/generated/source/proto/main/java/ibidem
 
 docker:
     COPY +build/jar ./groovy-randomizer.jar
