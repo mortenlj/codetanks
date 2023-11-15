@@ -95,7 +95,7 @@ class Armour(Vehicle):
         LOG.debug("%r has received %d in damage from %r", self, damage, perpetrator)
         if self.health <= 0:
             self._command = Dead(self)
-            self._world.add_event(None, Event(death=Death(victim=self.entity, perpetrator=perpetrator.entity)))
+            self._world.add_event(self.tank_id, Event(death=Death(victim=self.entity, perpetrator=perpetrator.entity)))
 
     def is_collision(self):
         return self._world.is_collision(self)

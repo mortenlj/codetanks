@@ -393,7 +393,7 @@ class TestDeath(Shared):
     def test_health_goes_to_zero(self, world, armour, tank):
         tank.health = 5
         armour.inflict(5, armour)
-        world.add_event.assert_called_with(None, Event(death=Death(victim=tank, perpetrator=tank)))
+        world.add_event.assert_called_with(tank.id, Event(death=Death(victim=tank, perpetrator=tank)))
 
     def test_death_is_not_sent_while_alive(self, world, armour, tank):
         tank.health = 10
