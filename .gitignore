@@ -5,6 +5,7 @@ target/
 dist/
 out/
 lib/
+!elixir-corny/lib
 __pycache__
 .pytest_cache
 .eggs
