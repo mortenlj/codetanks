@@ -16,6 +16,10 @@ updates:
     directory: "/groovy-randomizer/"
     schedule:
       interval: "daily"
+    groups:
+      log4j:
+        patterns:
+          - org.apache.logging.log4j:log4j-*
   - package-ecosystem: "cargo"
     directory: "/rusty-hunter/"
     schedule:
