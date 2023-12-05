@@ -13,7 +13,7 @@ zeromq = "0.3.4"
 tokio = { version = "1", features = ["full"] }
 anyhow = "1.0"
 thiserror = "1.0"
-schematic = "0.12.9"
+schematic = "0.12.10"
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["fmt", "json"] }
 serde = { version = "1.0.193", features = ["serde_derive", "derive"] }
