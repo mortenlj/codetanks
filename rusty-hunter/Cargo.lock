@@ -1257,9 +1257,9 @@ checksum = "1ad4cc8da4ef723ed60bced201181d83791ad433213d8c24efffda1eec85d741"
 
 [[package]]
 name = "schematic"
-version = "0.12.10"
+version = "0.12.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "710a6af816c586a37dc9b8b304370f36d8b90751785bbb245942bed0ae00a69d"
+checksum = "c5ed74b468686fb5551b8f29c8339dcf0b7ac4e0f475490f6f49f6a2aadcd392"
 dependencies = [
  "garde",
  "miette",
