@@ -1130,9 +1130,9 @@ dependencies = [
 
 [[package]]
 name = "reqwest"
-version = "0.11.22"
+version = "0.11.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "046cd98826c46c2ac8ddecae268eb5c2e58628688a5fc7a2643704a73faba95b"
+checksum = "37b1ae8d9ac08420c66222fb9096fc5de435c3c48542bc5336c51892cffafb41"
 dependencies = [
  "base64",
  "bytes",
@@ -1257,9 +1257,9 @@ checksum = "1ad4cc8da4ef723ed60bced201181d83791ad433213d8c24efffda1eec85d741"
 
 [[package]]
 name = "schematic"
-version = "0.12.12"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5ed74b468686fb5551b8f29c8339dcf0b7ac4e0f475490f6f49f6a2aadcd392"
+checksum = "dd8ad48870198d30a129ab8aedc823cc8320a81486e41cd7d445ce5b320181dc"
 dependencies = [
  "garde",
  "miette",
@@ -1275,9 +1275,9 @@ dependencies = [
 
 [[package]]
 name = "schematic_macros"
-version = "0.12.8"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "10e8b482f96eaca0fdc4fe3441c2eda44f5aeeb1a93b653d214ee2ecf4975be4"
+checksum = "a179036b19dd2528a1fad39f1d97f1fd8d9c550386649187be36f7cd0d50124c"
 dependencies = [
  "convert_case",
  "darling",
@@ -1288,9 +1288,9 @@ dependencies = [
 
 [[package]]
 name = "schematic_types"
-version = "0.4.10"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c38cdd0968bde35f7e093600c90e0306da6af5ffd1b3cb175dbfde1146debcf2"
+checksum = "7c6125ac98c145b753c4c479d1d8409add4b14da34810b5804b057c9700f22fe"
 
 [[package]]
 name = "scopeguard"
@@ -1337,9 +1337,9 @@ dependencies = [
 
 [[package]]
 name = "serde_path_to_error"
-version = "0.1.14"
+version = "0.1.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4beec8bce849d58d06238cb50db2e1c417cfeafa4c63f692b15c82b7c80f8335"
+checksum = "ebd154a240de39fdebcf5775d2675c204d7c13cf39a4c697be6493c8e734337c"
 dependencies = [
  "itoa",
  "serde",
@@ -1499,18 +1499,18 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "1.0.55"
+version = "1.0.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e3de26b0965292219b4287ff031fcba86837900fe9cd2b34ea8ad893c0953d2"
+checksum = "d54378c645627613241d077a3a79db965db602882668f9136ac42af9ecb730ad"
 dependencies = [
  "thiserror-impl",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "1.0.55"
+version = "1.0.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "268026685b2be38d7103e9e507c938a1fcb3d7e6eb15e87870b617bf37b6d581"
+checksum = "fa0faa943b50f3db30a20aa7e265dbc66076993efed8463e8de414e5d06d3471"
 dependencies = [
  "proc-macro2",
  "quote",
