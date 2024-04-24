@@ -1,13 +1,18 @@
 VERSION 0.7
 
-FROM namely/protoc:1.51_2
+FROM alpine:3
 WORKDIR /code
+
+protoc:
+    RUN wget https://github.com/protocolbuffers/protobuf/releases/download/v26.1/protoc-26.1-linux-x86_64.zip
+    RUN unzip protoc-26.1-linux-x86_64.zip -d /usr/local/
 
 src:
     COPY protobuf ./
     SAVE ARTIFACT ./ /src
 
 python:
+    FROM +protoc
     COPY +src/src ./
     RUN mkdir -p gen/python/ibidem/codetanks/domain && touch gen/python/ibidem/codetanks/domain/__init__.py
     RUN protoc messages.proto \
@@ -15,6 +20,7 @@ python:
     SAVE ARTIFACT gen/python /python
 
 java:
+    FROM +protoc
     COPY +src/src ./
     RUN mkdir -p gen/java
     RUN protoc messages.proto \
