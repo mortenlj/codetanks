@@ -31,10 +31,10 @@ jobs:
     - name: Build and possibly push
       env:
         EARTHLY_PUSH: "${{ github.ref == 'refs/heads/master' }}"
-        EARTHLY_ORG: ${{ secrets.EARTHLY_ORG }}
-        EARTHLY_SATELLITE: ${{ secrets.EARTHLY_SATELLITE }}
+        EARTHLY_ORG: ${{ vars.EARTHLY_ORG }}
+        EARTHLY_SATELLITE: ${{ vars.EARTHLY_SATELLITE }}
         EARTHLY_TOKEN: ${{ secrets.EARTHLY_TOKEN }}
-        DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
         DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       run: |
         earthly --ci --remote-cache=${cache_image} +all --IMAGE_TAG="${IMAGE_TAG}" --BASEIMAGE="${BASEIMAGE}"
