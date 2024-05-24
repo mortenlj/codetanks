@@ -5,7 +5,7 @@ set -o pipefail
 
 export TERM=xterm
 
-./earthlyw +all
+earthly +all
 
 docker run --label codetanks=server --name codetanks_server --net=host --rm --detach ghcr.io/mortenlj/codetanks-server:latest
 docker run --label codetanks=viewer --name codetanks_viewer --net=host -e DISPLAY -v ~/.Xauthority:/root/.Xauthority --rm --detach ghcr.io/mortenlj/codetanks-viewer tcp://localhost:13337
