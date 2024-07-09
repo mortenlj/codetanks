@@ -21,7 +21,7 @@ serde_json = "1.0.120"
 euclid = "0.22.10"
 
 [build-dependencies]
-prost-build = { version = "0.12.6" }
+prost-build = { version = "0.13.0" }
 
 [dev-dependencies]
 assertables = "7.0.1"
