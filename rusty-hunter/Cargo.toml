@@ -16,7 +16,7 @@ thiserror = "1.0"
 schematic = "0.16.1"
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["fmt", "json"] }
-serde = { version = "1.0.207", features = ["serde_derive", "derive"] }
+serde = { version = "1.0.208", features = ["serde_derive", "derive"] }
 serde_json = "1.0.124"
 euclid = "0.22.10"
 
