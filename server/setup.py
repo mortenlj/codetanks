@@ -18,7 +18,7 @@ setup(
         "pinject",
         "pygame",
         "fiaas-logging==0.1.1",
-        "protobuf==5.27.4",
+        "protobuf==5.28.0",
         # "euclid3>0.0.1", # TODO: Must be installed using pip?
     ],
     zip_safe=True,
