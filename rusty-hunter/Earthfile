@@ -50,4 +50,4 @@ docker:
     ARG EARTHLY_GIT_PROJECT_NAME
     ARG BASEIMAGE=ghcr.io/$EARTHLY_GIT_PROJECT_NAME
 
-    SAVE IMAGE --push ${BASEIMAGE}-rusty-hunter:${IMAGE_TAG} ${BASEIMAGE}-rusty-hunter:latest
+    SAVE IMAGE --push ${BASEIMAGE}/rusty-hunter:${IMAGE_TAG} ${BASEIMAGE}/rusty-hunter:latest

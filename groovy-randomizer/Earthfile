@@ -35,5 +35,4 @@ docker:
     ARG EARTHLY_GIT_PROJECT_NAME
     ARG BASEIMAGE=ghcr.io/$EARTHLY_GIT_PROJECT_NAME
 
-    SAVE IMAGE ${BASEIMAGE}-groovy-randomizer:${IMAGE_TAG}
-    SAVE IMAGE ${BASEIMAGE}-groovy-randomizer:latest
+    SAVE IMAGE --push ${BASEIMAGE}/groovy-randomizer:${IMAGE_TAG} ${BASEIMAGE}/groovy-randomizer:latest

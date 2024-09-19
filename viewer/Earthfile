@@ -27,5 +27,4 @@ docker:
     ARG EARTHLY_GIT_PROJECT_NAME
     ARG BASEIMAGE=ghcr.io/$EARTHLY_GIT_PROJECT_NAME
 
-    SAVE IMAGE ${BASEIMAGE}-viewer:${IMAGE_TAG}
-    SAVE IMAGE ${BASEIMAGE}-viewer:latest
+    SAVE IMAGE --push ${BASEIMAGE}/viewer:${IMAGE_TAG} ${BASEIMAGE}/viewer:latest

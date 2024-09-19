@@ -34,11 +34,10 @@ docker:
     ARG EARTHLY_GIT_PROJECT_NAME
     ARG BASEIMAGE=ghcr.io/$EARTHLY_GIT_PROJECT_NAME
 
-    SAVE IMAGE ${BASEIMAGE}-server:${IMAGE_TAG}
-    SAVE IMAGE ${BASEIMAGE}-server:latest
+    SAVE IMAGE --push ${BASEIMAGE}/server:${IMAGE_TAG} ${BASEIMAGE}/server:latest
 
 launch:
     LOCALLY
     ARG EARTHLY_GIT_PROJECT_NAME
     ARG BASEIMAGE=ghcr.io/$EARTHLY_GIT_PROJECT_NAME
-    RUN docker run --label codetanks=server --net=host --rm ${BASEIMAGE}-server:latest
+    RUN docker run --label codetanks=server --net=host --rm ${BASEIMAGE}/server:latest
