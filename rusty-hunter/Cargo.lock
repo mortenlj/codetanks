@@ -34,9 +34,9 @@ checksum = "86fdf8605db99b54d3cd748a44c6d04df638eb5dafb219b135d0149bd0db01f6"
 
 [[package]]
 name = "assertables"
-version = "8.10.1"
+version = "8.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a73cd825c7b94d74b0b29fed0c326a8e629c628d10d37ac87c907d3dbfe99e62"
+checksum = "097a7316abf38f13c005c2c73bef14e10542067ba953c86068562d47fcafb25a"
 
 [[package]]
 name = "async-trait"
