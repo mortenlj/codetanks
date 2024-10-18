@@ -17,7 +17,7 @@ schematic = "0.17.5"
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["fmt", "json"] }
 serde = { version = "1.0.210", features = ["serde_derive", "derive"] }
-serde_json = "1.0.128"
+serde_json = "1.0.129"
 euclid = "0.22.11"
 
 [build-dependencies]
