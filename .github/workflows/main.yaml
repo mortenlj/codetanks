@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
     - name: "Set image version"
       id: set-image-tag
       run: |
@@ -23,7 +23,7 @@ jobs:
       with:
         version: "latest" # or pin to an specific version, e.g. "v0.6.10"
     - name: Login to GitHub Packages Docker Registry
-      uses: docker/login-action@v3
+      uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
@@ -50,7 +50,7 @@ jobs:
       packages: write
     steps:
       - name: Cleanup main images
-        uses: dataaxiom/ghcr-cleanup-action@v1.0.13
+        uses: dataaxiom/ghcr-cleanup-action@98b4022383d6ddb70ccbf6a378b4d8c67a60f066 # v1.0.13
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           packages: codetanks/rusty-hunter,codetanks/groovy-randomizer,codetanks/viewer,codetanks/server
@@ -61,7 +61,7 @@ jobs:
           delete-orphaned-images: true
           delete-partial-images: true
       - name: Cleanup old cache images
-        uses: dataaxiom/ghcr-cleanup-action@v1.0.13
+        uses: dataaxiom/ghcr-cleanup-action@98b4022383d6ddb70ccbf6a378b4d8c67a60f066 # v1.0.13
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           package: codetanks/cache
