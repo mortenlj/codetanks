@@ -21,7 +21,7 @@ setup(
         "pygame>=2.0.0.dev12",
         "fiaas-logging==0.1.1",
         "six",
-        "protobuf==5.29.3",
+        "protobuf==6.30.0",
     ],
     zip_safe=True,
 
