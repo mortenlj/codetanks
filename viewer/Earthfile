@@ -1,7 +1,5 @@
 VERSION 0.8
 
-IMPORT github.com/mortenlj/earthly-lib/kubernetes/commands AS lib-k8s-commands
-
 FROM busybox
 
 uv:
