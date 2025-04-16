@@ -1,8 +1,13 @@
 VERSION 0.8
 
 all:
-    BUILD ./server+test
-    BUILD ./server+docker
-    BUILD ./viewer+docker
-    BUILD ./groovy-randomizer+docker
-    BUILD ./rusty-hunter+docker
+    ARG EARTHLY_GIT_SHORT_HASH
+    ARG IMAGE_TAG=$EARTHLY_GIT_SHORT_HASH
+    ARG EARTHLY_GIT_PROJECT_NAME
+    ARG BASEIMAGE=ghcr.io/$EARTHLY_GIT_PROJECT_NAME
+
+    BUILD ./server+test --IMAGE_TAG=${IMAGE_TAG} --BASEIMAGE=${BASEIMAGE}
+    BUILD ./server+docker --IMAGE_TAG=${IMAGE_TAG} --BASEIMAGE=${BASEIMAGE}
+    BUILD ./viewer+docker --IMAGE_TAG=${IMAGE_TAG} --BASEIMAGE=${BASEIMAGE}
+    BUILD ./groovy-randomizer+docker --IMAGE_TAG=${IMAGE_TAG} --BASEIMAGE=${BASEIMAGE}
+    BUILD ./rusty-hunter+docker --IMAGE_TAG=${IMAGE_TAG} --BASEIMAGE=${BASEIMAGE}
