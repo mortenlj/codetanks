@@ -1,50 +1,43 @@
-VERSION 0.7
+VERSION 0.8
 
-FROM busybox
+IMPORT github.com/mortenlj/earthly-lib/rust/commands AS lib-commands
+IMPORT github.com/mortenlj/earthly-lib/rust/targets AS lib-targets
 
-prepare:
-    FROM rust:1
-    WORKDIR /rusty-hunter
-    RUN cargo install cargo-chef
-    RUN apt-get --yes update && apt-get --yes install cmake musl-tools protobuf-compiler
-    RUN rustup target add x86_64-unknown-linux-musl
+FROM rust:1
+
+WORKDIR /code
 
 chef-planner:
-    FROM +prepare
-    COPY --dir src Cargo.lock Cargo.toml build.rs .
-    COPY ../domain+src/src/* target/proto/
-    RUN cargo chef prepare --recipe-path recipe.json
+    FROM lib-targets+common-build-setup
+
+    DO lib-commands+CHEF_PREPARE
     SAVE ARTIFACT recipe.json
 
-chef-cook:
-    FROM +prepare
+build-target:
+    FROM lib-targets+prepare-tier1
+
+    RUN apt-get --yes update && apt-get --yes install protobuf-compiler
     COPY +chef-planner/recipe.json recipe.json
-    RUN cargo chef cook --recipe-path recipe.json --release --target x86_64-unknown-linux-musl
-
-build:
-    FROM +chef-cook
-
     ENV PROTOBUF_SRC=src/protobuf/
-    COPY --dir src Cargo.lock Cargo.toml build.rs .
+    COPY --dir build.rs .
     COPY ../domain+src/src/* $PROTOBUF_SRC
-    # builtins must be declared
-    ARG EARTHLY_GIT_SHORT_HASH
-    ARG VERSION=$EARTHLY_GIT_SHORT_HASH
-    RUN cargo build --release --target x86_64-unknown-linux-musl
 
-    SAVE ARTIFACT target/x86_64-unknown-linux-musl/release/rusty-hunter rusty-hunter
+    ARG target
+    DO lib-commands+BUILD --target ${target}
+
+    ARG version=unknown
+    SAVE ARTIFACT --if-exists target/${target}/release/rusty-hunter rusty-hunter
 
 docker:
     FROM cgr.dev/chainguard/static:latest
 
     WORKDIR /bin
-    COPY +build/rusty-hunter rusty-hunter
+    ARG target=x86_64-unknown-linux-musl
+    COPY --platform=linux/amd64 (+build-target/rusty-hunter --target=$target) rusty-hunter
 
     ENTRYPOINT ["/bin/rusty-hunter"]
 
     # builtins must be declared
-    ARG EARTHLY_GIT_SHORT_HASH
-
     ARG EARTHLY_GIT_SHORT_HASH
     ARG IMAGE_TAG=$EARTHLY_GIT_SHORT_HASH
     ARG EARTHLY_GIT_PROJECT_NAME

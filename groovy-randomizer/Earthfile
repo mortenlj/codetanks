@@ -27,7 +27,7 @@ protobuf:
     SAVE ARTIFACT build/generated/source/proto/main/java AS LOCAL build/generated/source/proto/main/java/ibidem
 
 docker:
-    COPY +build/jar ./groovy-randomizer.jar
+    COPY --platform=linux/amd64 +build/jar ./groovy-randomizer.jar
     ENTRYPOINT ["java", "-jar", "groovy-randomizer.jar"]
 
     ARG EARTHLY_GIT_SHORT_HASH
