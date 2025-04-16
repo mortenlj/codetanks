@@ -1,25 +1,54 @@
-VERSION 0.7
+VERSION 0.8
 
-FROM python:3
-WORKDIR /code
-RUN pip install --upgrade wheel pip setuptools
+IMPORT github.com/mortenlj/earthly-lib/kubernetes/commands AS lib-k8s-commands
+
+FROM busybox
+
+uv:
+    FROM ghcr.io/astral-sh/uv:latest
+
+    SAVE ARTIFACT /uv
+
+deps:
+    FROM python:3.13
+
+    WORKDIR /app
+    COPY +uv/uv /bin/uv
+
+    COPY pyproject.toml uv.lock .
+    RUN uv sync --no-install-workspace --locked --compile-bytecode
+
+    SAVE ARTIFACT .venv
+    SAVE IMAGE --cache-hint
+
 
 build:
+    FROM +deps
+
+    RUN uv sync --locked --compile-bytecode
+
+    COPY --dir ibidem .
     COPY ../domain+python/* ./
-    COPY requirements.txt ./
-    COPY setup.py ./
-    COPY ibidem ibidem
-    RUN pip wheel -r requirements.txt --wheel-dir=wheels
-    SAVE ARTIFACT wheels /wheels
-    SAVE ARTIFACT ./ /src
+
+    SAVE ARTIFACT ibidem
+    SAVE IMAGE --cache-hint
+
 
 protobuf:
     COPY ../domain+python/* ./
     SAVE ARTIFACT ./ibidem/codetanks/domain AS LOCAL ./ibidem/codetanks/domain
 
+
 docker:
-    FROM +build
-    RUN pip install --no-index --find-links=wheels -r requirements.txt
+    FROM python:3.13-slim
+
+    WORKDIR /app
+
+    COPY --dir +deps/.venv .
+    COPY --dir +build/ibidem .
+
+    ENV PATH="/bin:/usr/bin:/usr/local/bin:/app/.venv/bin"
+
     ENTRYPOINT ["codetanks-viewer"]
 
     ARG EARTHLY_GIT_SHORT_HASH
