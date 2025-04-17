@@ -33,7 +33,8 @@ docker:
 
     WORKDIR /bin
     ARG target=x86_64-unknown-linux-musl
-    COPY --platform=linux/amd64 (+build-target/rusty-hunter --target=$target) rusty-hunter
+    ARG NATIVEPLATFORM
+    COPY --platform=${NATIVEPLATFORM} (+build-target/rusty-hunter --target=$target) rusty-hunter
 
     ENTRYPOINT ["/bin/rusty-hunter"]
 

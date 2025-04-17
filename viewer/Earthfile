@@ -42,8 +42,9 @@ docker:
 
     WORKDIR /app
 
+    ARG NATIVEPLATFORM
     COPY --dir +deps/.venv .
-    COPY --dir +build/ibidem .
+    COPY --platform=${NATIVEPLATFORM} --dir +build/ibidem .
 
     ENV PATH="/bin:/usr/bin:/usr/local/bin:/app/.venv/bin"
 
