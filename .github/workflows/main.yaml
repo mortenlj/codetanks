@@ -11,33 +11,35 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-    - name: "Set image version"
-      id: set-image-tag
-      run: |
-        export IMAGE_TAG="$(date +%Y%m%d%H%M%S)-$(git describe --always --dirty --exclude '*')"
-        echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
-        echo "image=${BASEIMAGE}:${IMAGE_TAG}" >> ${GITHUB_OUTPUT}
-    - uses: earthly/actions-setup@v1
-      with:
-        version: "latest" # or pin to an specific version, e.g. "v0.6.10"
-    - name: Login to GitHub Packages Docker Registry
-      uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    - name: Build and possibly push
-      env:
-        EARTHLY_PUSH: "${{ github.ref == 'refs/heads/master' }}"
-        EARTHLY_ORG: ${{ vars.EARTHLY_ORG }}
-        EARTHLY_SATELLITE: ${{ vars.EARTHLY_SATELLITE }}
-        EARTHLY_TOKEN: ${{ secrets.EARTHLY_TOKEN }}
-        DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
-        DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-      run: |
-        earthly --ci --remote-cache=${cache_image} +all --IMAGE_TAG="${IMAGE_TAG}" --BASEIMAGE="${BASEIMAGE}"
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: "Set image version"
+        id: set-image-tag
+        run: |
+          export IMAGE_TAG="$(date +%Y%m%d%H%M%S)-$(git describe --always --dirty --exclude '*')"
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+          echo "image=${BASEIMAGE}:${IMAGE_TAG}" >> ${GITHUB_OUTPUT}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - uses: earthly/actions-setup@v1
+        with:
+          version: "latest" # or pin to an specific version, e.g. "v0.6.10"
+      - name: Login to GitHub Packages Docker Registry
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and possibly push
+        env:
+          EARTHLY_PUSH: "${{ github.ref == 'refs/heads/master' }}"
+          EARTHLY_ORG: ${{ vars.EARTHLY_ORG }}
+          EARTHLY_SATELLITE: ${{ vars.EARTHLY_SATELLITE }}
+          EARTHLY_TOKEN: ${{ secrets.EARTHLY_TOKEN }}
+          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          earthly --ci --remote-cache=${cache_image} +all --IMAGE_TAG="${IMAGE_TAG}" --BASEIMAGE="${BASEIMAGE}"
     outputs:
       image: "${{ steps.set-image-tag.outputs.image }}"
 
