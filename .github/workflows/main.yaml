@@ -20,7 +20,7 @@ jobs:
           echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
           echo "image=${BASEIMAGE}:${IMAGE_TAG}" >> ${GITHUB_OUTPUT}
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3
       - uses: earthly/actions-setup@v1
         with:
           version: "latest" # or pin to an specific version, e.g. "v0.6.10"
