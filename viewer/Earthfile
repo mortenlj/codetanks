@@ -23,12 +23,11 @@ deps:
 build:
     FROM +deps
 
-    RUN uv sync --locked --compile-bytecode
-
     COPY --dir ibidem .
     COPY ../domain+python/* ./
+    RUN uv sync --locked --compile-bytecode --no-editable
 
-    SAVE ARTIFACT ibidem
+    SAVE ARTIFACT .venv
     SAVE IMAGE --cache-hint
 
 
@@ -43,8 +42,7 @@ docker:
     WORKDIR /app
 
     ARG NATIVEPLATFORM
-    COPY --dir +deps/.venv .
-    COPY --platform=${NATIVEPLATFORM} --dir +build/ibidem .
+    COPY --dir +build/.venv .
 
     ENV PATH="/bin:/usr/bin:/usr/local/bin:/app/.venv/bin"
 
