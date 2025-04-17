@@ -1,53 +1,57 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 
-import argparse
-from datetime import timedelta
 import logging
+from datetime import timedelta
+
+import pinject
 
 from ibidem.codetanks.domain.messages_pb2 import Registration
-import pinject
 from ibidem.codetanks.server.com import Channel, ChannelType
 from ibidem.codetanks.server.game_server import GameServer
 from ibidem.codetanks.server.world import World
+from ibidem.codetanks.server.config import settings, Mode
 
 
 class ObjectGraph(pinject.BindingSpec):
-    @pinject.copy_args_to_internal_fields
-    def __init__(self, registration_port, debug):
-        pass
-
     def configure(self, bind):
         bind("world_width", to_instance=500)
         bind("world_height", to_instance=500)
-        bind("registration_port", to_instance=self._registration_port)
-        bind("debug", to_instance=self._debug)
+        bind("registration_port", to_instance=settings.registration_port)
+        bind("viewer_port", to_instance=settings.viewer_port)
+        bind("event_port_range", to_instance=settings.event_port_range)
+        bind("cmd_port_range", to_instance=settings.cmd_port_range)
+        bind("debug", to_instance=settings.debug)
         bind("world", to_class=World)
         bind("victory_delay", to_instance=timedelta(seconds=30))
 
-    def provide_viewer_channel(self):
-        return Channel(ChannelType.PUBLISH)
+    def provide_viewer_channel(self, viewer_port):
+        return Channel(ChannelType.PUBLISH, viewer_port)
 
     def provide_registration_channel(self, registration_port):
         return Channel(ChannelType.REPLY, registration_port, Registration)
 
-    def provide_channel_factory(self):
+    def provide_channel_factory(self, event_port_range, cmd_port_range):
+        publish_ports = [i for i in range(event_port_range[0], event_port_range[1]+1)]
+        reply_ports = [i for i in range(cmd_port_range[0], cmd_port_range[1]+1)]
         def factory(channel_type):
-            return Channel(channel_type)
+            if channel_type == ChannelType.PUBLISH:
+                port = publish_ports.pop(0)
+            elif channel_type == ChannelType.REPLY:
+                port = reply_ports.pop(0)
+            else:
+                raise ValueError("Invalid channel type")
+            return Channel(channel_type, port)
+
         return factory
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-p", "--port", type=int, default=13337)
-    parser.add_argument("--debug", action="store_true", help="Enable debug features")
-    parser.add_argument("--debuglogs", action="store_true", help="Enable debug logging")
-    args = parser.parse_args()
-    loglevel = logging.INFO
-    if args.debug or args.debuglogs:
+    loglevel = getattr(logging, settings.log_level.upper(), logging.INFO)
+    if settings.debug:
         loglevel = logging.DEBUG
     logging.basicConfig(level=loglevel)
-    obj_graph = pinject.new_object_graph(modules=None, binding_specs=[ObjectGraph(args.port, args.debug)])
+    obj_graph = pinject.new_object_graph(modules=None, binding_specs=[ObjectGraph()])
     game_server = obj_graph.provide(GameServer)
     game_server.run()
 

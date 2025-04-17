@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 
-from socket import gethostname
 from collections import namedtuple
 
-from ibidem.codetanks.domain.messages_pb2 import CommandReply, Command, Event
 import zmq
+
+from ibidem.codetanks.domain.messages_pb2 import CommandReply, Command, Event
+from ibidem.codetanks.server.config import settings
 
 
 class ChannelType(object):
@@ -39,7 +40,7 @@ class Channel(object):
 
     @property
     def url(self):
-        return self._create_url(gethostname(), self.port)
+        return self._create_url(settings.advertise_address, self.port)
 
     def ready(self):
         return self.zmq_socket.poll(1) == zmq.POLLIN
