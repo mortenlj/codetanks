@@ -41,7 +41,7 @@ impl Into<LevelFilter> for &LogLevel {
 }
 
 #[derive(Config, Debug, Deserialize, Serialize, Clone)]
-#[config(env_prefix = "SAMPLE_RUST__")]
+#[config(env_prefix = "")]
 pub struct AppConfig {
     // Logging format to use
     #[serde(default)]

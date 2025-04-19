@@ -20,7 +20,7 @@ spec:
           imagePullPolicy: Always
           name: rusty-hunter
           env:
-            - name: SAMPLE_RUST__SERVER_URI
+            - name: SERVER_URI
               value: tcp://codetanks-server-demo:13337
 ---
 apiVersion: batch/v1
@@ -44,7 +44,7 @@ spec:
           imagePullPolicy: Always
           name: rusty-hunter
           env:
-            - name: SAMPLE_RUST__SERVER_URI
+            - name: SERVER_URI
               value: tcp://codetanks-server-demo:13337
 ---
 apiVersion: batch/v1
