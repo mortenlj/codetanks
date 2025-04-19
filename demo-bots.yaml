@@ -51,46 +51,46 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   labels:
-    app: rusty-hunter
-  name: rusty-hunter-3
+    app: groovy-randomizer
+  name: groovy-randomizer-3
   namespace: codetanks
 spec:
   template:
     metadata:
       labels:
-        app: rusty-hunter
-      name: rusty-hunter-3
+        app: groovy-randomizer
+      name: groovy-randomizer-3
       namespace: codetanks
     spec:
       restartPolicy: Never
       containers:
-        - image: ghcr.io/mortenlj/codetanks/rusty-hunter:latest
+        - image: ghcr.io/mortenlj/codetanks/groovy-randomizer:latest
           imagePullPolicy: Always
-          name: rusty-hunter
+          name: groovy-randomizer
           env:
-            - name: SAMPLE_RUST__SERVER_URI
+            - name: SERVER_URI
               value: tcp://codetanks-server-demo:13337
 ---
 apiVersion: batch/v1
 kind: Job
 metadata:
   labels:
-    app: rusty-hunter
-  name: rusty-hunter-4
+    app: groovy-randomizer
+  name: groovy-randomizer-4
   namespace: codetanks
 spec:
   template:
     metadata:
       labels:
-        app: rusty-hunter
-      name: rusty-hunter-4
+        app: groovy-randomizer
+      name: groovy-randomizer-4
       namespace: codetanks
     spec:
       restartPolicy: Never
       containers:
-        - image: ghcr.io/mortenlj/codetanks/rusty-hunter:latest
+        - image: ghcr.io/mortenlj/codetanks/groovy-randomizer:latest
           imagePullPolicy: Always
-          name: rusty-hunter
+          name: groovy-randomizer
           env:
-            - name: SAMPLE_RUST__SERVER_URI
+            - name: SERVER_URI
               value: tcp://codetanks-server-demo:13337

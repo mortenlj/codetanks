@@ -14,6 +14,7 @@ import ibidem.codetanks.domain.Messages.Id
 import ibidem.codetanks.domain.Messages.Registration
 import ibidem.codetanks.domain.Messages.RegistrationReply
 import ibidem.codetanks.domain.Messages.RegistrationResult
+import org.zeromq.SocketType
 import org.zeromq.ZMQ
 
 @Log4j2
@@ -41,9 +42,9 @@ class Tank {
         parse(bytes)
     }
 
-    def register(def serverUrl) {
+    def register(String serverUrl) {
         log.info("Registering at $serverUrl")
-        def regSocket = ctx.socket(ZMQ.REQ)
+        def regSocket = ctx.socket(SocketType.REQ)
         regSocket.connect(serverUrl)
         def registration = Registration.newBuilder()
                 .setClientType(ClientType.BOT)
@@ -65,11 +66,11 @@ class Tank {
 
     private initSockets(RegistrationReply reply) {
         log.info("Subscribing to ${reply.eventUrl}")
-        eventSocket = ctx.socket(ZMQ.SUB)
+        eventSocket = ctx.socket(SocketType.SUB)
         eventSocket.subscribe(ZMQ.SUBSCRIPTION_ALL)
         eventSocket.connect(reply.eventUrl)
         log.info("Connecting to ${reply.cmdUrl}")
-        cmdSocket = ctx.socket(ZMQ.REQ)
+        cmdSocket = ctx.socket(SocketType.REQ)
         cmdSocket.connect(reply.cmdUrl)
     }
 
@@ -152,8 +153,11 @@ class Tank {
     }
 }
 
-if (!args) throw new IllegalStateException("You must supply a server url")
-def serverUrl = args.first()
+def serverUrl = System.getenv("SERVER_URI")
+if (!serverUrl) {
+    if (!args) throw new IllegalStateException("You must supply a server url either as an argument or in the SERVER_URL environment variable")
+    serverUrl = args.first()
+}
 def tank = new Tank(serverUrl)
 tank.run()
 // Technically, the sockets and context should be closed, and then we could just exit normally,
