@@ -3,80 +3,6 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   labels:
-    app: codetanks-server
-  name: codetanks-server-demo
-  namespace: codetanks
-spec:
-  template:
-    metadata:
-      labels:
-        app: codetanks-server
-      name: codetanks-server-demo
-      namespace: codetanks
-    spec:
-      restartPolicy: Never
-      containers:
-      - image: ghcr.io/mortenlj/codetanks/server:latest
-        imagePullPolicy: IfNotPresent
-        name: codetanks-server
-        env:
-          - name: MODE
-            value: Release
-          - name: ADVERTISE_ADDRESS
-            value: codetanks-server-demo
-          - name: BIND_ADDRESS
-            value: "0.0.0.0"
-          - name: EVENT_PORT_RANGE
-            value: "[1337,1340]"
-          - name: CMD_PORT_RANGE
-            value: "[2337,2340]"
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: codetanks-server
-  name: codetanks-server-demo
-  namespace: codetanks
-spec:
-  ports:
-  - name: registration
-    port: 13337
-    targetPort: 13337
-  - name: viewer
-    port: 13338
-    targetPort: 13338
-  - name: event-1
-    port: 1337
-    targetPort: 1337
-  - name: event-2
-    port: 1338
-    targetPort: 1338
-  - name: event-3
-    port: 1339
-    targetPort: 1339
-  - name: event-4
-    port: 1340
-    targetPort: 1340
-  - name: cmd-1
-    port: 2337
-    targetPort: 2337
-  - name: cmd-2
-    port: 2338
-    targetPort: 2338
-  - name: cmd-3
-    port: 2339
-    targetPort: 2339
-  - name: cmd-4
-    port: 2340
-    targetPort: 2340
-  selector:
-    app: codetanks-server
----
-apiVersion: batch/v1
-kind: Job
-metadata:
-  labels:
     app: rusty-hunter
   name: rusty-hunter-1
   namespace: codetanks
@@ -91,7 +17,7 @@ spec:
       restartPolicy: Never
       containers:
         - image: ghcr.io/mortenlj/codetanks/rusty-hunter:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           name: rusty-hunter
           env:
             - name: SAMPLE_RUST__SERVER_URI
@@ -115,7 +41,7 @@ spec:
       restartPolicy: Never
       containers:
         - image: ghcr.io/mortenlj/codetanks/rusty-hunter:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           name: rusty-hunter
           env:
             - name: SAMPLE_RUST__SERVER_URI
@@ -139,7 +65,7 @@ spec:
       restartPolicy: Never
       containers:
         - image: ghcr.io/mortenlj/codetanks/rusty-hunter:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           name: rusty-hunter
           env:
             - name: SAMPLE_RUST__SERVER_URI
@@ -163,7 +89,7 @@ spec:
       restartPolicy: Never
       containers:
         - image: ghcr.io/mortenlj/codetanks/rusty-hunter:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           name: rusty-hunter
           env:
             - name: SAMPLE_RUST__SERVER_URI
