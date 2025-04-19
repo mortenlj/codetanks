@@ -21,3 +21,4 @@ server/ibidem/codetanks/domain/
 .gradle
 
 debug_plot*.svg
+deploy.yaml

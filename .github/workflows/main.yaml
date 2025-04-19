@@ -40,8 +40,48 @@ jobs:
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
           earthly --ci --remote-cache=${cache_image} +all --IMAGE_TAG="${IMAGE_TAG}" --BASEIMAGE="${BASEIMAGE}"
+      - name: Save manifests for later deploy
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: manifests
+          path: deploy.yaml
     outputs:
       image: "${{ steps.set-image-tag.outputs.image }}"
+
+  deploy:
+    name: Deploy
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # This is required for requesting the JWT
+    needs:
+      - build
+    steps:
+      - name: Get kubeconfig
+        uses: mortenlj/kube-actions/get-kubeconfig@main
+      - name: Download manifests from build
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4
+        with:
+          name: manifests
+      - id: join-zt
+        name: Join ZeroTier network
+        uses: mortenlj/zerotier-actions/join-zt@main
+        with:
+          network_id: ${{ secrets.ZEROTIER_NETWORK_ID }}
+          api_accesstoken: ${{ secrets.ZEROTIER_API_ACCESSTOKEN }}
+          ping_target: k3s.home.ibidem.no
+      - name: Run kubectl apply for application deploy
+        uses: mortenlj/kube-actions/apply-manifest@main
+        with:
+          appname: codetanks
+          namespace: codetanks
+      - name: Leave ZeroTier network
+        if: always()
+        uses: mortenlj/zerotier-actions/leave-zt@main
+        with:
+          node_id: ${{ steps.join-zt.outputs.node_id }}
+          network_id: ${{ secrets.ZEROTIER_NETWORK_ID }}
+          api_accesstoken: ${{ secrets.ZEROTIER_API_ACCESSTOKEN }}
 
   cleanup:
     name: Cleanup

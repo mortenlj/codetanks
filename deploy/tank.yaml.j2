@@ -1,0 +1,12 @@
+---
+apiVersion: codetanks.ibidem.no/v1
+kind: Tank
+metadata:
+  name: {{ environ('NAME') }}
+  namespace: codetanks
+  labels:
+    app: codetanks
+spec:
+  image: "{{ environ('IMAGE') }}"
+  owner:
+    name: mortenlj
