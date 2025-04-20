@@ -28,9 +28,16 @@ manifests:
     SAVE ARTIFACT ./deploy.yaml AS LOCAL deploy.yaml
 
 all:
+    FROM busybox
     ARG NATIVEPLATFORM
+    ARG SKIP_TESTS_FOR_CI=false
 
-    BUILD --platform=${NATIVEPLATFORM} ./server+test
+    IF [[ "${SKIP_TESTS_FOR_CI}" == "true" ]]
+        RUN echo "Skipping tests for CI"
+    ELSE
+        BUILD --platform=${NATIVEPLATFORM} ./server+test
+    END
+
     BUILD --platform=linux/amd64 --platform=linux/arm64 ./server+docker --IMAGE_TAG=${IMAGE_TAG} --BASEIMAGE=${BASEIMAGE}
     BUILD --platform=linux/amd64 --platform=linux/arm64 ./viewer+docker --IMAGE_TAG=${IMAGE_TAG} --BASEIMAGE=${BASEIMAGE}
     BUILD --platform=linux/amd64 --platform=linux/arm64 ./groovy-randomizer+docker --IMAGE_TAG=${IMAGE_TAG} --BASEIMAGE=${BASEIMAGE}
