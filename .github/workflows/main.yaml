@@ -6,6 +6,11 @@ on:
 env:
   BASEIMAGE: ghcr.io/${{ github.repository }}
   cache_image: ghcr.io/${{ github.repository }}/cache:cache
+  EARTHLY_USE_INLINE_CACHE: true
+  EARTHLY_SAVE_INLINE_CACHE: true
+  EARTHLY_VERBOSE: true
+  EARTHLY_FULL_TARGET: true
+  EARTHLY_OUTPUT: true
 
 jobs:
   build:
@@ -33,13 +38,10 @@ jobs:
       - name: Build and possibly push
         env:
           EARTHLY_PUSH: "${{ github.ref == 'refs/heads/main' }}"
-          EARTHLY_ORG: ${{ vars.EARTHLY_ORG }}
-          EARTHLY_SATELLITE: ${{ vars.EARTHLY_SATELLITE }}
-          EARTHLY_TOKEN: ${{ secrets.EARTHLY_TOKEN }}
           DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
-          earthly --ci --remote-cache=${cache_image} +all --IMAGE_TAG="${IMAGE_TAG}" --BASEIMAGE="${BASEIMAGE}" --SKIP_TESTS_FOR_CI=true
+          earthly --remote-cache=${cache_image} +all --IMAGE_TAG="${IMAGE_TAG}" --BASEIMAGE="${BASEIMAGE}" --SKIP_TESTS_FOR_CI=true
       - name: Save manifests for later deploy
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
