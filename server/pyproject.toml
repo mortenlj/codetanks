@@ -9,11 +9,12 @@ dependencies = [
     "setuptools>=78.1.0",
     "fiaas-logging==0.1.1",
     "pinject",
-    "protobuf==6.30.2",
+    "protobuf==5.29.4",
     "pygame",
     "pyzmq",
     "euclid",
     "pydantic-settings>=2.8.1",
+    "grpcio>=1.71.0",
 ]
 requires-python = "~=3.13"
 license = { text = "LGPL" }
@@ -44,6 +45,7 @@ euclid = { git = "https://github.com/euclid3/euclid3" }
 
 [dependency-groups]
 dev = [
+    "grpcio-tools>=1.71.0",
     "mock>=5.2.0",
     "pytest>=8.3.5",
 ]

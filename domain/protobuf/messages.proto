@@ -143,6 +143,9 @@ message Event {
     optional int64 sequence_id = 99;
 }
 
+message EventRequest {
+}
+
 // ********
 // Commands
 // ********
@@ -164,4 +167,13 @@ message Command {
     oneof optional_value {
         int32 value = 2;
     }
+}
+
+// ********
+// gRPC service
+// ********
+service CodeTanks {
+    rpc Register(Registration) returns (RegistrationReply);
+    rpc SendCommand(Command) returns (CommandReply);
+    rpc GetEvent(EventRequest) returns (stream Event);
 }

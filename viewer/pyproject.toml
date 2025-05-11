@@ -8,10 +8,11 @@ authors = [
 dependencies = [
     "setuptools>=78.1.0",
     "fiaas-logging==0.1.1",
-    "protobuf==6.30.2",
+    "protobuf==5.29.4",
     "pygame>=2.0.0.dev12",
     "pyzmq",
     "six",
+    "grpcio>=1.71.0",
 ]
 requires-python = "~=3.13"
 license = { text = "LGPL" }
@@ -34,4 +35,9 @@ packages = [
     "ibidem.codetanks.domain",
     "ibidem.codetanks.viewer",
     "ibidem.codetanks.viewer.resources"
+]
+
+[dependency-groups]
+dev = [
+    "grpcio-tools>=1.71.0",
 ]

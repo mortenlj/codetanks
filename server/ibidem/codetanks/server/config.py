@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     advertise_address: str = "localhost"
     registration_port: int = 13337
     viewer_port: int = 13338
+    grpc_port: int = 13339
 
     event_port_range: tuple[int, int] = (1337, 1340)
     cmd_port_range: tuple[int, int] = (2337, 2340)

@@ -14,7 +14,7 @@ deps:
     COPY +uv/uv /bin/uv
 
     COPY pyproject.toml uv.lock .
-    RUN uv sync --no-install-workspace --locked --compile-bytecode
+    RUN uv sync --no-install-workspace --locked --compile-bytecode --no-dev
 
     SAVE ARTIFACT .venv
     SAVE IMAGE --cache-hint
@@ -24,16 +24,21 @@ build:
     FROM +deps
 
     COPY --dir ibidem .
-    COPY ../domain+python/* ./
-    RUN uv sync --locked --compile-bytecode --no-editable
+    COPY +protobuf/domain ./ibidem/codetanks/domain
+    RUN uv sync --locked --compile-bytecode --no-editable --no-dev
 
     SAVE ARTIFACT .venv
     SAVE IMAGE --cache-hint
 
 
 protobuf:
-    COPY ../domain+python/* ./
-    SAVE ARTIFACT ./ibidem/codetanks/domain AS LOCAL ./ibidem/codetanks/domain
+    FROM +deps
+    ENV PROTOBUF_SRC=profobuf/
+    COPY ../domain+src/src/* $PROTOBUF_SRC
+    RUN uv sync --no-install-workspace --locked --compile-bytecode --dev
+    RUN mkdir -p ./ibidem/codetanks/domain
+    RUN .venv/bin/python -m grpc_tools.protoc -I$PROTOBUF_SRC --python_out=./ibidem/codetanks/domain --pyi_out=./ibidem/codetanks/domain --grpc_python_out=./ibidem/codetanks/domain $PROTOBUF_SRC/messages.proto
+    SAVE ARTIFACT ibidem/codetanks/domain domain AS LOCAL ibidem/codetanks/domain
 
 
 docker:
