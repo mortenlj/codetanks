@@ -5,9 +5,9 @@ import time
 from datetime import datetime
 
 import pygame
-
 from ibidem.codetanks.domain.messages_pb2 import GameInfo, RegistrationReply, ClientType, RegistrationResult, Event, \
     GameStarted, GameOver
+
 from ibidem.codetanks.server.bot import Bot
 from ibidem.codetanks.server.com import ChannelType
 from ibidem.codetanks.server.constants import PLAYER_COUNT, MAX_HEALTH, BULLET_DAMAGE, TANK_SPEED, ROTATION, \
@@ -110,29 +110,33 @@ class GameServer(object):
                 event_url=self._viewer_channel.url
             ))
 
-    def _handle_bot_registration(self, registration):
+    def _handle_bot_registration_inner(self, registration, event_channel, cmd_channel):
         if self.game_full():
-            self._registration_channel.send(RegistrationReply(
+            return RegistrationReply(
                 result=RegistrationResult.FAILURE,
                 game_info=self.build_game_info()
-            ))
-            return
-        event_channel = self._channel_factory(ChannelType.PUBLISH)
-        cmd_channel = self._channel_factory(ChannelType.REPLY)
+            )
         tank_id = len(self._bots)
         tank = self._world.add_tank(registration.id, tank_id)
         bot = Bot(registration.id, tank_id, event_channel, cmd_channel, tank)
         self._bots.append(bot)
         self._handlers[bot.cmd_channel] = bot.handle_command
         LOG.info("Bot registered with cmd_url %s and event_url %s", cmd_channel.url, event_channel.url)
-        self._registration_channel.send(
-            RegistrationReply(
-                result=RegistrationResult.SUCCESS,
-                game_info=self.build_game_info(),
-                event_url=event_channel.url,
-                cmd_url=cmd_channel.url,
-                id=tank_id
-            ))
+        return RegistrationReply(
+            result=RegistrationResult.SUCCESS,
+            game_info=self.build_game_info(),
+            event_url=event_channel.url,
+            cmd_url=cmd_channel.url,
+            id=tank_id
+        )
+
+    def _handle_bot_registration(self, registration):
+        reply = self._handle_bot_registration_inner(
+            registration,
+            self._channel_factory(ChannelType.PUBLISH),
+            self._channel_factory(ChannelType.REPLY)
+        )
+        self._registration_channel.send(reply)
 
     def build_game_info(self):
         return GameInfo(
