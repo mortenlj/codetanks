@@ -27,4 +27,4 @@ prost-build = { version = "0.14.0" }
 assertables = "=9.8.1"
 envtestkit = "=1.1.2"
 pretty_assertions = "=1.4.1"
-rstest = "=0.26.0"
+rstest = "=0.26.1"
