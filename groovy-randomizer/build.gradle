@@ -23,9 +23,9 @@ dependencies {
     implementation (
             'org.apache.groovy:groovy-all:5.0.1',
             'org.zeromq:jeromq:0.6.0',
-            'org.apache.logging.log4j:log4j-api:2.25.1',
-            'org.apache.logging.log4j:log4j-core:2.25.1',
-            'org.apache.logging.log4j:log4j-slf4j-impl:2.25.1',
+            'org.apache.logging.log4j:log4j-api:2.25.2',
+            'org.apache.logging.log4j:log4j-core:2.25.2',
+            'org.apache.logging.log4j:log4j-slf4j-impl:2.25.2',
             'com.google.protobuf:protobuf-java:4.32.1',
     )
 }
