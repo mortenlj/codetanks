@@ -9,7 +9,7 @@ from ibidem.codetanks.domain.messages_pb2 import GameInfo, RegistrationReply, Cl
     GameStarted, GameOver
 
 from ibidem.codetanks.server.bot import Bot
-from ibidem.codetanks.server.com import ChannelType
+from ibidem.codetanks.server.zeromq import ChannelType
 from ibidem.codetanks.server.constants import PLAYER_COUNT, MAX_HEALTH, BULLET_DAMAGE, TANK_SPEED, ROTATION, \
     BULLET_SPEED, TANK_RADIUS, BULLET_RADIUS, CANNON_RELOAD
 

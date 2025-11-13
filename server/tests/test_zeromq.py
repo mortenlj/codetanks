@@ -5,7 +5,7 @@ import pytest
 from mock import patch
 
 from ibidem.codetanks.domain.messages_pb2 import Command, CommandType, Registration, ClientType, Id
-from ibidem.codetanks.server.com import Channel, ChannelType
+from ibidem.codetanks.server.zeromq import Channel, ChannelType
 from ibidem.codetanks.server.config import Settings
 
 
@@ -27,7 +27,7 @@ class TestChannel(object):
         return Settings(advertise_address=self.hostname)
 
     def test_has_valid_urls(self, settings):
-        with patch("ibidem.codetanks.server.com.settings", settings):
+        with patch("ibidem.codetanks.server.zeromq.settings", settings):
             socket = Channel(ChannelType.PUBLISH, self.port)
             assert socket.url == "tcp://%s:%d" % (self.hostname, self.port)
 

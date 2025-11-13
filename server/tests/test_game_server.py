@@ -8,7 +8,7 @@ from mock import create_autospec, MagicMock, PropertyMock
 from ibidem.codetanks.domain.messages_pb2 import Registration, GameData, ClientType, Id, RegistrationReply, Command, \
     CommandType, CommandReply, \
     CommandResult, BotStatus, Tank, Death, GameInfo, RegistrationResult, Event, Arena, Point, ScanComplete
-from ibidem.codetanks.server.com import Channel
+from ibidem.codetanks.server.zeromq import Channel
 from ibidem.codetanks.server.constants import PLAYER_COUNT, MAX_HEALTH, BULLET_DAMAGE, TANK_SPEED, ROTATION, \
     BULLET_SPEED, TANK_RADIUS, BULLET_RADIUS, CANNON_RELOAD
 from ibidem.codetanks.server.game_server import GameServer

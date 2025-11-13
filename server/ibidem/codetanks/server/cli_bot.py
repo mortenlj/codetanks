@@ -13,7 +13,7 @@ import zmq
 from ibidem.codetanks.domain.messages_pb2 import Registration, ClientType, Id, CommandResult, Command, CommandType, \
     RegistrationResult, \
     RegistrationReply, Event, CommandReply
-from ibidem.codetanks.server.com import serialize, deserialize
+from ibidem.codetanks.server.zeromq import serialize, deserialize
 
 LOG = logging.getLogger(__name__)
 

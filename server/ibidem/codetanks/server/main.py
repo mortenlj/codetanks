@@ -7,7 +7,7 @@ from datetime import timedelta
 import pinject
 
 from ibidem.codetanks.domain.messages_pb2 import Registration
-from ibidem.codetanks.server.com import Channel, ChannelType
+from ibidem.codetanks.server.zeromq import Channel, ChannelType
 from ibidem.codetanks.server.game_server import GameServer
 from ibidem.codetanks.server.world import World
 from ibidem.codetanks.server.config import settings, Mode
