@@ -14,6 +14,7 @@ from ibidem.codetanks.server.constants import PLAYER_COUNT, MAX_HEALTH, BULLET_D
 from ibidem.codetanks.server.game_server import GameServer
 from ibidem.codetanks.server.vehicle import Armour
 from ibidem.codetanks.server.world import World
+from ibidem.codetanks.server.zeromq import ZeroMQServer
 
 VICTORY_DELAY = timedelta(seconds=1)
 BOT_CLIENT_ID = Id(name="bot", version=1)
@@ -28,8 +29,13 @@ def world():
 
 
 @pytest.fixture
-def server(world):
-    return GameServer(world, VICTORY_DELAY)
+def zeromq_server():
+    return MagicMock(ZeroMQServer, instance=True)
+
+
+@pytest.fixture
+def server(world, zeromq_server):
+    return GameServer(zeromq_server, world, VICTORY_DELAY)
 
 
 def _make_peer(client_type, id):

@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 import logging
-import time
 from datetime import datetime
 
 import pygame
+import time
 from ibidem.codetanks.domain.messages_pb2 import GameInfo, RegistrationReply, ClientType, RegistrationResult, Event, \
     GameStarted, GameOver
 
@@ -18,8 +18,10 @@ LOG = logging.getLogger(__name__)
 
 class GameServer(object):
     def __init__(self,
+                 zeromq_server,
                  world,
                  victory_delay):
+        self._zeromq_server = zeromq_server
         self._world = world
         pygame.init()
         self.clock = None
@@ -97,6 +99,7 @@ class GameServer(object):
                 event.sequence_id = self.next_sequence_id()
                 for peer, _ in bots:
                     peer.handle_event(event)
+        self._zeromq_server.register_waiting(self.add_peer)
 
     def add_peer(self, peer: Peer) -> RegistrationReply:
         LOG.info("GameServer received peer: %r", peer)

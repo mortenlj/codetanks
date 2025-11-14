@@ -1,15 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
-import sys
+import logging
 from collections import namedtuple
 from typing import Optional
 
+import sys
 import zmq
 from ibidem.codetanks.domain import messages_pb2
 from ibidem.codetanks.domain.messages_pb2 import CommandReply, Command, Event, ClientType
 
 from ibidem.codetanks.server import peer
 from ibidem.codetanks.server.config import settings
+
+LOG = logging.getLogger(__name__)
 
 
 class ChannelType(object):
@@ -26,6 +29,7 @@ class Channel(object):
 
     def __init__(self, channel_type, port=None, override_clz=None):
         ctx = zmq.Context.instance()
+        self._channel_type = channel_type
         self._clz = override_clz or channel_type.clz
         self.zmq_socket = ctx.socket(channel_type.socket)
         self.port = self._bind_socket(port)
@@ -60,12 +64,15 @@ class Channel(object):
         data = serialize(value)
         self.zmq_socket.send(data, copy=False)
 
+    def __repr__(self):
+        return f"Channel(url={self.url}, channel_type={self._channel_type})"
+
 
 class ZeroMQPeer(peer.Peer):
     id: messages_pb2.Id
     client_type: messages_pb2.ClientType
 
-    def __init__(self, registration: messages_pb2.Registration, event_channel: Channel, cmd_channel: Channel):
+    def __init__(self, registration: messages_pb2.Registration, event_channel: Channel, cmd_channel: Optional[Channel]):
         self.id = registration.id
         self.client_type = registration.client_type
         self._event_channel = event_channel
@@ -84,10 +91,13 @@ class ZeroMQPeer(peer.Peer):
 
 
 class ZeroMQServer:
-    def __init__(self, registration_handler, viewer_channel, registration_channel):
-        self._registration_handler = registration_handler
+    def __init__(self, viewer_channel, registration_channel):
         self._viewer_channel = viewer_channel
         self._registration_channel = registration_channel
+
+        LOG.debug("Creating ZeroMQServer with:")
+        LOG.debug("\tviewer_channel: %r", self._viewer_channel)
+        LOG.debug("\tregistration_channel: %r", self._registration_channel)
 
         event_port_range = settings.event_port_range
         cmd_port_range = settings.cmd_port_range
@@ -106,34 +116,38 @@ class ZeroMQServer:
             raise ValueError("Invalid channel type")
         return Channel(channel_type, port)
 
-    def start(self):
-        """TODO: Figure out how this should be started/run"""
-        while True:
-            if self._registration_channel.wait() == zmq.POLLIN:
-                registration = self._registration_channel.recv()
-                if registration.client_type == ClientType.VIEWER:
-                    self._register_viewer(registration)
-                else:
-                    self._register_bot(registration)
+    def register_waiting(self, add_peer):
+        while self._registration_channel.ready():
+            registration = self._registration_channel.recv()
+            if registration.client_type == ClientType.VIEWER:
+                self._register_viewer(registration, add_peer)
+            else:
+                self._register_bot(registration, add_peer)
 
-    def _register_viewer(self, registration: messages_pb2.Registration):
+    def _register_viewer(self, registration: messages_pb2.Registration, add_peer):
         if self._game_info:
-            registration_reply = messages_pb2.RegistrationReply(result=messages_pb2.RegistrationResult.SUCCESS,
-                                                                game_info=self._game_info,
-                                                                event_url=self._viewer_channel.url)
+            LOG.info("Registering viewer %r using existing game info", registration)
+            registration_reply = messages_pb2.RegistrationReply(
+                result=messages_pb2.RegistrationResult.SUCCESS,
+                game_info=self._game_info,
+                event_url=self._viewer_channel.url
+            )
         else:
+            LOG.info("Registering viewer %r as first viewer", registration)
             peer = ZeroMQPeer(registration, self._viewer_channel, None)
-            registration_reply: messages_pb2.RegistrationReply = self._registration_handler(peer)
+            registration_reply: messages_pb2.RegistrationReply = add_peer(peer)
             if registration_reply.result == messages_pb2.RegistrationResult.SUCCESS:
                 self._game_info = registration_reply.game_info
+                registration_reply.event_url = self._viewer_channel.url
         self._registration_channel.send(registration_reply)
 
-    def _register_bot(self, registration: messages_pb2.Registration):
+    def _register_bot(self, registration: messages_pb2.Registration, add_peer):
+        LOG.info("Registering bot %r", registration)
         event_channel = self._channel_factory(ChannelType.PUBLISH)
         cmd_channel = self._channel_factory(ChannelType.REPLY)
         peer = ZeroMQPeer(registration, event_channel, cmd_channel)
         peer_id = next(self._peer_ids)
-        registration_reply: messages_pb2.RegistrationReply = self._registration_handler(peer)
+        registration_reply: messages_pb2.RegistrationReply = add_peer(peer)
         if registration_reply.result == messages_pb2.RegistrationResult.SUCCESS:
             self._peers[peer_id] = peer
             registration_reply.event_url = event_channel.url

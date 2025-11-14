@@ -5,12 +5,12 @@ import logging
 from datetime import timedelta
 
 import pinject
-
 from ibidem.codetanks.domain.messages_pb2 import Registration
-from ibidem.codetanks.server.zeromq import Channel, ChannelType
+
+from ibidem.codetanks.server.config import settings
 from ibidem.codetanks.server.game_server import GameServer
 from ibidem.codetanks.server.world import World
-from ibidem.codetanks.server.config import settings, Mode
+from ibidem.codetanks.server.zeromq import Channel, ChannelType, ZeroMQServer
 
 
 class ObjectGraph(pinject.BindingSpec):
@@ -23,6 +23,7 @@ class ObjectGraph(pinject.BindingSpec):
         bind("cmd_port_range", to_instance=settings.cmd_port_range)
         bind("debug", to_instance=settings.debug)
         bind("world", to_class=World)
+        bind("zeromq_server", to_class=ZeroMQServer)
         bind("victory_delay", to_instance=timedelta(seconds=30))
 
     def provide_viewer_channel(self, viewer_port):
@@ -32,8 +33,9 @@ class ObjectGraph(pinject.BindingSpec):
         return Channel(ChannelType.REPLY, registration_port, Registration)
 
     def provide_channel_factory(self, event_port_range, cmd_port_range):
-        publish_ports = [i for i in range(event_port_range[0], event_port_range[1]+1)]
-        reply_ports = [i for i in range(cmd_port_range[0], cmd_port_range[1]+1)]
+        publish_ports = [i for i in range(event_port_range[0], event_port_range[1] + 1)]
+        reply_ports = [i for i in range(cmd_port_range[0], cmd_port_range[1] + 1)]
+
         def factory(channel_type):
             if channel_type == ChannelType.PUBLISH:
                 port = publish_ports.pop(0)
