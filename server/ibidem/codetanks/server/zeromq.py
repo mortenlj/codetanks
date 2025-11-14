@@ -6,7 +6,7 @@ from typing import Optional
 
 import zmq
 from ibidem.codetanks.domain import messages_pb2
-from ibidem.codetanks.domain.messages_pb2 import CommandReply, Command, Event
+from ibidem.codetanks.domain.messages_pb2 import CommandReply, Command, Event, ClientType
 
 from ibidem.codetanks.server import peer
 from ibidem.codetanks.server.config import settings
@@ -84,9 +84,11 @@ class ZeroMQPeer(peer.Peer):
 
 
 class ZeroMQServer:
-    def __init__(self, registration_handler):
+    def __init__(self, registration_handler, viewer_channel, registration_channel):
         self._registration_handler = registration_handler
-        self._registration_channel = Channel(ChannelType.REPLY, settings.registration_port, messages_pb2.Registration)
+        self._viewer_channel = viewer_channel
+        self._registration_channel = registration_channel
+
         event_port_range = settings.event_port_range
         cmd_port_range = settings.cmd_port_range
         self._publish_ports = iter(range(event_port_range[0], event_port_range[1] + 1))
@@ -108,8 +110,12 @@ class ZeroMQServer:
         while True:
             if self._registration_channel.wait() == zmq.POLLIN:
                 registration = self._registration_channel.recv()
-                event_channel = self._channel_factory(ChannelType.PUBLISH)
-                cmd_channel = self._channel_factory(ChannelType.REPLY)
+                if registration.client_type == ClientType.VIEWER:
+                    event_channel = self._viewer_channel
+                    cmd_channel = None
+                else:
+                    event_channel = self._channel_factory(ChannelType.PUBLISH)
+                    cmd_channel = self._channel_factory(ChannelType.REPLY)
                 peer = ZeroMQPeer(registration, event_channel, cmd_channel)
                 peer_id = next(self._peer_ids)
                 registration_reply: messages_pb2.RegistrationReply = self._registration_handler(peer)
