@@ -9,32 +9,29 @@ from ibidem.codetanks.domain.messages_pb2 import GameInfo, RegistrationReply, Cl
     GameStarted, GameOver
 
 from ibidem.codetanks.server.bot import Bot
-from ibidem.codetanks.server.zeromq import ChannelType
 from ibidem.codetanks.server.constants import PLAYER_COUNT, MAX_HEALTH, BULLET_DAMAGE, TANK_SPEED, ROTATION, \
     BULLET_SPEED, TANK_RADIUS, BULLET_RADIUS, CANNON_RELOAD
+from ibidem.codetanks.server.peer import Peer
 
 LOG = logging.getLogger(__name__)
 
 
 class GameServer(object):
     def __init__(self,
-                 registration_channel,
-                 viewer_channel,
-                 channel_factory,
                  world,
                  victory_delay):
-        self._registration_channel = registration_channel
-        self._viewer_channel = viewer_channel
-        self._channel_factory = channel_factory
         self._world = world
         pygame.init()
         self.clock = None
-        self._handlers = {
-            self._registration_channel: self._handle_registration
-        }
         self._bots = []
+        self._viewers = []
         self._victory_delay = victory_delay
         self._event_sequence_id = 1
+
+    def _send_viewer_event(self, event: Event):
+        for viewer in self._viewers:
+            assert isinstance(viewer, Peer)
+            viewer.handle_event(event)
 
     def next_sequence_id(self):
         self._event_sequence_id += 1
@@ -43,10 +40,10 @@ class GameServer(object):
     def start(self):
         game_info = self.build_game_info()
         sequence_id = self.next_sequence_id()
-        self._viewer_channel.send(Event(game_started=GameStarted(game_info=game_info), sequence_id=sequence_id))
-        for bot in self._bots:
+        self._send_viewer_event(Event(game_started=GameStarted(game_info=game_info), sequence_id=sequence_id))
+        for peer, bot in self._bots:
             event = Event(game_started=GameStarted(game_info=game_info, you=bot.tank.entity), sequence_id=sequence_id)
-            bot.event_channel.send(event)
+            peer.handle_event(event)
         self.clock = pygame.time.Clock()
         LOG.info("Game started!")
 
@@ -61,7 +58,7 @@ class GameServer(object):
         return len(self._bots) > 1 >= live_count
 
     def run(self):
-        LOG.info("GameServer starting, registration available on %s", self._registration_channel.url)
+        LOG.info("GameServer starting")
         while not self.game_full():
             self._run_once()
         LOG.info("Players registered, preparing to start game")
@@ -73,70 +70,61 @@ class GameServer(object):
         start = datetime.now()
         winner = self._world.get_live_bots()[-1]
         game_over = Event(game_over=GameOver(winner=winner.entity), sequence_id=self.next_sequence_id())
-        for bot in self._bots:
-            bot.event_channel.send(game_over)
-        self._viewer_channel.send(game_over)
+        for peer, bot in self._bots:
+            peer.handle_event(game_over)
+        self._send_viewer_event(game_over)
         while (datetime.now() - start) < self._victory_delay:
             self._run_once()
 
     def _run_once(self):
-        received_messages = 0
-        for channel in list(self._handlers.keys()):
-            if channel.ready():
-                self._handlers[channel](channel.recv())
-                received_messages += 1
-        if received_messages > 0:
-            LOG.debug("GameServer processed %d messages", received_messages)
+        received_commands = 0
+        for peer, bot in self._bots:
+            cmd = peer.next_command()
+            if cmd:
+                reply = bot.handle_command(cmd)
+                peer.command_reply(reply)
+                received_commands += 1
+        if received_commands > 0:
+            LOG.debug("GameServer processed %d commands", received_commands)
         if self.started():
             ticks = self.clock.tick(60)
             self._world.update(ticks)
-        self._viewer_channel.send(Event(game_data=self._world.gamedata))
+        self._send_viewer_event(Event(game_data=self._world.gamedata))
         for tank_id, events in self._world.get_events().items():
             bots = self._bots if tank_id is None else (self._bots[tank_id],)
             for event in events:
                 assert isinstance(event, Event), "%r is not an instance of Event" % event
                 event.sequence_id = self.next_sequence_id()
-                for bot in bots:
-                    bot.event_channel.send(event)
+                for peer, _ in bots:
+                    peer.handle_event(event)
 
-    def _handle_registration(self, registration):
-        LOG.info("GameServer received registration: %r", registration)
-        if registration.client_type == ClientType.BOT:
-            self._handle_bot_registration(registration)
+    def add_peer(self, peer: Peer) -> RegistrationReply:
+        LOG.info("GameServer received peer: %r", peer)
+        if peer.client_type == ClientType.BOT:
+            return self._register_bot(peer)
         else:
-            self._registration_channel.send(RegistrationReply(
+            self._viewers.append(peer)
+            return RegistrationReply(
                 result=RegistrationResult.SUCCESS,
                 game_info=self.build_game_info(),
-                event_url=self._viewer_channel.url
-            ))
+            )
 
-    def _handle_bot_registration_inner(self, registration, event_channel, cmd_channel):
+    def _register_bot(self, peer: Peer):
         if self.game_full():
             return RegistrationReply(
                 result=RegistrationResult.FAILURE,
                 game_info=self.build_game_info()
             )
         tank_id = len(self._bots)
-        tank = self._world.add_tank(registration.id, tank_id)
-        bot = Bot(registration.id, tank_id, event_channel, cmd_channel, tank)
-        self._bots.append(bot)
-        self._handlers[bot.cmd_channel] = bot.handle_command
-        LOG.info("Bot registered with cmd_url %s and event_url %s", cmd_channel.url, event_channel.url)
+        tank = self._world.add_tank(peer.id, tank_id)
+        bot = Bot(peer.id, tank_id, tank)
+        self._bots.append((peer, bot))
+        LOG.info("Bot %r registered with peer %r", bot, peer)
         return RegistrationReply(
             result=RegistrationResult.SUCCESS,
             game_info=self.build_game_info(),
-            event_url=event_channel.url,
-            cmd_url=cmd_channel.url,
             id=tank_id
         )
-
-    def _handle_bot_registration(self, registration):
-        reply = self._handle_bot_registration_inner(
-            registration,
-            self._channel_factory(ChannelType.PUBLISH),
-            self._channel_factory(ChannelType.REPLY)
-        )
-        self._registration_channel.send(reply)
 
     def build_game_info(self):
         return GameInfo(

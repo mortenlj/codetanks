@@ -3,12 +3,12 @@
 from datetime import datetime, timedelta
 
 import pytest
-from mock import create_autospec, MagicMock, PropertyMock
-
-from ibidem.codetanks.domain.messages_pb2 import Registration, GameData, ClientType, Id, RegistrationReply, Command, \
+from ibidem.codetanks.domain.messages_pb2 import GameData, ClientType, Id, RegistrationReply, Command, \
     CommandType, CommandReply, \
     CommandResult, BotStatus, Tank, Death, GameInfo, RegistrationResult, Event, Arena, Point, ScanComplete
-from ibidem.codetanks.server.zeromq import Channel
+from mock import create_autospec, MagicMock, PropertyMock
+
+from ibidem.codetanks.server import peer
 from ibidem.codetanks.server.constants import PLAYER_COUNT, MAX_HEALTH, BULLET_DAMAGE, TANK_SPEED, ROTATION, \
     BULLET_SPEED, TANK_RADIUS, BULLET_RADIUS, CANNON_RELOAD
 from ibidem.codetanks.server.game_server import GameServer
@@ -20,21 +20,6 @@ BOT_CLIENT_ID = Id(name="bot", version=1)
 
 
 @pytest.fixture
-def registration_channel():
-    registration_channel = create_autospec(Channel)
-    registration_channel.url = "tcp://registration_channel.url"
-    registration_channel.ready.return_value = False
-    return registration_channel
-
-
-@pytest.fixture
-def viewer_channel():
-    viewer_channel = create_autospec(Channel)
-    viewer_channel.url = "tcp://viewer_channel.url"
-    return viewer_channel
-
-
-@pytest.fixture
 def world():
     world = create_autospec(World)
     world.arena = Arena()
@@ -43,118 +28,113 @@ def world():
 
 
 @pytest.fixture
-def server(registration_channel, viewer_channel, world):
-    def channel_factory(x):
-        mock = create_autospec(Channel, instance=True)
-        mock.ready.return_value = False
-        mock.url = "tcp://mock_channel.url"
-        return mock
-
-    return GameServer(registration_channel, viewer_channel, channel_factory, world, VICTORY_DELAY)
+def server(world):
+    return GameServer(world, VICTORY_DELAY)
 
 
-def send_on_mock_channel(channel, value):
-    channel.ready.return_value = True
-    channel.recv.return_value = value
+def _make_peer(client_type, id):
+    m = MagicMock(peer.Peer, instance=True)
+    m.client_type = client_type
+    m.id = id
+    return m
 
 
-def reset_mock_channel(channel):
-    channel.ready.return_value = None
+@pytest.fixture
+def bot_peer():
+    return _make_peer(ClientType.BOT, BOT_CLIENT_ID)
+
+
+@pytest.fixture
+def viewer_peer():
+    return _make_peer(ClientType.VIEWER, Id(name="viewer", version=1))
 
 
 class TestViewerRegistration:
-    @pytest.fixture(autouse=True)
-    def send_registration(self, registration_channel):
-        send_on_mock_channel(registration_channel,
-                             Registration(client_type=ClientType.VIEWER, id=Id(name="viewer", version=1)))
-
-    def test_registering_viewer_gets_generic_urls_and_game_info(self, server, registration_channel):
-        server._run_once()
-        registration_channel.send.assert_called_once_with(
-            RegistrationReply(result=RegistrationResult.SUCCESS,
-                              game_info=server.build_game_info(),
-                              event_url=server._viewer_channel.url)
-        )
+    def test_registering_viewer_gets_game_info(self, server, viewer_peer):
+        reply = server.add_peer(viewer_peer)
+        assert reply == RegistrationReply(result=RegistrationResult.SUCCESS,
+                                          game_info=server.build_game_info(),
+                                          )
 
 
 class TestBotRegistration:
-    @pytest.fixture(autouse=True)
-    def send_registration(self, registration_channel):
-        send_on_mock_channel(registration_channel, Registration(client_type=ClientType.BOT, id=BOT_CLIENT_ID))
-
-    def test_registering_bots_are_associated_with_channels(self, server):
-        server._run_once()
-        bot = server._bots[0]
+    def test_registering_bots_are_associated_with_channels(self, server, bot_peer):
+        server.add_peer(bot_peer)
+        peer, bot = server._bots[0]
+        assert peer is bot_peer
         assert bot is not None
-        assert bot.event_channel is not None
-        assert bot.cmd_channel is not None
         assert bot.tank_id == 0
 
-    def test_registering_bots_get_dedicated_channel_urls_and_game_info(self, server, registration_channel):
-        server._run_once()
-        bot = server._bots[0]
-        registration_channel.send.assert_called_once_with(
-            RegistrationReply(result=RegistrationResult.SUCCESS,
-                              game_info=server.build_game_info(),
-                              event_url=bot.event_channel.url,
-                              cmd_url=bot.cmd_channel.url,
-                              id=0)
-        )
+    def test_registering_bots_get_game_info(self, server, bot_peer):
+        reply = server.add_peer(bot_peer)
+        assert reply == RegistrationReply(result=RegistrationResult.SUCCESS,
+                                          game_info=server.build_game_info(),
+                                          id=0)
 
-    def test_bot_cmd_channel_is_polled(self, server, registration_channel):
+    def test_bot_cmd_channel_is_polled(self, server, bot_peer):
+        server.add_peer(bot_peer)
         server._run_once()
-        reset_mock_channel(registration_channel)
-        server._run_once()
-        bot = server._bots[0]
-        bot.cmd_channel.ready.assert_called_once_with()
+        peer, bot = server._bots[0]
+        peer.next_command.assert_called_once()
 
-    def test_bot_is_added_to_world(self, server, world):
+    def test_bot_called_to_handle_command(self, server, bot_peer):
+        cmd = Command(type=CommandType.MOVE, value=10)
+        bot_peer.next_command.return_value = cmd
+        server.add_peer(bot_peer)
+        peer, bot = server._bots[0]
+        bot.handle_command = MagicMock()
         server._run_once()
+        peer.next_command.assert_called_once()
+        bot.handle_command.assert_called_once_with(cmd)
+
+    def test_bot_is_added_to_world(self, server, bot_peer, world):
+        server.add_peer(bot_peer)
         world.add_tank.assert_called_once_with(BOT_CLIENT_ID, 0)
 
 
 class TestGame:
     @pytest.fixture
-    def server(self, server):
-        server._handle_bot_registration(Registration(client_type=ClientType.BOT, id=Id(name="bot", version=1)))
+    def server(self, server, bot_peer):
+        server.add_peer(bot_peer)
         return server
 
     @pytest.fixture
     def bot(self, server):
-        bot = server._bots[0]
+        _peer, bot = server._bots[0]
         bot.tank.status = BotStatus.IDLE
         bot.tank.position = Point(x=1, y=1)
         bot.tank.direction = Point(x=1, y=0)
         bot.tank.turret = Point(x=0, y=1)
         return bot
 
-    def test_game_data_sent_once_per_loop(self, server, world, viewer_channel):
+    def test_game_data_sent_once_per_loop(self, server, world, viewer_peer):
+        server.add_peer(viewer_peer)
         game_data = GameData(bullets=[], tanks=[])
         type(world).gamedata = PropertyMock(return_value=game_data)
         server._run_once()
-        viewer_channel.send.assert_called_with(Event(game_data=game_data))
+        viewer_peer.handle_event.assert_called_with(Event(game_data=game_data))
 
     def test_events_gathered_once_per_loop(self, server, world):
         world.get_events.return_value = {}
         server._run_once()
         world.get_events.assert_called_once_with()
 
-    def test_events_sent_when_gathered(self, server, world, bot):
+    def test_events_sent_when_gathered(self, server, world, bot, bot_peer):
         scan_result = Event(scan_complete=ScanComplete(tanks=[]))
         world.get_events.return_value = {bot.tank_id: [scan_result]}
         server._run_once()
-        bot.event_channel.send.assert_called_once_with(scan_result)
+        bot_peer.handle_event.assert_called_once_with(scan_result)
 
-    def test_events_sent_to_all_when_no_tank_id(self, server, world, bot):
+    def test_events_sent_to_all_when_no_tank_id(self, server, world, bot, bot_peer):
         death = Event(death=Death(victim=Tank(), perpetrator=Tank()))
         world.get_events.return_value = {None: [death]}
         server._run_once()
-        bot.event_channel.send.assert_called_once_with(death)
+        bot_peer.handle_event.assert_called_once_with(death)
 
-    def test_bot_command_receives_reply(self, server, bot):
-        send_on_mock_channel(bot.cmd_channel, Command(type=CommandType.MOVE, value=10))
+    def test_bot_command_receives_reply(self, server, bot, bot_peer):
+        bot_peer.next_command.return_value = Command(type=CommandType.MOVE, value=10)
         server._run_once()
-        bot.cmd_channel.send.assert_called_once_with(CommandReply(result=CommandResult.ACCEPTED))
+        bot_peer.command_reply.assert_called_once_with(CommandReply(result=CommandResult.ACCEPTED))
 
     @pytest.mark.parametrize("command, name, param", (
             (Command(type=CommandType.MOVE, value=10), "move", 10),
@@ -167,8 +147,8 @@ class TestGame:
             (Command(type=CommandType.AIM, value=0), "aim", 0),
             (Command(type=CommandType.SCAN, value=0), "scan", 0),
     ))
-    def test_command(self, server, bot, command, name, param):
-        send_on_mock_channel(bot.cmd_channel, command)
+    def test_command(self, server, bot, bot_peer, command, name, param):
+        bot_peer.next_command.return_value = command
         server._run_once()
         if param is None:
             getattr(bot.tank, name).assert_called_once_with()
@@ -184,12 +164,12 @@ class TestGame:
             Command(type=CommandType.ROTATE, value=1),
             Command(type=CommandType.AIM, value=-1)
     ))
-    def test_command_abort_if_busy(self, server, bot, command_abort_if_busy_states, command):
+    def test_command_abort_if_busy(self, server, bot, bot_peer, command_abort_if_busy_states, command):
         bot.tank.status = command_abort_if_busy_states
-        send_on_mock_channel(bot.cmd_channel, command)
+        bot_peer.next_command.return_value = command
         server._run_once()
         getattr(bot.tank, CommandType.Name(command.type).lower()).assert_not_called()
-        bot.cmd_channel.send.assert_called_once_with(CommandReply(result=CommandResult.BUSY))
+        bot_peer.command_reply.assert_called_once_with(CommandReply(result=CommandResult.BUSY))
 
     def test_game_full_after_fourth_bot(self, server, world, bot):
         world.add_tank.return_value = Armour(Tank(), world)
@@ -197,7 +177,7 @@ class TestGame:
         # One from fixture, and another three here
         for i in range(PLAYER_COUNT - 1):
             assert not server.started()
-            server._handle_bot_registration(Registration(client_type=ClientType.BOT, id=Id(name="bot", version=1)))
+            server.add_peer(_make_peer(ClientType.BOT, Id(name="bot", version=1)))
         assert server.game_full()
 
     def test_update_not_called_before_game_started(self, server, world):
@@ -214,7 +194,7 @@ class TestStartedGame:
     def server(self, server, world):
         world.add_tank.return_value = Armour(Tank(), world)
         for i in range(PLAYER_COUNT):
-            server._handle_bot_registration(Registration(client_type=ClientType.BOT, id=Id(name="bot", version=1)))
+            server.add_peer(_make_peer(ClientType.BOT, Id(name="bot", version=1)))
         return server
 
     @pytest.fixture
@@ -245,8 +225,8 @@ class TestStartedGame:
         end = datetime.now()
         assert (end - start).total_seconds() == pytest.approx(VICTORY_DELAY.total_seconds(), abs=0.2)
 
-    def test_new_bots_are_refused_when_game_started(self, server, world, registration_channel):
-        server._handle_bot_registration(Registration(client_type=ClientType.BOT, id=Id(name="bot", version=1)))
+    def test_new_bots_are_refused_when_game_started(self, server, world):
+        reply = server.add_peer(_make_peer(ClientType.BOT, Id(name="bot", version=1)))
         game_info = GameInfo(
             arena=world.arena,
             max_health=MAX_HEALTH,
@@ -259,5 +239,20 @@ class TestStartedGame:
             bullet_radius=BULLET_RADIUS,
             cannon_reload=CANNON_RELOAD,
         )
-        registration_channel.send.assert_called_with(
-            RegistrationReply(result=RegistrationResult.FAILURE, game_info=game_info))
+        assert reply == RegistrationReply(result=RegistrationResult.FAILURE, game_info=game_info)
+
+    def test_new_viewers_are_accepted_when_game_started(self, server, world):
+        reply = server.add_peer(_make_peer(ClientType.VIEWER, Id(name="viewer", version=1)))
+        game_info = GameInfo(
+            arena=world.arena,
+            max_health=MAX_HEALTH,
+            bullet_damage=BULLET_DAMAGE,
+            player_count=PLAYER_COUNT,
+            tank_speed=TANK_SPEED,
+            rotation=ROTATION,
+            bullet_speed=BULLET_SPEED,
+            tank_radius=TANK_RADIUS,
+            bullet_radius=BULLET_RADIUS,
+            cannon_reload=CANNON_RELOAD,
+        )
+        assert reply == RegistrationReply(result=RegistrationResult.SUCCESS, game_info=game_info)
