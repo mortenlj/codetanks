@@ -95,6 +95,7 @@ class ZeroMQServer:
         self._reply_ports = iter(range(cmd_port_range[0], cmd_port_range[1] + 1))
         self._peer_ids = iter(range(sys.maxsize))
         self._peers = {}
+        self._game_info = None
 
     def _channel_factory(self, channel_type):
         if channel_type == ChannelType.PUBLISH:
@@ -111,19 +112,33 @@ class ZeroMQServer:
             if self._registration_channel.wait() == zmq.POLLIN:
                 registration = self._registration_channel.recv()
                 if registration.client_type == ClientType.VIEWER:
-                    event_channel = self._viewer_channel
-                    cmd_channel = None
+                    self._register_viewer(registration)
                 else:
-                    event_channel = self._channel_factory(ChannelType.PUBLISH)
-                    cmd_channel = self._channel_factory(ChannelType.REPLY)
-                peer = ZeroMQPeer(registration, event_channel, cmd_channel)
-                peer_id = next(self._peer_ids)
-                registration_reply: messages_pb2.RegistrationReply = self._registration_handler(peer)
-                if registration_reply.result == messages_pb2.RegistrationResult.SUCCESS:
-                    self._peers[peer_id] = peer
-                    registration_reply.event_url = event_channel.url
-                    registration_reply.cmd_url = cmd_channel.url
-                return registration_reply
+                    self._register_bot(registration)
+
+    def _register_viewer(self, registration: messages_pb2.Registration):
+        if self._game_info:
+            registration_reply = messages_pb2.RegistrationReply(result=messages_pb2.RegistrationResult.SUCCESS,
+                                                                game_info=self._game_info,
+                                                                event_url=self._viewer_channel.url)
+        else:
+            peer = ZeroMQPeer(registration, self._viewer_channel, None)
+            registration_reply: messages_pb2.RegistrationReply = self._registration_handler(peer)
+            if registration_reply.result == messages_pb2.RegistrationResult.SUCCESS:
+                self._game_info = registration_reply.game_info
+        self._registration_channel.send(registration_reply)
+
+    def _register_bot(self, registration: messages_pb2.Registration):
+        event_channel = self._channel_factory(ChannelType.PUBLISH)
+        cmd_channel = self._channel_factory(ChannelType.REPLY)
+        peer = ZeroMQPeer(registration, event_channel, cmd_channel)
+        peer_id = next(self._peer_ids)
+        registration_reply: messages_pb2.RegistrationReply = self._registration_handler(peer)
+        if registration_reply.result == messages_pb2.RegistrationResult.SUCCESS:
+            self._peers[peer_id] = peer
+            registration_reply.event_url = event_channel.url
+            registration_reply.cmd_url = cmd_channel.url
+        self._registration_channel.send(registration_reply)
 
 
 def serialize(value):
