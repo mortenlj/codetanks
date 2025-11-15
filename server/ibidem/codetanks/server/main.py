@@ -7,6 +7,7 @@ from datetime import timedelta
 import pinject
 from ibidem.codetanks.domain.messages_pb2 import Registration
 
+from ibidem.codetanks.server import grpc_service
 from ibidem.codetanks.server.config import settings
 from ibidem.codetanks.server.game_server import GameServer
 from ibidem.codetanks.server.world import World
@@ -55,6 +56,7 @@ def main():
     logging.basicConfig(level=loglevel)
     obj_graph = pinject.new_object_graph(modules=None, binding_specs=[ObjectGraph()])
     game_server = obj_graph.provide(GameServer)
+    grpc_service.serve(game_server)
     game_server.run()
 
 

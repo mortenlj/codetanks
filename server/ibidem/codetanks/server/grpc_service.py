@@ -1,10 +1,16 @@
+import logging
+import threading
+from concurrent import futures
 from queue import Queue, Empty
 from typing import Generator, Optional
 
 import grpc
-from ibidem.codetanks.domain import messages_pb2_grpc, messages_pb2
 
+from ibidem.codetanks.domain import messages_pb2_grpc, messages_pb2
 from ibidem.codetanks.server import peer
+from ibidem.codetanks.server.config import settings
+
+LOG = logging.getLogger(__name__)
 
 
 class GrpcPeer(peer.Peer):
@@ -52,6 +58,8 @@ class CodeTanksServicer(messages_pb2_grpc.CodeTanksServicer):
         peer_id = context.peer()
         peer = GrpcPeer(request)
 
+        ct_name = "viewer" if peer.client_type == messages_pb2.ClientType.VIEWER else "bot"
+        LOG.info("Registering %s %r with peer ID: %r", ct_name, request, peer_id)
         registration_reply: messages_pb2.RegistrationReply = self._registration_handler(peer)
         if registration_reply.result == messages_pb2.RegistrationResult.SUCCESS:
             self._peers[peer_id] = peer
@@ -60,7 +68,7 @@ class CodeTanksServicer(messages_pb2_grpc.CodeTanksServicer):
     def SendCommand(self, request: messages_pb2.Command, context: grpc.ServicerContext) -> messages_pb2.CommandReply:
         peer_id = context.peer()
         if peer_id not in self._peers:
-            raise grpc.RpcError(grpc.StatusCode.FAILED_PRECONDITION, "Peer not registered")
+            raise grpc.RpcError(grpc.StatusCode.FAILED_PRECONDITION, f"Peer {peer_id} not registered")
         peer = self._peers[peer_id]
         peer.queue_command(request)
         return peer.next_reply()
@@ -72,6 +80,17 @@ class CodeTanksServicer(messages_pb2_grpc.CodeTanksServicer):
     ) -> Generator[messages_pb2.Event]:
         peer_id = context.peer()
         if peer_id not in self._peers:
-            raise grpc.RpcError(grpc.StatusCode.FAILED_PRECONDITION, "Peer not registered")
+            raise grpc.RpcError(grpc.StatusCode.FAILED_PRECONDITION, f"Peer {peer_id} not registered")
         peer = self._peers[peer_id]
         yield from peer.get_events()
+
+
+def serve(game_server) -> None:
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    messages_pb2_grpc.add_CodeTanksServicer_to_server(CodeTanksServicer(game_server.add_peer), server)
+    serving_port = server.add_insecure_port(f"localhost:{settings.grpc_port}")
+    server.start()
+    grpc_thread = threading.Thread(target=server.wait_for_termination, daemon=True)
+    grpc_thread.start()
+    LOG.info("GRPC Server started on port %d", serving_port)
+

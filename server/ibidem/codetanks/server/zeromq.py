@@ -95,6 +95,7 @@ class ZeroMQServer:
         self._viewer_channel = viewer_channel
         self._registration_channel = registration_channel
 
+        LOG.info("ZeroMQServer accepting registrations at %s", self._registration_channel.url)
         LOG.debug("Creating ZeroMQServer with:")
         LOG.debug("\tviewer_channel: %r", self._viewer_channel)
         LOG.debug("\tregistration_channel: %r", self._registration_channel)

@@ -38,6 +38,8 @@ protobuf:
     RUN uv sync --no-install-workspace --locked --compile-bytecode --dev
     RUN mkdir -p ./ibidem/codetanks/domain
     RUN .venv/bin/python -m grpc_tools.protoc -I$PROTOBUF_SRC --python_out=./ibidem/codetanks/domain --pyi_out=./ibidem/codetanks/domain --grpc_python_out=./ibidem/codetanks/domain $PROTOBUF_SRC/messages.proto
+    COPY fix_grpc_imports.patch .
+    RUN patch -p1 < fix_grpc_imports.patch
     SAVE ARTIFACT ibidem/codetanks/domain domain AS LOCAL ibidem/codetanks/domain
 
 

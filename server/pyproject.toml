@@ -14,7 +14,7 @@ dependencies = [
     "pyzmq",
     "euclid",
     "pydantic-settings>=2.8.1",
-    "grpcio>=1.71.0",
+    "grpcio==1.76.0",
 ]
 requires-python = "~=3.13.0"
 license = { text = "LGPL" }
@@ -45,7 +45,7 @@ euclid = { git = "https://github.com/euclid3/euclid3" }
 
 [dependency-groups]
 dev = [
-    "grpcio-tools>=1.71.0",
+    "grpcio-tools==1.76.0",
     "mock>=5.2.0",
     "pytest>=8.3.5",
 ]
