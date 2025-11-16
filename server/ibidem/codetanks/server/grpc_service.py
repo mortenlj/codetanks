@@ -1,5 +1,6 @@
 import logging
 import threading
+import uuid
 from concurrent import futures
 from queue import Queue, Empty
 from typing import Generator, Optional
@@ -55,13 +56,14 @@ class CodeTanksServicer(messages_pb2_grpc.CodeTanksServicer):
             request: messages_pb2.Registration,
             context: grpc.ServicerContext
     ) -> messages_pb2.RegistrationReply:
-        peer_id = context.peer()
+        peer_id = uuid.uuid4()
         peer = GrpcPeer(request)
 
         ct_name = "viewer" if peer.client_type == messages_pb2.ClientType.VIEWER else "bot"
         LOG.info("Registering %s %r with peer ID: %r", ct_name, request, peer_id)
         registration_reply: messages_pb2.RegistrationReply = self._registration_handler(peer)
         if registration_reply.result == messages_pb2.RegistrationResult.SUCCESS:
+            registration_reply.peer_id = str(peer_id)
             self._peers[peer_id] = peer
         return registration_reply
 

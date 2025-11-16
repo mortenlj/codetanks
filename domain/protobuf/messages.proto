@@ -53,9 +53,17 @@ message GameInfo {
 message RegistrationReply {
     RegistrationResult result = 1;
     GameInfo game_info = 2;
+
+    // If events and commands are provided at a different URL than the registration, these are set here.
+    // Otherwise, the client is expected to use the same base URL according to the selected transport.
     string event_url = 3;
     string cmd_url = 4;
+
+    // In reality, this is player number, only given to bots
     int32 id = 5;
+
+    // If a peer_id is returned, the client is expected to include the given peer_id in all future interactions.
+    optional string peer_id = 6;
 }
 
 message Point {
@@ -144,6 +152,7 @@ message Event {
 }
 
 message EventRequest {
+  optional string peer_id = 1;
 }
 
 // ********
@@ -167,6 +176,7 @@ message Command {
     oneof optional_value {
         int32 value = 2;
     }
+    optional string peer_id = 3;
 }
 
 // ********

@@ -85,6 +85,7 @@ async fn start_searching(commander: &mut comms::Commander, spread: i32) -> Resul
     commander
         .command(domain::Command {
             r#type: domain::CommandType::Scan as i32,
+            peer_id: None,
             optional_value: Some(OptionalValue::Value(spread)),
         })
         .await?;
@@ -107,6 +108,7 @@ async fn start_aiming_at_angle(commander: &mut comms::Commander, angle: i32) -> 
     commander
         .command(domain::Command {
             r#type: domain::CommandType::Aim as i32,
+            peer_id: None,
             optional_value: Some(OptionalValue::Value(angle)),
         })
         .await?;
@@ -125,6 +127,7 @@ async fn start_firing(
         commander
             .command(domain::Command {
                 r#type: domain::CommandType::Fire as i32,
+                peer_id: None,
                 optional_value: None,
             })
             .await?;
@@ -137,6 +140,7 @@ async fn start_firing(
         commander
             .command(domain::Command {
                 r#type: domain::CommandType::Rotate as i32,
+                peer_id: None,
                 optional_value: Some(OptionalValue::Value(
                     targeting_solution.rotate_angle.to_degrees() as i32,
                 )),
@@ -157,6 +161,7 @@ async fn start_moving(
     commander
         .command(domain::Command {
             r#type: domain::CommandType::Move as i32,
+            peer_id: None,
             optional_value: Some(OptionalValue::Value(targeting_solution.distance * 3 / 4)),
         })
         .await?;
