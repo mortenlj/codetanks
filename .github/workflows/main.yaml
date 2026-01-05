@@ -43,7 +43,7 @@ jobs:
         run: |
           earthly --remote-cache=${cache_image} +all --IMAGE_TAG="${IMAGE_TAG}" --BASEIMAGE="${BASEIMAGE}" --SKIP_TESTS_FOR_CI=true
       - name: Save manifests for later deploy
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: manifests
           path: deploy.yaml
@@ -62,7 +62,7 @@ jobs:
       - name: Get kubeconfig
         uses: mortenlj/kube-actions/get-kubeconfig@main
       - name: Download manifests from build
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: manifests
       - id: join-zt
