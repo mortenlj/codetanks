@@ -9,7 +9,7 @@ dependencies = [
     "setuptools>=78.1.0",
     "fiaas-logging==0.1.1",
     "pinject",
-    "protobuf==6.33.2",
+    "protobuf==6.33.3",
     "pygame",
     "pyzmq",
     "euclid",
