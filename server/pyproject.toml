@@ -45,7 +45,7 @@ euclid = { git = "https://github.com/euclid3/euclid3" }
 
 [dependency-groups]
 dev = [
-    "grpcio-tools==1.76.0",
+    "grpcio-tools==1.78.0",
     "mock>=5.2.0",
     "pytest>=8.3.5",
 ]
