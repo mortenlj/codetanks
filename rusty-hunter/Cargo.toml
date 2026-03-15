@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 prost = "0.14.0"
 bytes = "1"
-zeromq = "0.4.1"
+zeromq = "0.5.0"
 tokio = { version = "1", features = ["full"] }
 anyhow = "1.0"
 thiserror = "2.0"
