@@ -43,7 +43,7 @@ jobs:
         run: |
           earthly --remote-cache=${cache_image} +all --IMAGE_TAG="${IMAGE_TAG}" --BASEIMAGE="${BASEIMAGE}" --SKIP_TESTS_FOR_CI=true
       - name: Save manifests for later deploy
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
         with:
           name: manifests
           path: deploy.yaml
