@@ -30,7 +30,7 @@ jobs:
         with:
           version: "latest" # or pin to an specific version, e.g. "v0.6.10"
       - name: Login to GitHub Packages Docker Registry
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
