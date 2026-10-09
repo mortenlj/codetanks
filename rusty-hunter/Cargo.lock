@@ -19,9 +19,9 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 
 [[package]]
 name = "assertables"
-version = "9.8.6"
+version = "9.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "098fbfe90e8af520c4a968eaad7a4031908e473394f16c99cd9cce6369328a68"
+checksum = "627b0b35c347252505ec6c078827dfcecc4e9dcfa931c54c54066f9245ac752b"
 dependencies = [
  "regex",
  "walkdir",
@@ -1481,7 +1481,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
